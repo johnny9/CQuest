@@ -17,7 +17,7 @@ public class SearchLightSchedule extends DiscoverSchedule {
     
     @Override
     int[] generateScedule() {
-        int[] schedule = new int[this.prime * this.prime];
+        int[] schedule = new int[this.prime * (this.prime / 2)];
         
         for (int i=0; i<schedule.length; ++i) {
             if (i % this.prime == 0) {
@@ -29,7 +29,7 @@ public class SearchLightSchedule extends DiscoverSchedule {
         }
         
         Random rand = new Random();
-        for (int i=0; i<this.prime; ++i) {
+        for (int i=0; i<(this.prime / 2); ++i) {
             int poll = (rand.nextInt(this.prime-1) + 1) + (i * this.prime);
             schedule[poll] = TRANSMIT_N_LISTEN;
         }
