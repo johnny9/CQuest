@@ -10,6 +10,9 @@ import android.widget.Button;
 import android.widget.EditText;
 
 public class MainActivity extends Activity {
+	
+	private String phoneId;
+	private String ipAddr;
 
 	private EditText phoneIdText;
 	private EditText ipAddrText;
@@ -49,6 +52,14 @@ public class MainActivity extends Activity {
 	}
 	
 	private boolean canStart() {
+		return (validIP() && validPhoneId());
+	}
+	
+	private boolean validIP() {
+		return true;
+	}
+	
+	private boolean validPhoneId() {
 		return true;
 	}
 	
@@ -56,11 +67,15 @@ public class MainActivity extends Activity {
 //		startService(new Intent(MainActivity.this, PowerManagement.class));
 //		startService(new Intent(MainActivity.this, WifiService.class));
 		startService(new Intent(MainActivity.this, BluetoothService.class));
+//		startService(new Intent(MainActivity.this, SchedulerService.class));
+		
 	}
 	
 	private void stopServices() {
 //		stopService(new Intent(MainActivity.this, PowerManagement.class));
 //		stopService(new Intent(MainActivity.this, WifiService.class));
 		stopService(new Intent(MainActivity.this, BluetoothService.class));
+//		stopService(new Intent(MainActivity.this, SchedulerService.class));
+		
 	}
 }
