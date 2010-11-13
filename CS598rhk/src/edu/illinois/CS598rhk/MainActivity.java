@@ -64,9 +64,9 @@ public class MainActivity extends Activity {
 	}
 	
 	private void startServices() {
-//		startService(new Intent(MainActivity.this, PowerManagement.class));
+		startService(new Intent(MainActivity.this, PowerManagement.class));
 //		startService(new Intent(MainActivity.this, WifiService.class));
-		startService(new Intent(MainActivity.this, BluetoothService.class));
+//		startService(new Intent(MainActivity.this, BluetoothService.class));
 //		startService(new Intent(MainActivity.this, SchedulerService.class));
 		
 	}

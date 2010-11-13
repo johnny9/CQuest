@@ -13,7 +13,7 @@
 		<service android:name=".services.SchedulerService" />
 		<service android:name=".services.BluetoothService" />
 		<service android:name=".services.WifiService" />
-		<service android:name=".services.PowerManagement" />
+		<service android:name=".PowerManagement" />
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
 	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
