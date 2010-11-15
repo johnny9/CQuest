@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.illinois.CS598rhk.BluetoothService.BlueToothBinder;
+
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -19,11 +21,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 
-public class WifiService extends Service {
+public class WifiService extends Service implements IWifiService {
     public static final String INTENT_TO_RESUME_WIFI ="intent to update the wifi state";
     public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
     public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
@@ -49,13 +52,18 @@ public class WifiService extends Service {
     
     InetAddress dest;
     
+    private final IBinder mBinder = new WifiBinder();
     
     @Override
-    public IBinder onBind(Intent intent) {
-        // TODO Auto-generated method stub
-        return null;
+    public IBinder onBind(Intent arg0) {
+        return mBinder;
     }
     
+    public class WifiBinder extends Binder {
+        public IWifiService getService() {
+            return WifiService.this;
+        }
+    }
     @Override
     public void onCreate() {
         wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
@@ -353,5 +361,28 @@ public class WifiService extends Service {
             }
         }
     }
+	@Override
+	public void pauseWifiService() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void resumeWifiService(long delay) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public long scheduleTimeRemaining() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void broadcast(List<String> addrs, String message) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
