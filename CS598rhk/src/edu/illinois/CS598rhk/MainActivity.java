@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -51,7 +50,7 @@ public class MainActivity extends Activity {
 		setContentView( R.layout.main );
 		
 		phoneIdText = (EditText) findViewById(R.id.PhoneIdText);
-		phoneIdText = (EditText) findViewById(R.id.IPAddrText);
+		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
 		startButton = (Button) findViewById(R.id.StartButton);
 		stopButton = (Button) findViewById(R.id.StopButton);
 		
@@ -123,10 +122,6 @@ public class MainActivity extends Activity {
 	}
 	
 	private boolean validIP() {
-		if (phoneIdText.getText().toString().equals("test")) {
-			return false;
-		}
-		System.out.println("|" + phoneIdText.getText().toString() + "|");
 		return true;
 	}
 	

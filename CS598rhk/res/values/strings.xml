@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="hello">Hello World, AdhocClient</string>
-    <string name="app_name">AdhocClient</string>
+    <string name="app_name">CS598rhk</string>
     <string-array name="wifimodevalues">  
 		<item>0</item>  
 		<item>1</item>  
