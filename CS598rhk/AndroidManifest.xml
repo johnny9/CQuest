@@ -10,9 +10,9 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<service android:name=".services.SchedulerService" />
-		<service android:name=".services.BluetoothService" />
-		<service android:name=".services.WifiService" />
+		<service android:name=".SchedulerService" />
+		<service android:name=".BluetoothService" />
+		<service android:name=".WifiService" />
 		<service android:name=".PowerManagement" />
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
