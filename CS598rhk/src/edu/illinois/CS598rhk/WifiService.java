@@ -217,11 +217,11 @@ public class WifiService extends Service {
             }
         }
         
-        private void sendBroadcast() {
+        private void sendWifiBroadcast() {
             
         }
         
-        private void listenForBroadcast() {
+        private void listenForWifiBroadcast() {
             
         }
         
@@ -302,6 +302,7 @@ public class WifiService extends Service {
                                             Intent foundNewNeighbor = new Intent(INTENT_TO_ADD_WIFI_NEIGHBOR);
                                             foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, f.name);
                                             foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,f.IPaddress);
+                                            sendBroadcast(foundNewNeighbor);
                                         }
                                     } while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
                                 } catch (InterruptedIOException e) {
