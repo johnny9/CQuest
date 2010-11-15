@@ -137,17 +137,17 @@ public class MainActivity extends Activity {
 	
 	private void startServices() {
 		startService(new Intent(MainActivity.this, PowerManagement.class));
-//		startService(new Intent(MainActivity.this, WifiService.class));
+		startService(new Intent(MainActivity.this, WifiService.class));
 //		startService(new Intent(MainActivity.this, BluetoothService.class));
-//		startService(new Intent(MainActivity.this, SchedulerService.class));
+		startService(new Intent(MainActivity.this, SchedulerService.class));
 		
 	}
 	
 	private void stopServices() {
 		stopService(new Intent(MainActivity.this, PowerManagement.class));
-//		stopService(new Intent(MainActivity.this, WifiService.class));
-		stopService(new Intent(MainActivity.this, BluetoothService.class));
-//		stopService(new Intent(MainActivity.this, SchedulerService.class));
+		stopService(new Intent(MainActivity.this, WifiService.class));
+//		stopService(new Intent(MainActivity.this, BluetoothService.class));
+		stopService(new Intent(MainActivity.this, SchedulerService.class));
 		
 	}
 }

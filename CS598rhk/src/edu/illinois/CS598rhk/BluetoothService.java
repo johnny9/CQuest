@@ -3,7 +3,6 @@ package edu.illinois.CS598rhk;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +18,8 @@ import android.util.Log;
 
 public class BluetoothService extends Service implements IBluetoothService {
     
+	public static final String INTENT_TO_ADD_BT_NEIGHBOR = "add bt neighbor";
+	
     // Debugging
     private static final String TAG = "BluetoothService";
     private static final boolean D = true;
@@ -44,7 +45,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
     
     private final IBinder mBinder = new BlueToothBinder();
-    private static List<String> neighbors;
     
     @Override
     public IBinder onBind(Intent arg0) {
@@ -57,21 +57,14 @@ public class BluetoothService extends Service implements IBluetoothService {
         }
     }
     
-    @Override
-    public void onCreate() {
-        neighbors = new ArrayList<String>();
-    }
-    
-    public List<String> getNeighbors() {
-        return neighbors;
-    }
-    
-    public void send(String neighbor, String message) {
+    public void send(String addr, String message) {
        
     }
     
-    public void broadcast(String message) {
-        
+    public void broadcast(List<String> addrs, String message) {
+        for (String addr : addrs) {
+        	send(addr, message);
+        }
     }
 
     /**
