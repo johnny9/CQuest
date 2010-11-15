@@ -65,6 +65,7 @@ public class WifiService extends Service {
         activeFriends = new ArrayList<FriendData>();
         myIPAddress = "192.168.1.2";
         myBroadcast = "192.168.1.255";
+        discoveryScheduler = new SearchLightSchedule(7);
         
         try {
             dest = InetAddress.getByName(myBroadcast);
