@@ -5,15 +5,20 @@ import java.util.List;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
 
 public class SchedulerService extends Service implements ISchedulerService {
 
 	private final IBinder mBinder = new SchedulerBinder();
+	
+	private IWifiService wifiService;
+	private IBluetoothService bluetoothService;
 	
 	private NeighborReceiver neighborReceiver = new NeighborReceiver();
 	
@@ -38,6 +43,19 @@ public class SchedulerService extends Service implements ISchedulerService {
 		btNeighbors = new ArrayList<BTNeighbor>();
 	}
 	
+	private ServiceConnection mConnection = new ServiceConnection()
+    {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			wifiService = ( (WifiService.WifiBinder) service ).getService();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			wifiService = null;	
+		}
+    };
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
@@ -46,6 +64,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 		filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BT_NEIGHBOR);
 		registerReceiver(neighborReceiver, filter);
 		
+		bindService( new Intent( SchedulerService.this, WifiService.class ), mConnection, Context.BIND_AUTO_CREATE );
+
 		return super.onStartCommand(intent, flags, startId);
 	}
 	
@@ -62,7 +82,13 @@ public class SchedulerService extends Service implements ISchedulerService {
 				}
 			}
 			else if (intent.getAction().equals(BluetoothService.INTENT_TO_ADD_BT_NEIGHBOR)) {
+				BTNeighbor neighbor = new BTNeighbor();
+				neighbor.name = intent.getStringExtra(BluetoothService.BT_NEIGHBOR_NAME);
+				neighbor.macAddr = intent.getStringExtra(BluetoothService.BT_MAC_ADDRESS);
 				
+				if (!btNeighbors.contains(neighbor)) {
+					btNeighbors.add(neighbor);
+				}
 			}
 		}
 	}

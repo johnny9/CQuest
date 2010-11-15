@@ -19,6 +19,8 @@ import android.util.Log;
 public class BluetoothService extends Service implements IBluetoothService {
     
 	public static final String INTENT_TO_ADD_BT_NEIGHBOR = "add bt neighbor";
+	public static final String BT_NEIGHBOR_NAME = "bt neighbor name";
+	public static final String BT_MAC_ADDRESS = "bt mac address";
 	
     // Debugging
     private static final String TAG = "BluetoothService";
