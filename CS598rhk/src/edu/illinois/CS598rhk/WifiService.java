@@ -27,6 +27,8 @@ public class WifiService extends Service {
     public static final String INTENT_TO_RESUME_WIFI ="intent to update the wifi state";
     public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
     public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
+    public static final String WIFI_NEIGHBOR_NAME = "phone name";
+    public static final String WIFI_IP_ADDRESS = "ip address";
     
     private static final int DISCOVERY_PERIOD = 5000;
     private static final String MSG_TAG = "WifiService";
@@ -135,7 +137,6 @@ public class WifiService extends Service {
 			} else if(intent.getAction() == INTENT_TO_PAUSE_WIFI){
 				wifiController.pauseWifiService();
 			}
-			
 			
 		}
     }
@@ -296,6 +297,11 @@ public class WifiService extends Service {
                                             }
                                             Log.d(MSG_TAG, "isMessage returned: "
                                                     + (f.isMessage(rcv) ? "true" : "false"));
+                                            
+                                            //inform the scheduling service
+                                            Intent foundNewNeighbor = new Intent(INTENT_TO_ADD_WIFI_NEIGHBOR);
+                                            foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, f.name);
+                                            foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,f.IPaddress);
                                         }
                                     } while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
                                 } catch (InterruptedIOException e) {
