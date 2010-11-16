@@ -48,24 +48,67 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	
+    	updateNeighbors();
+    	start();
     	return START_STICKY;
     }
     
     private Map<BluetoothNeighbor, BluetoothDevice> neighbors;
     private BluetoothNeighbor connectedNeighbor;
+    private BluetoothNeighbor myContactInfo;
+    
+    public void updateContactInfo(BluetoothNeighbor contactInfo) {
+    	myContactInfo = contactInfo;
+    }
+    
+    public void updateNeighbors() {
+    	// Stop listening and/or stop any current connections
+    	stop();
+    	// Remove all existing known neighbors (If they're still there, we'll find them again)
+    	neighbors = new HashMap<BluetoothNeighbor, BluetoothDevice>();
+    	
+    	// Potential neighbors are all devices we have already paired with
+    	Set<BluetoothDevice> potentialNeighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
+    	
+    	// Attempt to connect to each paired device one by one and exchange contact info
+    	for (BluetoothDevice device : potentialNeighbors) {
+    		if (blockingConnect(device)) {
+    			exchangeContactInfo();
+        		if (connectedNeighbor != null) {
+        			neighbors.put(connectedNeighbor, device);
+        		}
+        	}
+    	}
+    }
     
     public void broadcast(String message) {
         Set<BluetoothNeighbor> neighborKeys = neighbors.keySet();
     	for (BluetoothNeighbor neighbor : neighborKeys) {
-        	
+    		if (blockingConnect(neighbors.get(neighbor))) {
+    			send(message);
+    		}
         }
     }
     
+    private void exchangeContactInfo() {
+    	
+    }
+    
     private void send(String message) {
-        
+        write(message.getBytes());
     }
 
+    private boolean blockingConnect(BluetoothDevice device) {
+    	connect(device);
+		
+		int spinState = getState();
+		while(spinState != STATE_CONNECTED && spinState != STATE_NONE) {
+			// Wait for connection to succeed
+			spinState = getState();
+		}
+		return (getState() == STATE_CONNECTED);
+    }
+    
     //
     //
     //
