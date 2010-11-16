@@ -3,6 +3,9 @@ package edu.illinois.CS598rhk.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import android.app.Service;
@@ -15,14 +18,63 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
+import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
     
 	public static final String INTENT_TO_ADD_BT_NEIGHBOR = "add bt neighbor";
 	public static final String BT_NEIGHBOR_NAME = "bt neighbor name";
 	public static final String BT_MAC_ADDRESS = "bt mac address";
-	
-    // Debugging
+    
+    private final IBinder mBinder = new BlueToothBinder();
+    
+    @Override
+    public IBinder onBind(Intent arg0) {
+        return mBinder;
+    }
+    
+    public class BlueToothBinder extends Binder {
+        public IBluetoothService getService() {
+            return BluetoothService.this;
+        }
+    }
+    
+    @Override
+    public void onCreate() {
+    	super.onCreate();
+    	neighbors = new HashMap<BluetoothNeighbor, BluetoothDevice>();
+    	connectedNeighbor = null;
+    }
+    
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+    	
+    	return START_STICKY;
+    }
+    
+    private Map<BluetoothNeighbor, BluetoothDevice> neighbors;
+    private BluetoothNeighbor connectedNeighbor;
+    
+    public void broadcast(String message) {
+        Set<BluetoothNeighbor> neighborKeys = neighbors.keySet();
+    	for (BluetoothNeighbor neighbor : neighborKeys) {
+        	
+        }
+    }
+    
+    private void send(String message) {
+        
+    }
+
+    //
+    //
+    //
+    // Code taken BluetoothChatService API Demo
+    //
+    //
+    //
+    
+ // Debugging
     private static final String TAG = "BluetoothService";
     private static final boolean D = true;
 
@@ -46,27 +98,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
     
-    private final IBinder mBinder = new BlueToothBinder();
-    
-    @Override
-    public IBinder onBind(Intent arg0) {
-        return mBinder;
-    }
-    
-    public class BlueToothBinder extends Binder {
-        public IBluetoothService getService() {
-            return BluetoothService.this;
-        }
-    }
-    
-    public void send(String addr, String message) {
-       
-    }
-    
-    public void broadcast(String message) {
-        //TODO: 
-    }
-
     /**
      * Constructor. Prepares a new BluetoothChat session.
      * @param context  The UI Activity Context
@@ -200,8 +231,8 @@ public class BluetoothService extends Service implements IBluetoothService {
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
-        setState(STATE_LISTEN);
-
+    	//setState(STATE_LISTEN);
+    	setState(STATE_NONE);
         // Send a failure message back to the Activity
 //        Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
 //        Bundle bundle = new Bundle();
@@ -214,8 +245,8 @@ public class BluetoothService extends Service implements IBluetoothService {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
-        setState(STATE_LISTEN);
-
+    	//setState(STATE_LISTEN);
+    	setState(STATE_NONE);
         // Send a failure message back to the Activity
 //        Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
 //        Bundle bundle = new Bundle();
@@ -341,7 +372,7 @@ public class BluetoothService extends Service implements IBluetoothService {
                     Log.e(TAG, "unable to close() socket during connection failure", e2);
                 }
                 // Start the service over to restart listening mode
-                BluetoothService.this.start();
+                //BluetoothService.this.start();
                 return;
             }
 

@@ -1,8 +1,5 @@
 package edu.illinois.CS598rhk;
 
-import edu.illinois.CS598rhk.services.PowerManagement;
-import edu.illinois.CS598rhk.services.SchedulerService;
-import edu.illinois.CS598rhk.services.WifiService;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -14,6 +11,10 @@ import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
+import edu.illinois.CS598rhk.services.BluetoothService;
+import edu.illinois.CS598rhk.services.PowerManagement;
+import edu.illinois.CS598rhk.services.SchedulerService;
+import edu.illinois.CS598rhk.services.WifiService;
 
 public class MainActivity extends Activity {
 	
@@ -141,7 +142,7 @@ public class MainActivity extends Activity {
 	private void startServices() {
 		startService(new Intent(MainActivity.this, PowerManagement.class));
 		startService(new Intent(MainActivity.this, WifiService.class));
-//		startService(new Intent(MainActivity.this, BluetoothService.class));
+		startService(new Intent(MainActivity.this, BluetoothService.class));
 		startService(new Intent(MainActivity.this, SchedulerService.class));
 		
 	}
@@ -149,8 +150,7 @@ public class MainActivity extends Activity {
 	private void stopServices() {
 		stopService(new Intent(MainActivity.this, PowerManagement.class));
 		stopService(new Intent(MainActivity.this, WifiService.class));
-//		stopService(new Intent(MainActivity.this, BluetoothService.class));
-		stopService(new Intent(MainActivity.this, SchedulerService.class));
-		
+		stopService(new Intent(MainActivity.this, BluetoothService.class));
+		stopService(new Intent(MainActivity.this, SchedulerService.class));	
 	}
 }

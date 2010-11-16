@@ -98,7 +98,7 @@ public class WifiService extends Service implements IWifiService {
         
         wifiController.start();
         
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
     
     @Override

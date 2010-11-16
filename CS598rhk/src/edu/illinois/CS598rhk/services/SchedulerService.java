@@ -70,7 +70,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		
 		bindService( new Intent( SchedulerService.this, WifiService.class ), mConnection, Context.BIND_AUTO_CREATE );
 
-		return super.onStartCommand(intent, flags, startId);
+		return START_STICKY;
 	}
 	
 	private class NeighborReceiver extends BroadcastReceiver {

@@ -48,7 +48,7 @@ public class PowerManagement extends Service implements Runnable {
         batteryFilter.addAction(POWER_SERVICE);
         myBatteryInfoReceiver = new BatteryInfoReceiver();
         registerReceiver(myBatteryInfoReceiver, batteryFilter);
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
     
     private class BatteryInfoReceiver extends BroadcastReceiver {
