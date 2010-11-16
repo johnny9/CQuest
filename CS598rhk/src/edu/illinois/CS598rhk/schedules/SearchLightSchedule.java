@@ -17,7 +17,7 @@ public class SearchLightSchedule extends DiscoverSchedule {
     }
     
     @Override
-    int[] generateScedule() {
+	public int[] generateScedule() {
         int[] schedule = new int[this.prime * (this.prime / 2)];
         
         for (int i=0; i<schedule.length; ++i) {

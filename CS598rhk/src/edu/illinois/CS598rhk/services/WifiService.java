@@ -12,11 +12,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.illinois.CS598rhk.DiscoverSchedule;
-import edu.illinois.CS598rhk.FriendData;
-import edu.illinois.CS598rhk.SearchLightSchedule;
+import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
+import edu.illinois.CS598rhk.models.FriendData;
+import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
-
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -41,7 +40,7 @@ public class WifiService extends Service implements IWifiService {
 
     private DiscoverSchedule discoveryScheduler;
     private boolean wifiEnabled=false;
-    private CoreTask coretask;
+//    private CoreTask coretask;
 
     private List<FriendData> friendList;
     private List<FriendData> activeFriends;
@@ -131,11 +130,11 @@ public class WifiService extends Service implements IWifiService {
     }
 
     public void disableWifi() {
-        if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-                + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
-            Log.d(MSG_TAG, "netcontrol stop_wifi failed");
-            // fall down below anyway
-        }
+//        if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+//                + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
+//            Log.d(MSG_TAG, "netcontrol stop_wifi failed");
+//            // fall down below anyway
+//        }
         Log.d(MSG_TAG, "Wifi disabled");
         wifiEnabled = false;
     }

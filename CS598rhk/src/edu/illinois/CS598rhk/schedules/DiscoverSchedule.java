@@ -7,5 +7,5 @@ public abstract class DiscoverSchedule {
 	public static final int TRANSMIT = 2;
 	public static final int LISTEN = 3;
 	
-    abstract int[] generateScedule();
+    public abstract int[] generateScedule();
 }
