@@ -1,4 +1,4 @@
-package edu.illinois.CS598rhk;
+package edu.illinois.CS598rhk.services;
 
 import java.io.IOException;
 import java.io.InputStream;

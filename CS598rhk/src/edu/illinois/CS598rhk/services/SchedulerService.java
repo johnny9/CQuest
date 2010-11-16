@@ -1,4 +1,4 @@
-package edu.illinois.CS598rhk;
+package edu.illinois.CS598rhk.services;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,7 @@ import android.os.IBinder;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
+import edu.illinois.CS598rhk.services.WifiService.WifiBinder;
 
 public class SchedulerService extends Service implements ISchedulerService {
 

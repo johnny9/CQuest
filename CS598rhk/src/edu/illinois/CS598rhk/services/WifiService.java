@@ -1,4 +1,4 @@
-package edu.illinois.CS598rhk;
+package edu.illinois.CS598rhk.services;
 
 import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
@@ -12,7 +12,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.illinois.CS598rhk.BluetoothService.BlueToothBinder;
+import edu.illinois.CS598rhk.DiscoverSchedule;
+import edu.illinois.CS598rhk.FriendData;
+import edu.illinois.CS598rhk.SearchLightSchedule;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 
 
