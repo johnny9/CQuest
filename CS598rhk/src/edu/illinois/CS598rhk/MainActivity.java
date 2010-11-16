@@ -1,5 +1,6 @@
 package edu.illinois.CS598rhk;
 
+import edu.illinois.CS598rhk.services.PowerManagement;
 import edu.illinois.CS598rhk.services.SchedulerService;
 import edu.illinois.CS598rhk.services.WifiService;
 import android.app.Activity;
