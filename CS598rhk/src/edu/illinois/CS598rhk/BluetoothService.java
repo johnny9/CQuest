@@ -3,7 +3,6 @@ package edu.illinois.CS598rhk;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.UUID;
 
 import android.app.Service;
@@ -15,6 +14,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 
 public class BluetoothService extends Service implements IBluetoothService {
     
@@ -63,10 +63,8 @@ public class BluetoothService extends Service implements IBluetoothService {
        
     }
     
-    public void broadcast(List<String> addrs, String message) {
-        for (String addr : addrs) {
-        	send(addr, message);
-        }
+    public void broadcast(String message) {
+        //TODO: 
     }
 
     /**

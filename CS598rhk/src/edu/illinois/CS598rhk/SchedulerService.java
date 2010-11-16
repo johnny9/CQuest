@@ -12,6 +12,9 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
+import edu.illinois.CS598rhk.interfaces.IBluetoothService;
+import edu.illinois.CS598rhk.interfaces.ISchedulerService;
+import edu.illinois.CS598rhk.interfaces.IWifiService;
 
 public class SchedulerService extends Service implements ISchedulerService {
 

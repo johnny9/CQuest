@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.illinois.CS598rhk.BluetoothService.BlueToothBinder;
+import edu.illinois.CS598rhk.interfaces.IWifiService;
 
 
 import android.app.Service;
