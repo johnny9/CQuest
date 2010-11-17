@@ -21,8 +21,6 @@ import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.models.FriendData;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
-import edu.ncsu.AdhocClient.CoreTask;
-import edu.ncsu.AdhocClient.R;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -142,13 +140,13 @@ public class WifiService extends Service implements IWifiService {
     public void installBinaries() {
         List<String> filenames = new ArrayList<String>();
         // tether
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/netcontrol", android.R.raw.netcontrol);
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/netcontrol", edu.illinois.CS598rhk.R.raw.netcontrol);
         filenames.add("netcontrol");
         // dnsmasq
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/dnsmasq", android.R.raw.dnsmasq);
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/dnsmasq", edu.illinois.CS598rhk.R.raw.dnsmasq);
         filenames.add("dnsmasq");
         // iwconfig
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", android.R.raw.);
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", edu.illinois.CS598rhk.R.raw.iwconfig);
         filenames.add("iwconfig");
         try {
             this.coretask.chmodBin(filenames);
@@ -156,9 +154,9 @@ public class WifiService extends Service implements IWifiService {
         	Log.d(MSG_TAG, "Unable to change permission on binary files!");
         }
         // dnsmasq.conf
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/dnsmasq.conf", R.raw.dnsmasq_conf);
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/dnsmasq.conf", edu.illinois.CS598rhk.R.raw.dnsmasq_conf);
         // tiwlan.ini
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/tiwlan.ini", R.raw.tiwlan_ini);
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/tiwlan.ini", edu.illinois.CS598rhk.R.raw.tiwlan_ini);
         Log.d(MSG_TAG, "Binaries and config-files installed!");
     }
 
