@@ -10,6 +10,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,382 +36,312 @@ import android.os.Looper;
 import android.util.Log;
 
 public class WifiService extends Service implements IWifiService {
-    public static final String INTENT_TO_RESUME_WIFI ="intent to update the wifi state";
-    public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
-    public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
-    public static final String WIFI_NEIGHBOR_NAME = "phone name";
-    public static final String WIFI_IP_ADDRESS = "ip address";
-    
-    private static final int DISCOVERY_PERIOD = 5000;
-    private static final String MSG_TAG = "MyWifiService";
+	public static final String INTENT_TO_RESUME_WIFI = "intent to update the wifi state";
+	public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
+	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
+	public static final String INTENT_TO_CHANGE_WIFI_ADDRESS = "WHERE ARE ALL MY WIFIS";
+	public static final String NEW_WIFI_ADDRESS = "asdfasdfasdfasdfasdf";
+	public static final String WIFI_NEIGHBOR_NAME = "phone name";
+	public static final String WIFI_IP_ADDRESS = "ip address";
+	public static final int WIFI_STATE_DISCOVERYING = 1;
+	public static final int WIFI_STATE_PAUSED = 0;
 
-    private DiscoverSchedule discoveryScheduler;
-    private boolean wifiEnabled=false;
-    private CoreTask coretask;
+	private static final int DISCOVERY_PERIOD = 5000;
+	private static final String MSG_TAG = "MyWifiService";
+	public static final String RESUME_DELAY = "O_o";
+	public static final String NEW_PHONE_NAME = "<><><><><><><><><><<";
+	public static final String INTENT_TO_UPDATE_NAME = "^^;;";
 
-    private List<FriendData> friendList;
-    private List<FriendData> activeFriends;
-    private FriendData myData;
-    private WifiManager wifiManager;
-    private WifiMessageReceiver messageReceiver; 
-    private WifiController wifiController;
-    
-    private String myIPAddress;
-    private String myBroadcast;
-    private int timeSlice;
-    
-    InetAddress dest;
-    
-    private final IBinder mBinder = new WifiBinder();
-    
-    @Override
-    public IBinder onBind(Intent arg0) {
-        return mBinder;
-    }
-    
-    public class WifiBinder extends Binder {
-        public IWifiService getService() {
-            return WifiService.this;
-        }
-    }
-    @Override
-    public void onCreate() {
-        wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
-        wifiController = new WifiController();
-        myData = new FriendData();
-        friendList = new ArrayList<FriendData>();
-        activeFriends = new ArrayList<FriendData>();
-        myIPAddress = "192.168.1.2";
-        myBroadcast = "192.168.1.255";
-        discoveryScheduler = new AlwaysSchedule();
-        coretask = new CoreTask();
-        
-        
-        try {
-            dest = InetAddress.getByName(myBroadcast);
-        } catch (UnknownHostException e) {
-            Log.d(MSG_TAG,"Broadcast address "+myBroadcast+" as unknown.");
-        }
-    }
-    
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-    	IntentFilter messageFilter = new IntentFilter();
-    	messageFilter.addAction(INTENT_TO_PAUSE_WIFI);
-    	messageFilter.addAction(INTENT_TO_RESUME_WIFI);
-    	messageReceiver = new WifiMessageReceiver();
-    	registerReceiver(messageReceiver, messageFilter);
-    	
-    	coretask = new CoreTask();
-        coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
-        Log.d(MSG_TAG, "Current directory is "
-                + this.getApplicationContext().getFilesDir().getParent());
-        
-        if(wifiManager.isWifiEnabled())
-            wifiManager.setWifiEnabled(false);
-        enableWifi();
-        
-       // setIPAddress("192.168.1.2");
-        
-        wifiController.start();
-        
-        
-        return START_STICKY;
-    }
-    public void setIPAddress(String ip) {
-    	this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 "+ip+" netmask 255.255.255.0");
-    	
-    }
-    
-    
-    @Override
-    public void onDestroy() {
-        if(wifiEnabled)
-            disableWifi();
-        super.onDestroy();
-    }
-    
-    public void enableWifi() {
-        if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-                + "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH)) {
-            Log.d(MSG_TAG, "netcontrol start_wifi failed");
-            // fall down below anyway
-        }
-        Log.d(MSG_TAG, "Wifi Enabled");
-     
-        
-        wifiEnabled = true;
-    }
+	private DiscoverSchedule discoveryScheduler;
+	private boolean wifiEnabled = false;
+	private CoreTask coretask;
 
-    public void disableWifi() {
-       if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-               + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
-            Log.d(MSG_TAG, "netcontrol stop_wifi failed");
-            // fall down below anyway
-        }
-        Log.d(MSG_TAG, "Wifi disabled");
-        wifiEnabled = false;
-    }
-    
-    private class WifiMessageReceiver extends BroadcastReceiver {
+	private WifiManager wifiManager;
+	private WifiMessageReceiver messageReceiver;
+	private WifiController wifiController;
 
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if(intent.getAction() == INTENT_TO_RESUME_WIFI) {
-				wifiController.resumeWifiService();
-			} else if(intent.getAction() == INTENT_TO_PAUSE_WIFI){
-				wifiController.pauseWifiService();
-			}
-			
-		}
-    }
-    
-    
-    private class WifiController extends Thread {
-        
-        public synchronized void processHeartbeat(FriendData f, String gps) {
+	private String myIPAddress;
+	private String myBroadcast;
+	private String myPhoneName;
+	private int timeSlice;
+	private int wifiState;
 
-            boolean found = false;
-            Collection<FriendData> c = activeFriends;
-            Iterator<FriendData> itr = c.iterator();
-            int i = 0;
-            while (itr.hasNext()) {
-                FriendData curFriend = itr.next();
-                if (curFriend.equals(f)) {
-                    Log.d(MSG_TAG, "Updating existing friend: " + f.name + ", " + f.IPaddress);
-                    if (curFriend.lastHeartbeat == 0) {
-                        // staleFriendCount--;
-                        // notifyStatusActivity();
-                    }
-                    curFriend.lastHeartbeat = System.currentTimeMillis();
-                    if (curFriend.statusMsg.compareTo(f.statusMsg) != 0) {
-                       // addEvent(String.valueOf(f.name + " status is now: " + f.statusMsg));
-                    }
-                    curFriend.statusMsg = f.statusMsg;
-                    //friendList.set(i,
-                    //      String.valueOf(f.name + ": " + f.statusMsg + "\n" + "GPS: " + gps));
-                    // notifyFriendListActivity();
-                    found = true;
-                    break;
-                }
-                i++;
-            }
-            if (!found) {
-                Log.d(MSG_TAG, "Added a new friend: " + f.name + ", " + f.IPaddress);
-                // Found a new friend
-                int new_index = friendList.size();
-                f.lastHeartbeat = System.currentTimeMillis();
-                // addEvent(String.valueOf(f.name + " status is now: " +
-                // f.statusMsg));
-                //friendList.add(String.valueOf(f.name + ": " + f.statusMsg + "\n" + "GPS: " + gps));
-                //activeFriends.put(new_index, f);
-                // notifyFriendListActivity();
-                // notifyStatusActivity();
-            }
+	InetAddress dest;
 
-        }
-        
-        public void resumeWifiService() {
-			// TODO Auto-generated method stub
-		}
+	private final IBinder mBinder = new WifiBinder();
+	public long resumeDelay;
 
-		public void pauseWifiService() {
-			// TODO Auto-generated method stub
-			
-		}
-
-		public synchronized void checkStaleFriends() {
-            Collection<FriendData> c = activeFriends;
-            Iterator<FriendData> itr = c.iterator();
-            int i = 0;
-            while (itr.hasNext()) {
-                FriendData curFriend = itr.next();
-                if (curFriend.lastHeartbeat > 0
-                        && (System.currentTimeMillis() - curFriend.lastHeartbeat) > 15000) {
-                    Log.d(MSG_TAG, "Marking stale friend: " + curFriend.name + ", "
-                            + curFriend.IPaddress);
-                    curFriend.lastHeartbeat = 0;
-                    curFriend.statusMsg = "unknown";
-                    //staleFriendCount++;
-                    //friendList.set(i,
-                    //      String.valueOf(curFriend.name + ": " + curFriend.statusMsg + " [stale]"));
-                    //notifyFriendListActivity();
-                    //notifyStatusActivity();
-                }
-                i++;
-            }
-        }
-        
-        private void sendWifiBroadcast() {
-            
-        }
-        
-        private void listenForWifiBroadcast() {
-            
-        }
-        
-        @Override
-        public void run() {
-            byte[] buf = new byte[1024];
-            DatagramPacket pkt = null;
-            DatagramSocket sock = null;
-            enableWifi();
-
-            int[] mySchedule = discoveryScheduler.generateScedule();
-            timeSlice = 0;
-            Looper.prepare();
-            while (true) {
-                long startTime = System.currentTimeMillis();
-                if (!wifiEnabled) {
-                    if (mySchedule[(timeSlice + 1) % mySchedule.length] != DiscoverSchedule.DO_NOTHING) {
-                        enableWifi();
-                        wifiEnabled = true;
-                    }
-                } else {
-                    if (mySchedule[timeSlice] != DiscoverSchedule.DO_NOTHING) {
-                        try {
-                            String msg = myData.makeHeartbeat("");
-                            buf = msg.getBytes();
-                            pkt = new DatagramPacket(buf, buf.length, dest, 8888);
-
-                            if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-                                    || mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
-                                try {
-                                    sock = new DatagramSocket();
-                                    sock.setBroadcast(true);
-                                    sock.send(pkt);
-                                    Log.d(MSG_TAG, "Packet was sent.");
-
-                                    sendToLogger("Sent Wifi heartbeat");
-                                } catch (Exception e) {
-                                    // e.printStackTrace();
-                                    Log.d(MSG_TAG, "attempt to send failed");
-                                }
-                            }
-
-                            if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-                                    || mySchedule[timeSlice] == DiscoverSchedule.LISTEN) {
-                                try {
-                                    do {
-                                        sock = new DatagramSocket(8888);
-                                        sock.setSoTimeout((int) (DISCOVERY_PERIOD - (System
-                                                .currentTimeMillis() - startTime)));
-                                        sock.receive(pkt);
-
-                                        String rcv = new String(pkt.getData(), 0, pkt.getLength());
-
-                                        Log.d(MSG_TAG, "Packet was received "
-                                                + pkt.getAddress().toString() + ": " + rcv);
-
-                                        if (myData.IPaddress == null) {
-                                            
-                                        } else if (pkt.getAddress().getHostAddress()
-                                                .compareTo(myData.IPaddress) == 0) {
-                                            Log.d(MSG_TAG, "Packet was received from myself");
-                                        } else {
-                                            FriendData f = new FriendData();
-                                            f.IPaddress = pkt.getAddress().getHostAddress();
-                                            if (f.isHeartbeat(rcv)) {
-                                                String gps = f.parseHeartbeat(rcv);
-                                                processHeartbeat(f, gps);
-                                            }
-                                            Log.d(MSG_TAG,
-                                                    "isHeartbeat returned: "
-                                                            + (f.isHeartbeat(rcv) ? "true" : "false"));
-                                            if (f.isMessage(rcv)) {
-                                                String m = f.parseMessage(rcv);
-                                                // processMessage(f, m);
-                                            }
-                                            Log.d(MSG_TAG, "isMessage returned: "
-                                                    + (f.isMessage(rcv) ? "true" : "false"));
-                                            
-                                            
-                                        }
-                                      //inform the scheduling service
-                                        Intent foundNewNeighbor = new Intent(INTENT_TO_ADD_WIFI_NEIGHBOR);
-                                        foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, "");
-                                        foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,"");
-                                        sendBroadcast(foundNewNeighbor);
-                                        
-                                        sendToLogger("Found neighbor "+"");
-                                        sock.close();
-                                    } while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
-                                } catch (InterruptedIOException e) {
-                                    // timed out, so no message was received
-                                	if(!sock.isClosed())
-                                		sock.close();
-                                }
-                            }
-                            if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-                                    || mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
-                                try {
-                                    // send our last one
-                                    sock = new DatagramSocket();
-                                    sock.setBroadcast(true);
-                                    sock.send(pkt);
-                                    Log.d(MSG_TAG, "Packet was sent.");
-                                    sendToLogger("Sent Wifi heartbeat");
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    Log.d(MSG_TAG, "attempt to send failed");
-                                }
-                            }
-                        } catch (Exception e) {
-                            // nothing
-                            Log.d(MSG_TAG, "Couldn't setup socket: " + e.getMessage());
-                        }
-                    }
-
-                }
-
-                if (mySchedule[(timeSlice + 1) % mySchedule.length] == DiscoverSchedule.DO_NOTHING
-                        && wifiEnabled) {
-                    disableWifi();
-                }
-
-                try {
-                    long sleepyTime = DISCOVERY_PERIOD - (System.currentTimeMillis() - startTime);
-                    if (sleepyTime < 0)
-                        sleepyTime = 0;
-                    Thread.sleep(sleepyTime);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-
-            
-                // checkStaleFriends(); ???
-                timeSlice = (timeSlice + 1) % mySchedule.length;
-            
-            }
-        }
-    }
 	@Override
-	public void pauseWifiService() {
-		// TODO Auto-generated method stub
-		
+	public IBinder onBind(Intent arg0) {
+		return mBinder;
+	}
+
+	public class WifiBinder extends Binder {
+		public IWifiService getService() {
+			return WifiService.this;
+		}
 	}
 
 	@Override
+	public void onCreate() {
+		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
+		wifiController = new WifiController();
+		myBroadcast = "192.168.1.255";
+		discoveryScheduler = new AlwaysSchedule();
+		coretask = new CoreTask();
+
+		try {
+			dest = InetAddress.getByName(myBroadcast);
+		} catch (UnknownHostException e) {
+			Log.d(MSG_TAG, "Broadcast address " + myBroadcast + " as unknown.");
+		}
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		IntentFilter messageFilter = new IntentFilter();
+		messageFilter.addAction(INTENT_TO_PAUSE_WIFI);
+		messageFilter.addAction(INTENT_TO_RESUME_WIFI);
+		messageFilter.addAction(INTENT_TO_CHANGE_WIFI_ADDRESS);
+		messageFilter.addAction(INTENT_TO_UPDATE_NAME);
+		messageReceiver = new WifiMessageReceiver();
+		registerReceiver(messageReceiver, messageFilter);
+
+		coretask = new CoreTask();
+		coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
+		Log.d(MSG_TAG, "Current directory is "
+				+ this.getApplicationContext().getFilesDir().getParent());
+
+		if (wifiManager.isWifiEnabled())
+			wifiManager.setWifiEnabled(false);
+		enableWifi();
+
+		wifiController.start();
+
+		return START_STICKY;
+	}
+
+	public void setIPAddress(String ip) {
+		if (!validateIPAddress(ip))
+			return;
+		myBroadcast = ip.substring(0, ip.lastIndexOf(".")) + "255";
+		this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 " + ip
+				+ " netmask 255.255.255.0");
+		try {
+			dest = InetAddress.getByName(myBroadcast);
+		} catch (UnknownHostException e) {
+			Log.d(MSG_TAG, "Broadcast address " + myBroadcast + " as unknown.");
+		}
+	}
+
+	private boolean validateIPAddress(String ipAddress) {
+		String[] parts = ipAddress.split("\\.");
+		if (parts.length != 3) {
+			return false;
+		}
+		for (String s : parts) {
+			int i = Integer.parseInt(s);
+
+			if ((i < 0) || (i > 255)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public void onDestroy() {
+		if (wifiEnabled)
+			disableWifi();
+		super.onDestroy();
+	}
+
+	public void enableWifi() {
+		if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+				+ "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH)) {
+			// Log.d(MSG_TAG, "netcontrol start_wifi failed");
+			// fall down below anyway
+		}
+		Log.d(MSG_TAG, "Wifi Enabled");
+		wifiEnabled = true;
+	}
+
+	public void disableWifi() {
+		if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+				+ "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
+			// Log.d(MSG_TAG, "netcontrol stop_wifi failed");
+			// fall down below anyway
+		}
+		Log.d(MSG_TAG, "Wifi disabled");
+		wifiEnabled = false;
+	}
+
+	private class WifiMessageReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction() == INTENT_TO_RESUME_WIFI) {
+				resumeWifiService(intent.getLongExtra(
+						RESUME_DELAY, 0));
+			} else if (intent.getAction() == INTENT_TO_PAUSE_WIFI) {
+				pauseWifiService();
+			} else if (intent.getAction() == INTENT_TO_CHANGE_WIFI_ADDRESS) {
+				setIPAddress(intent.getStringExtra(NEW_WIFI_ADDRESS));
+			} else if (intent.getAction() == INTENT_TO_UPDATE_NAME) {
+				myPhoneName = intent.getStringExtra(NEW_PHONE_NAME);
+			}
+
+		}
+	}
+
+	private class WifiController extends Thread {
+
+		private void sendWifiBroadcast() {
+			byte[] buf = new byte[1024];
+			String msg = "name";
+			buf = msg.getBytes();
+			DatagramSocket sock;
+			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
+			try {
+				// send our last one
+				sock = new DatagramSocket();
+				sock.setBroadcast(true);
+				sock.send(pkt);
+				Log.d(MSG_TAG, "Packet was sent.");
+				sendToLogger("Sent Wifi heartbeat");
+			} catch (Exception e) {
+				e.printStackTrace();
+				Log.d(MSG_TAG, "attempt to send failed");
+			}
+		}
+
+		private void listenForWifiBroadcast(long startTime) {
+			byte[] buf = new byte[1024];
+			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
+			DatagramSocket sock = null;
+			do {
+				try {
+					sock = new DatagramSocket(8888);
+					sock.setSoTimeout((int) (DISCOVERY_PERIOD - (System
+							.currentTimeMillis() - startTime)));
+					sock.receive(pkt);
+
+					String rcv = new String(pkt.getData(), 0, pkt.getLength());
+
+					// inform the scheduling service
+					Intent foundNewNeighbor = new Intent(
+							INTENT_TO_ADD_WIFI_NEIGHBOR);
+					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, "");
+					foundNewNeighbor.putExtra(WIFI_IP_ADDRESS, "");
+					sendBroadcast(foundNewNeighbor);
+
+					sendToLogger("Found neighbor ");
+					sock.close();
+				} catch (InterruptedIOException e) {
+					// timed out, so no message was received
+					if (!sock.isClosed())
+						sock.close();
+				} catch (SocketException e) {
+					// couldn't create the socket
+					enableWifi();
+				} catch (IOException e) {
+					// error receiving the packet, try again
+				}
+			} while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
+
+		}
+
+		@Override
+		public void run() {
+			enableWifi();
+			int[] mySchedule = discoveryScheduler.generateScedule();
+			timeSlice = 0;
+			Looper.prepare();
+			while (true) {
+				if (wifiState == WIFI_STATE_PAUSED) {
+					while (wifiState != WIFI_STATE_DISCOVERYING)
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// interrupted from sleep
+						}
+					try {
+						Thread.sleep(resumeDelay);
+					} catch (InterruptedException e) {
+						//interrupted from sleep >=(
+					}
+					timeSlice = 0;
+
+				}
+
+				if (timeSlice == 0)
+					mySchedule = discoveryScheduler.generateScedule();
+
+				long startTime = System.currentTimeMillis();
+				if (!wifiEnabled) {
+					if (mySchedule[(timeSlice + 1) % mySchedule.length] != DiscoverSchedule.DO_NOTHING) {
+						enableWifi();
+					}
+				} else {
+					if (mySchedule[timeSlice] != DiscoverSchedule.DO_NOTHING) {
+						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+								|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
+							sendWifiBroadcast();
+						}
+
+						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+								|| mySchedule[timeSlice] == DiscoverSchedule.LISTEN) {
+							listenForWifiBroadcast(startTime);
+						}
+						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+								|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
+							sendWifiBroadcast();
+						}
+
+					}
+
+				}
+
+				if (mySchedule[(timeSlice + 1) % mySchedule.length] == DiscoverSchedule.DO_NOTHING
+						&& wifiEnabled) {
+					disableWifi();
+				}
+
+				try {
+					long sleepyTime = DISCOVERY_PERIOD
+							- (System.currentTimeMillis() - startTime);
+					if (sleepyTime < 0)
+						sleepyTime = 0;
+					Thread.sleep(sleepyTime);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+
+				timeSlice = (timeSlice + 1) % mySchedule.length;
+
+			}
+		}
+	}
+
 	public void resumeWifiService(long delay) {
-		// TODO Auto-generated method stub
-		
+		wifiState = WIFI_STATE_DISCOVERYING;
+		resumeDelay = delay;
+		wifiController.interrupt();
+
+	}
+
+	public void pauseWifiService() {
+		wifiState = WIFI_STATE_PAUSED;
 	}
 
 	@Override
 	public long scheduleTimeRemaining() {
-		return discoveryScheduler.scheduleLength()-timeSlice;
+		return (discoveryScheduler.scheduleLength() - timeSlice)*DISCOVERY_PERIOD;
 	}
 
-	@Override
-	public void broadcast(List<String> addrs, String message) {
-		// TODO Auto-generated method stub
-		
-	}
-	
 	public void sendToLogger(String message) {
 		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
 		sendBroadcast(intentToLog);
 	}
 }
-
