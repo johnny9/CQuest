@@ -26,6 +26,7 @@ public class PowerManagement extends Service implements Runnable {
     private static final String LOG_MESSAGE_TAG = "AdHocClient_logMessage";
     
     private BatteryInfoReceiver myBatteryInfoReceiver;
+    private BatteryInfoReceiver myBatteryInfoReceiver2;
     
     public static final String ACTION_LOG_UPDATE = "log update";
 	public static final String LOG_MESSAGE = "log message";
@@ -54,6 +55,11 @@ public class PowerManagement extends Service implements Runnable {
         batteryFilter.addAction(POWER_SERVICE);
         myBatteryInfoReceiver = new BatteryInfoReceiver();
         registerReceiver(myBatteryInfoReceiver, batteryFilter);
+        
+        IntentFilter logFilter = new IntentFilter(ACTION_LOG_UPDATE);
+        batteryFilter.addAction(LOG_MESSAGE);
+        myBatteryInfoReceiver2 = new BatteryInfoReceiver();
+        registerReceiver(myBatteryInfoReceiver2, logFilter);
         return START_STICKY;
     }
     
@@ -100,19 +106,19 @@ public class PowerManagement extends Service implements Runnable {
         		String message = intent.getStringExtra(LOG_MESSAGE);
         		long curTime = SystemClock.elapsedRealtime();
         		
-        		String log_output = "Time: " + curTime + "; " + message;
+        		String log_output = "Time: " + curTime + "; " + message + "\n";
         		
-        		Log.d(POWER_TAG, log_output);
+        		Log.d(LOG_MESSAGE_TAG, log_output);
 				
 				try {
 					fos = openFileOutput(filename, Context.MODE_APPEND);
 					fos.write(log_output.getBytes());
 					fos.close();
 				} catch (FileNotFoundException e) {
-					Log.e(POWER_TAG, "Log file could not be open");
+					Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
 					e.printStackTrace();
 				} catch (IOException e) {
-					Log.e(POWER_TAG, "Log file could not be written to");
+					Log.e(LOG_MESSAGE_TAG, "Log file could not be written to");
 					e.printStackTrace();
 				}
         	}

@@ -303,7 +303,7 @@ public class WifiService extends Service implements IWifiService {
                                                 + pkt.getAddress().toString() + ": " + rcv);
 
                                         if (myData.IPaddress == null) {
-                                            // WTF
+                                            
                                         } else if (pkt.getAddress().getHostAddress()
                                                 .compareTo(myData.IPaddress) == 0) {
                                             Log.d(MSG_TAG, "Packet was received from myself");
@@ -324,20 +324,23 @@ public class WifiService extends Service implements IWifiService {
                                             Log.d(MSG_TAG, "isMessage returned: "
                                                     + (f.isMessage(rcv) ? "true" : "false"));
                                             
-                                            //inform the scheduling service
-                                            Intent foundNewNeighbor = new Intent(INTENT_TO_ADD_WIFI_NEIGHBOR);
-                                            foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, f.name);
-                                            foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,f.IPaddress);
-                                            sendBroadcast(foundNewNeighbor);
                                             
-                                            sendToLogger("Found neighbor "+f.name);
                                         }
+                                      //inform the scheduling service
+                                        Intent foundNewNeighbor = new Intent(INTENT_TO_ADD_WIFI_NEIGHBOR);
+                                        foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, "");
+                                        foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,"");
+                                        sendBroadcast(foundNewNeighbor);
+                                        
+                                        sendToLogger("Found neighbor "+"");
+                                        sock.close();
                                     } while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
                                 } catch (InterruptedIOException e) {
                                     // timed out, so no message was received
+                                	if(!sock.isClosed())
+                                		sock.close();
                                 }
                             }
-                            sock.close();
                             if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
                                     || mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
                                 try {
@@ -405,7 +408,7 @@ public class WifiService extends Service implements IWifiService {
 	}
 	
 	public void sendToLogger(String message) {
-		Intent intentToLog = new Intent(PowerManagement.INPUT_METHOD_SERVICE);
+		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
 		sendBroadcast(intentToLog);
 	}
