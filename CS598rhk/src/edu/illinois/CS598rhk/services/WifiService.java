@@ -41,7 +41,7 @@ public class WifiService extends Service implements IWifiService {
     public static final String WIFI_IP_ADDRESS = "ip address";
     
     private static final int DISCOVERY_PERIOD = 5000;
-    private static final String MSG_TAG = "WifiService";
+    private static final String MSG_TAG = "MyWifiService";
 
     private DiscoverSchedule discoveryScheduler;
     private boolean wifiEnabled=false;
@@ -336,7 +336,7 @@ public class WifiService extends Service implements IWifiService {
                                     // timed out, so no message was received
                                 }
                             }
-
+                            sock.close();
                             if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
                                     || mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
                                 try {
