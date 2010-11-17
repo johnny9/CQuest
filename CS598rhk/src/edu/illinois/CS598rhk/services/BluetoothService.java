@@ -26,7 +26,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static final String BT_NEIGHBOR_NAME = "bt neighbor name";
 	public static final String BT_MAC_ADDRESS = "bt mac address";
     
-    private final IBinder mBinder = new BlueToothBinder();
+	private static final byte CONTACT_INFO_HEADER = 0;
+	private static final int MAC_ADDRESS_LENGTH = BluetoothAdapter.getDefaultAdapter().getAddress().length();
+	final IBinder mBinder = new BlueToothBinder();
     
     @Override
     public IBinder onBind(Intent arg0) {
@@ -91,7 +93,10 @@ public class BluetoothService extends Service implements IBluetoothService {
     }
     
     private void exchangeContactInfo() {
+    	int nameLength = myContactInfo.name.length();
     	
+    	int contactInfoLength = 2 + nameLength + MAC_ADDRESS_LENGTH;
+    	byte[] buffer = new byte[contactInfoLength];
     }
     
     private void send(String message) {
