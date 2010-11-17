@@ -3,9 +3,6 @@ package edu.illinois.CS598rhk.models;
 import java.nio.ByteBuffer;
 
 public class BluetoothNeighbor extends Neighbor {
-	private static final int INDEX_OF_NAME_LENGTH = 5;
-	private static final int INDEX_OF_NAME = 9;
-	
 	public int progress;
 	
 	public byte getHeaderType() {
