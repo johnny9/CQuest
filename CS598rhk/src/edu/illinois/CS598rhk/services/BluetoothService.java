@@ -3,7 +3,9 @@ package edu.illinois.CS598rhk.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -13,7 +15,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -22,12 +27,22 @@ import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
     
+	private static final String BLUETOOTH_CONNECTION_STATE_CHANGED = "bluetooth connection state changed";
+	private static final String BLUETOOTH_EVENT_RESULT = "bluetooth event result";
+	private static final int BLUETOOTH_SEND_SUCCESS = 0;
+	private static final int BLUETOOTH_SEND_FAILED = 1;
+	private static final int BLUETOOTH_RECV_SUCCESS = 2;
+	private static final int BLUETOOTH_RECV_FAILED = 3;
+	private static final int BLUETOOTH_CONNECTION_LOST = 4;
+	private static final int BLUETOOTH_CONNECTION_SUCCESS = 5;
+	
 	public static final String INTENT_TO_ADD_BT_NEIGHBOR = "add bt neighbor";
 	public static final String BT_NEIGHBOR_NAME = "bt neighbor name";
 	public static final String BT_MAC_ADDRESS = "bt mac address";
     
 	private static final byte CONTACT_INFO_HEADER = 0;
-	private static final int MAC_ADDRESS_LENGTH = BluetoothAdapter.getDefaultAdapter().getAddress().length();
+	private static final byte WIFI_FRIEND_HEADER = 1;
+	
 	final IBinder mBinder = new BlueToothBinder();
     
     @Override
@@ -41,77 +56,93 @@ public class BluetoothService extends Service implements IBluetoothService {
         }
     }
     
+    private BluetoothNeighbor myContactInfo;
+    private BluetoothEventReceiver eventReceiver;
+    
+    private List<byte[]> messages;
+    private Map<BluetoothDevice, BluetoothNeighbor> neighbors;
+    private Set<BluetoothDevice> neighborKeys;
+    private Iterator<BluetoothDevice> nextNeighbor;
+    private BluetoothDevice currentNeighbor;
+    private boolean broadcasting;
+    
     @Override
     public void onCreate() {
     	super.onCreate();
-    	neighbors = new HashMap<BluetoothNeighbor, BluetoothDevice>();
-    	connectedNeighbor = null;
+    	myContactInfo = null;
+    	eventReceiver = new BluetoothEventReceiver();
+    	
+    	broadcasting = false;
+    	neighborKeys = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
+    	nextNeighbor = neighborKeys.iterator();
+    	for (BluetoothDevice device : neighborKeys) {
+    		neighbors.put(device, null);
+    	}
+    	messages = new ArrayList<byte[]>();
     }
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+    	IntentFilter filter = new IntentFilter(BLUETOOTH_CONNECTION_STATE_CHANGED);
+    	registerReceiver(eventReceiver, filter);
+    	
     	updateNeighbors();
     	start();
     	return START_STICKY;
     }
     
-    private Map<BluetoothNeighbor, BluetoothDevice> neighbors;
-    private BluetoothNeighbor connectedNeighbor;
-    private BluetoothNeighbor myContactInfo;
-    
-    public void updateContactInfo(BluetoothNeighbor contactInfo) {
+    public synchronized void updateContactInfo(BluetoothNeighbor contactInfo) {
     	myContactInfo = contactInfo;
     }
     
     public void updateNeighbors() {
-    	// Stop listening and/or stop any current connections
-    	stop();
-    	// Remove all existing known neighbors (If they're still there, we'll find them again)
-    	neighbors = new HashMap<BluetoothNeighbor, BluetoothDevice>();
-    	
-    	// Potential neighbors are all devices we have already paired with
-    	Set<BluetoothDevice> potentialNeighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
-    	
-    	// Attempt to connect to each paired device one by one and exchange contact info
-    	for (BluetoothDevice device : potentialNeighbors) {
-    		if (blockingConnect(device)) {
-    			exchangeContactInfo();
-        		if (connectedNeighbor != null) {
-        			neighbors.put(connectedNeighbor, device);
-        		}
-        	}
-    	}
+    	broadcast(myContactInfo.getBytes());
     }
     
     public void broadcast(String message) {
-        Set<BluetoothNeighbor> neighborKeys = neighbors.keySet();
-    	for (BluetoothNeighbor neighbor : neighborKeys) {
-    		if (blockingConnect(neighbors.get(neighbor))) {
-    			send(message);
-    		}
-        }
+    	broadcast(message.getBytes());
     }
     
-    private void exchangeContactInfo() {
-    	int nameLength = myContactInfo.name.length();
-    	
-    	int contactInfoLength = 2 + nameLength + MAC_ADDRESS_LENGTH;
-    	byte[] buffer = new byte[contactInfoLength];
-    }
-    
-    private void send(String message) {
-        write(message.getBytes());
-    }
-
-    private boolean blockingConnect(BluetoothDevice device) {
-    	connect(device);
-		
-		int spinState = getState();
-		while(spinState != STATE_CONNECTED && spinState != STATE_NONE) {
-			// Wait for connection to succeed
-			spinState = getState();
+    private void broadcast(byte[] message) {
+    	messages.add(message);
+    	if (!broadcasting) {
+			broadcasting = true;
+			processNextMessage();
 		}
-		return (getState() == STATE_CONNECTED);
+    }
+    
+    private void processNextMessage() {
+    	if (nextNeighbor.hasNext()) {
+			currentNeighbor = nextNeighbor.next();
+		}
+    	
+    }
+    
+    private void sendMessageToNextNeighbor() {
+    	
+    }
+    
+    public class BluetoothEventReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (BLUETOOTH_CONNECTION_STATE_CHANGED.equals(intent.getAction())) {
+				int result = intent.getIntExtra(BLUETOOTH_EVENT_RESULT, -1);
+				switch(result) {
+				case BLUETOOTH_CONNECTION_SUCCESS:
+					break;
+				case BLUETOOTH_SEND_SUCCESS:
+					break;
+				case BLUETOOTH_SEND_FAILED:
+					break;
+				case BLUETOOTH_RECV_SUCCESS:
+					break;
+				case BLUETOOTH_RECV_FAILED:
+					break;
+				case BLUETOOTH_CONNECTION_LOST:
+					break;
+				}
+			}
+		}
     }
     
     //
@@ -480,9 +511,7 @@ public class BluetoothService extends Service implements IBluetoothService {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer);
 
-                    // Send the obtained bytes to the UI Activity
-//                    mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, bytes, -1, buffer)
-//                            .sendToTarget();
+                    
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
@@ -498,7 +527,6 @@ public class BluetoothService extends Service implements IBluetoothService {
         public void write(byte[] buffer) {
             try {
                 mmOutStream.write(buffer);
-
                 // Share the sent message back to the UI Activity
 //                mHandler.obtainMessage(BluetoothChat.MESSAGE_WRITE, -1, -1, buffer)
 //                        .sendToTarget();
