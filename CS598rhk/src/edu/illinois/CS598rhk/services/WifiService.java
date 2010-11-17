@@ -1,6 +1,11 @@
 package edu.illinois.CS598rhk.services;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -16,6 +21,8 @@ import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.models.FriendData;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
+import edu.ncsu.AdhocClient.CoreTask;
+import edu.ncsu.AdhocClient.R;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -40,7 +47,7 @@ public class WifiService extends Service implements IWifiService {
 
     private DiscoverSchedule discoveryScheduler;
     private boolean wifiEnabled=false;
-//    private CoreTask coretask;
+    private CoreTask coretask;
 
     private List<FriendData> friendList;
     private List<FriendData> activeFriends;
@@ -77,6 +84,7 @@ public class WifiService extends Service implements IWifiService {
         myIPAddress = "192.168.1.2";
         myBroadcast = "192.168.1.255";
         discoveryScheduler = new SearchLightSchedule(7);
+        coretask = new CoreTask();
         
         try {
             dest = InetAddress.getByName(myBroadcast);
@@ -99,7 +107,102 @@ public class WifiService extends Service implements IWifiService {
         
         wifiController.start();
         
+        coretask = new CoreTask();
+        coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
+        Log.d(MSG_TAG, "Current directory is "
+                + this.getApplicationContext().getFilesDir().getParent());
+        
+     // Check Homedir, or create it
+        this.checkDirs();
+
+        // Check for binaries
+        boolean filesetOutdated = coretask.filesetOutdated();
+        if (binariesExists() == false || filesetOutdated) {
+            if (coretask.hasRootPermission()) {
+                installBinaries();
+                // if (filesetOutdated) {
+                // this.openConfigRecoverDialog();
+                // }
+            } else {
+                //this.openNotRootDialog();
+            }
+        }
+        
         return START_STICKY;
+    }
+ // Binary install
+    public boolean binariesExists() {
+        File file = new File(this.coretask.DATA_FILE_PATH + "/bin/tether");
+        if (file.exists()) {
+            return true;
+        }
+        return false;
+    }
+
+    public void installBinaries() {
+        List<String> filenames = new ArrayList<String>();
+        // tether
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/netcontrol", android.R.raw.netcontrol);
+        filenames.add("netcontrol");
+        // dnsmasq
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/dnsmasq", android.R.raw.dnsmasq);
+        filenames.add("dnsmasq");
+        // iwconfig
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", android.R.raw.);
+        filenames.add("iwconfig");
+        try {
+            this.coretask.chmodBin(filenames);
+        } catch (Exception e) {
+        	Log.d(MSG_TAG, "Unable to change permission on binary files!");
+        }
+        // dnsmasq.conf
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/dnsmasq.conf", R.raw.dnsmasq_conf);
+        // tiwlan.ini
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/tiwlan.ini", R.raw.tiwlan_ini);
+        Log.d(MSG_TAG, "Binaries and config-files installed!");
+    }
+
+    private void copyBinary(String filename, int resource) {
+        File outFile = new File(filename);
+        InputStream is = this.getResources().openRawResource(resource);
+        byte buf[] = new byte[1024];
+        int len;
+        try {
+            OutputStream out = new FileOutputStream(outFile);
+            while ((len = is.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            out.close();
+            is.close();
+        } catch (IOException e) {
+        	Log.d(MSG_TAG, "Couldn't install file - " + filename + "!");
+        }
+    }
+
+    private void checkDirs() {
+        File dir = new File(this.coretask.DATA_FILE_PATH);
+        if (dir.exists() == false) {
+        	Log.d(MSG_TAG, "Application data-dir does not exist!");
+        } else {
+            dir = new File(this.coretask.DATA_FILE_PATH + "/bin");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create bin-directory!");
+                }
+            }
+            dir = new File(this.coretask.DATA_FILE_PATH + "/var");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create var-directory!");
+                }
+            }
+            dir = new File(this.coretask.DATA_FILE_PATH + "/conf");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create conf-directory!");
+                }
+            }
+        }
     }
     
     @Override
@@ -110,32 +213,23 @@ public class WifiService extends Service implements IWifiService {
     }
     
     public void enableWifi() {
-        /*if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+        if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
                 + "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH)) {
             Log.d(MSG_TAG, "netcontrol start_wifi failed");
             // fall down below anyway
         }
-        Log.d(MSG_TAG, "Wifi Enabled");*/
-        if(!wifiManager.isWifiEnabled())
-        {
-            wifiManager.setWifiEnabled(true);
-            while(!wifiManager.isWifiEnabled()) {
-                try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-				}
-            }
-        }
+        Log.d(MSG_TAG, "Wifi Enabled");
+     
         
         wifiEnabled = true;
     }
 
     public void disableWifi() {
-//        if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-//                + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
-//            Log.d(MSG_TAG, "netcontrol stop_wifi failed");
-//            // fall down below anyway
-//        }
+       if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+               + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
+            Log.d(MSG_TAG, "netcontrol stop_wifi failed");
+            // fall down below anyway
+        }
         Log.d(MSG_TAG, "Wifi disabled");
         wifiEnabled = false;
     }
