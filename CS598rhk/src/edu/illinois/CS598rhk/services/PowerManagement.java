@@ -47,6 +47,9 @@ public class PowerManagement extends Service implements Runnable {
         	deleteFile(filename);
         }
     	
+    	//long curTime = SystemClock.elapsedRealtime();
+    	//filename = filename + "." + curTime;
+    	
         IntentFilter batteryFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         batteryFilter.addAction(POWER_SERVICE);
         myBatteryInfoReceiver = new BatteryInfoReceiver();
