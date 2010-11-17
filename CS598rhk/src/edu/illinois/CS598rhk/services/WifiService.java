@@ -83,7 +83,7 @@ public class WifiService extends Service implements IWifiService {
         myBroadcast = "192.168.1.255";
         discoveryScheduler = new SearchLightSchedule(7);
         coretask = new CoreTask();
-        
+        setIPAddress(myIPAddress);
         try {
             dest = InetAddress.getByName(myBroadcast);
         } catch (UnknownHostException e) {
@@ -128,13 +128,18 @@ public class WifiService extends Service implements IWifiService {
         
         return START_STICKY;
     }
- // Binary install
+    // Binary install
     public boolean binariesExists() {
         File file = new File(this.coretask.DATA_FILE_PATH + "/bin/tether");
         if (file.exists()) {
             return true;
         }
         return false;
+    }
+    
+    public void setIPAddress(String ip) {
+    	this.coretask.runRootCommand("/sbin/ifconfig tiwlan0 "+ip+" netmask 255.255.255.0");
+    	
     }
 
     public void installBinaries() {
