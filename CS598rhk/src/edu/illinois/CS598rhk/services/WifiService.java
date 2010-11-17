@@ -23,6 +23,8 @@ import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 
 public class WifiService extends Service implements IWifiService {
+	public static final String INTENT_TO_UPDATE_SCHEDULE_PROGRESS = "intent to update schedule progress";
+	public static final String SCHEDULE_PROGRESS_UPDATE = "schedule progress update";
 	public static final String INTENT_TO_RESUME_WIFI = "intent to update the wifi state";
 	public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
 	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";

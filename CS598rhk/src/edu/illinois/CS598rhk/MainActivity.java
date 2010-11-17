@@ -36,6 +36,9 @@ public class MainActivity extends Activity {
 	private static String STATE_KEY = "state";
 	private CoreTask coretask;
 	
+	public static String NAME_KEY = "name key";
+	public static String ADDRESS_KEY = "address key";
+	
 	private String phoneID;
 	private String ipAddr;
 
@@ -193,17 +196,17 @@ public class MainActivity extends Activity {
 	
 	private void startServices() {
 		startService(new Intent(MainActivity.this, PowerManagement.class));
-		startService(new Intent(MainActivity.this, WifiService.class));
-		//startService(new Intent(MainActivity.this, BluetoothService.class));
-		//startService(new Intent(MainActivity.this, SchedulerService.class));
-		
+		Intent i = new Intent(MainActivity.this, SchedulerService.class);
+		i.putExtra(PHONEID_KEY, phoneID);
+		i.putExtra(IPADDR_KEY, ipAddr);
+		startService(i);
 	}
 	
 	private void stopServices() {
 		stopService(new Intent(MainActivity.this, PowerManagement.class));
+		stopService(new Intent(MainActivity.this, SchedulerService.class));
 		stopService(new Intent(MainActivity.this, WifiService.class));
 		stopService(new Intent(MainActivity.this, BluetoothService.class));
-		//stopService(new Intent(MainActivity.this, SchedulerService.class));	
 	}
 	
 	// Binary install

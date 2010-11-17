@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
+import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
@@ -25,10 +26,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 	private IWifiService wifiService;
 	private IBluetoothService bluetoothService;
 	
-	private NeighborReceiver neighborReceiver = new NeighborReceiver();
+	private MessageReceiver neighborReceiver = new MessageReceiver();
 	
 	private List<WifiNeighbor> wifiNeighbors;
-	private List<BluetoothNeighbor> btNeighbors;
+	private List<BluetoothNeighbor> bluetoothNeighbors;
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -45,10 +46,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 	public void onCreate() {
 		super.onCreate();
 		wifiNeighbors = new ArrayList<WifiNeighbor>();
-		btNeighbors = new ArrayList<BluetoothNeighbor>();
+		bluetoothNeighbors = new ArrayList<BluetoothNeighbor>();
 	}
 	
-	private ServiceConnection mConnection = new ServiceConnection()
+	private ServiceConnection mWifiConnection = new ServiceConnection()
     {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -60,6 +61,19 @@ public class SchedulerService extends Service implements ISchedulerService {
 			wifiService = null;	
 		}
     };
+    
+	private ServiceConnection mBluetoothConnection = new ServiceConnection()
+    {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			bluetoothService = ( (BluetoothService.BluetoothBinder) service ).getService();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			bluetoothService = null;	
+		}
+    };
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -69,29 +83,46 @@ public class SchedulerService extends Service implements ISchedulerService {
 		filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
 		registerReceiver(neighborReceiver, filter);
 		
-		bindService( new Intent( SchedulerService.this, WifiService.class ), mConnection, Context.BIND_AUTO_CREATE );
+		bindService( new Intent( SchedulerService.this, WifiService.class ), mWifiConnection, Context.BIND_AUTO_CREATE );
+		bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
 
+		String name = intent.getStringExtra(MainActivity.NAME_KEY);
+		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
+		
+		Intent i = new Intent(SchedulerService.this, WifiService.class);
+		i.putExtra(MainActivity.NAME_KEY, name);
+		i.putExtra(MainActivity.ADDRESS_KEY, address);
+		startService(i);
+		
+		i = new Intent(SchedulerService.this, BluetoothService.class);
+		i.putExtra(MainActivity.NAME_KEY, name);
+		startService(i);
+		
 		return START_STICKY;
 	}
 	
-	private class NeighborReceiver extends BroadcastReceiver {
+	private class MessageReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR)) {
+			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent.getAction())) {
 				WifiNeighbor neighbor = new WifiNeighbor();
 				neighbor.name = intent.getStringExtra(WifiService.WIFI_NEIGHBOR_NAME);
 				neighbor.address = intent.getStringExtra(WifiService.WIFI_IP_ADDRESS);
 				
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
+					bluetoothService.broadcast(new String(neighbor.getBytes()));
 				}
 			}
-			else if (intent.getAction().equals(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR)) {
+			else if (BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR.equals(intent.getAction())) {
 				BluetoothNeighbor neighbor = BluetoothNeighbor.parseByteArray(intent.getByteArrayExtra(BluetoothService.BLUETOOTH_NEIGHBOR_DATA));
 				
-				if (!btNeighbors.contains(neighbor)) {
-					btNeighbors.add(neighbor);
+				if (!bluetoothNeighbors.contains(neighbor)) {
+					bluetoothNeighbors.add(neighbor);
 				}
+			}
+			else if (WifiService.INTENT_TO_UPDATE_SCHEDULE_PROGRESS.equals(intent.getAction())) {
+				bluetoothService.updateScheduleProgress(intent.getIntExtra(WifiService.SCHEDULE_PROGRESS_UPDATE, 0));
 			}
 		}
 	}

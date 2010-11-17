@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 import edu.illinois.CS598rhk.models.Neighbor;
@@ -27,14 +28,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static final String INTENT_TO_ADD_BLUETOOTH_NEIGHBOR = "add bluetooth neighbor";
 	public static final String BLUETOOTH_NEIGHBOR_DATA = "bluetooth neighbor data";
 	
-	final IBinder mBinder = new BlueToothBinder();
+	final IBinder mBinder = new BluetoothBinder();
     
     @Override
     public IBinder onBind(Intent arg0) {
         return mBinder;
     }
     
-    public class BlueToothBinder extends Binder {
+    public class BluetoothBinder extends Binder {
         public IBluetoothService getService() {
             return BluetoothService.this;
         }
@@ -51,24 +52,28 @@ public class BluetoothService extends Service implements IBluetoothService {
     @Override
     public void onCreate() {
     	super.onCreate();
-    	myContactInfo = null;
+    	myContactInfo = new BluetoothNeighbor();
+    }
+    
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+    	myContactInfo.name = intent.getStringExtra(MainActivity.NAME_KEY);
+    	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
+    	myContactInfo.progress = 0;
     	
     	broadcasting = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
     	nextNeighbor = neighbors.iterator();
     	messages = new ArrayList<byte[]>();
-    }
-    
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    	
     	updateNeighbors();
     	start();
     	return START_STICKY;
     }
     
-    public void updateContactInfo(BluetoothNeighbor contactInfo) {
+    public void updateScheduleProgress(int progress) {
     	synchronized(myContactInfo) {
-    		myContactInfo = contactInfo;
+    		myContactInfo.progress = progress;
     	}
     }
     
