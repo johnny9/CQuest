@@ -8,4 +8,6 @@ public abstract class DiscoverSchedule {
 	public static final int LISTEN = 3;
 	
     public abstract int[] generateScedule();
+
+	public abstract int scheduleLength();
 }

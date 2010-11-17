@@ -37,4 +37,8 @@ public class SearchLightSchedule extends DiscoverSchedule {
         
         return schedule;
     }
+
+	public int scheduleLength() {
+		return (int) Math.ceil(prime*prime/2);
+	}
 }

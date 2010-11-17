@@ -51,6 +51,7 @@ public class WifiService extends Service implements IWifiService {
     
     private String myIPAddress;
     private String myBroadcast;
+    private int timeSlice;
     
     InetAddress dest;
     
@@ -244,7 +245,7 @@ public class WifiService extends Service implements IWifiService {
             enableWifi();
 
             int[] mySchedule = discoveryScheduler.generateScedule();
-            int timeSlice = 0;
+            timeSlice = 0;
             Looper.prepare();
             while (true) {
                 long startTime = System.currentTimeMillis();
@@ -267,6 +268,8 @@ public class WifiService extends Service implements IWifiService {
                                     sock.setBroadcast(true);
                                     sock.send(pkt);
                                     Log.d(MSG_TAG, "Packet was sent.");
+
+                                    sendToLogger("Sent Wifi heartbeat");
                                 } catch (Exception e) {
                                     // e.printStackTrace();
                                     Log.d(MSG_TAG, "attempt to send failed");
@@ -314,6 +317,8 @@ public class WifiService extends Service implements IWifiService {
                                             foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, f.name);
                                             foundNewNeighbor.putExtra(WIFI_IP_ADDRESS,f.IPaddress);
                                             sendBroadcast(foundNewNeighbor);
+                                            
+                                            sendToLogger("Found neighbor "+f.name);
                                         }
                                     } while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
                                 } catch (InterruptedIOException e) {
@@ -329,6 +334,7 @@ public class WifiService extends Service implements IWifiService {
                                     sock.setBroadcast(true);
                                     sock.send(pkt);
                                     Log.d(MSG_TAG, "Packet was sent.");
+                                    sendToLogger("Sent Wifi heartbeat");
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                     Log.d(MSG_TAG, "attempt to send failed");
@@ -377,8 +383,7 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public long scheduleTimeRemaining() {
-		// TODO Auto-generated method stub
-		return 0;
+		return discoveryScheduler.scheduleLength()-timeSlice;
 	}
 
 	@Override
@@ -386,5 +391,11 @@ public class WifiService extends Service implements IWifiService {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	public void sendToLogger(String message) {
+		Intent intentToLog = new Intent(PowerManagement.INPUT_METHOD_SERVICE);
+		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
+		sendBroadcast(intentToLog);
+	}
 }
+
