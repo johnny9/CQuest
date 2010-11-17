@@ -1,28 +1,12 @@
 package edu.illinois.CS598rhk.services;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
-import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
-import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
-import edu.illinois.CS598rhk.models.FriendData;
-import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
-import edu.illinois.CS598rhk.interfaces.IWifiService;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -34,11 +18,15 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import edu.illinois.CS598rhk.interfaces.IWifiService;
+import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
+import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 
 public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_RESUME_WIFI = "intent to update the wifi state";
 	public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
 	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
+	public static final String WIFI_NEIGHBOR_DATA = "wifi neighbor data";
 	public static final String INTENT_TO_CHANGE_WIFI_ADDRESS = "WHERE ARE ALL MY WIFIS";
 	public static final String NEW_WIFI_ADDRESS = "asdfasdfasdfasdfasdf";
 	public static final String WIFI_NEIGHBOR_NAME = "phone name";

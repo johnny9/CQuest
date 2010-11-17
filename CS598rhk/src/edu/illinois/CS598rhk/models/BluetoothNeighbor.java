@@ -8,6 +8,12 @@ public class BluetoothNeighbor extends Neighbor {
 	
 	public int progress;
 	
+	public byte getHeaderType() {
+		return BLUETOOTH_NEIGHBOR_HEADER;
+	}
+	
+	// byte[] format [0:3] messageLength, [4] messageType, [5:n] name, [n+1,m] address, [m+1] progress
+	
 	@Override
 	public byte[] getBytes() {
 		byte[] tempName = name.getBytes();
@@ -18,7 +24,7 @@ public class BluetoothNeighbor extends Neighbor {
 		
 		byte[] bytes = new byte[msgLength];
 		System.arraycopy(msgLengthBytes, 0, bytes, 0, 4);
-		bytes[4] = BLUETOOTH_NEIGHBOR_HEADER_ID;
+		bytes[4] = BLUETOOTH_NEIGHBOR_HEADER;
 		System.arraycopy(tempName, 0, bytes, INDEX_OF_NAME, tempName.length);
 		System.arraycopy(tempAddress, 0, bytes, INDEX_OF_NAME + tempName.length, tempAddress.length);
 		bytes[bytes.length-1] = Integer.valueOf(progress).byteValue();

@@ -80,7 +80,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 			if (intent.getAction().equals(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR)) {
 				WifiNeighbor neighbor = new WifiNeighbor();
 				neighbor.name = intent.getStringExtra(WifiService.WIFI_NEIGHBOR_NAME);
-				neighbor.ipAddr = intent.getStringExtra(WifiService.WIFI_IP_ADDRESS);
+				neighbor.address = intent.getStringExtra(WifiService.WIFI_IP_ADDRESS);
 				
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
