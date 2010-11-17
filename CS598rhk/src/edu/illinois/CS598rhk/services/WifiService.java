@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.models.FriendData;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
@@ -81,7 +82,7 @@ public class WifiService extends Service implements IWifiService {
         activeFriends = new ArrayList<FriendData>();
         myIPAddress = "192.168.1.2";
         myBroadcast = "192.168.1.255";
-        discoveryScheduler = new SearchLightSchedule(7);
+        discoveryScheduler = new AlwaysSchedule();
         coretask = new CoreTask();
         
         
