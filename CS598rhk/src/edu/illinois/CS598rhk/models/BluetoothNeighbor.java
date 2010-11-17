@@ -3,6 +3,9 @@ package edu.illinois.CS598rhk.models;
 import java.nio.ByteBuffer;
 
 public class BluetoothNeighbor extends Neighbor {
+	private static final int INDEX_OF_NAME_LENGTH = 5;
+	private static final int INDEX_OF_NAME = 9;
+	
 	public int progress;
 	
 	@Override
@@ -16,11 +19,28 @@ public class BluetoothNeighbor extends Neighbor {
 		byte[] bytes = new byte[msgLength];
 		System.arraycopy(msgLengthBytes, 0, bytes, 0, 4);
 		bytes[4] = BLUETOOTH_NEIGHBOR_HEADER_ID;
-		System.arraycopy(tempName, 0, bytes, 1, tempName.length);
-		System.arraycopy(tempAddress, 0, bytes, 1, tempAddress.length);
+		System.arraycopy(tempName, 0, bytes, INDEX_OF_NAME, tempName.length);
+		System.arraycopy(tempAddress, 0, bytes, INDEX_OF_NAME + tempName.length, tempAddress.length);
 		bytes[bytes.length-1] = Integer.valueOf(progress).byteValue();
 		
 		return bytes;
+	}
+	
+	public static BluetoothNeighbor parseByteArray(byte[] bytes) {
+		BluetoothNeighbor neighbor = new BluetoothNeighbor();
+		
+		byte[] temp = new byte[4];
+		System.arraycopy(bytes, INDEX_OF_NAME_LENGTH, temp, 0, 4);
+		
+		ByteBuffer bb = ByteBuffer.wrap(temp);
+		int nameLength = bb.getInt();
+		
+		neighbor.name = new String(bytes, INDEX_OF_NAME, nameLength);
+		int indexOfAddress = INDEX_OF_NAME + nameLength;
+		neighbor.address = new String(bytes, indexOfAddress, bytes.length-indexOfAddress);
+		neighbor.progress = bytes[bytes.length-1];
+		
+		return neighbor;
 	}
 	
 	@Override

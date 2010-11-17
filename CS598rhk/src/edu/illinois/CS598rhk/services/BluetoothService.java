@@ -35,10 +35,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 	private static final int BLUETOOTH_RECV_FAILED = 3;
 	private static final int BLUETOOTH_CONNECTION_LOST = 4;
 	private static final int BLUETOOTH_CONNECTION_SUCCESS = 5;
+	private static final int BLUETOOTH_CONNECTION_FAILED = 6;
 	
-	public static final String INTENT_TO_ADD_BT_NEIGHBOR = "add bt neighbor";
-	public static final String BT_NEIGHBOR_NAME = "bt neighbor name";
-	public static final String BT_MAC_ADDRESS = "bt mac address";
+	public static final String INTENT_TO_ADD_BLUETOOTH_NEIGHBOR = "add bt neighbor";
+	public static final String BLUETOOTH_NEIGHBOR_DATA = "bt neighbor data";
     
 	private static final byte CONTACT_INFO_HEADER = 0;
 	private static final byte WIFI_FRIEND_HEADER = 1;
@@ -106,6 +106,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     private void broadcast(byte[] message) {
     	messages.add(message);
     	if (!broadcasting) {
+    		stop();
 			broadcasting = true;
 			processNextMessage();
 		}
@@ -114,12 +115,23 @@ public class BluetoothService extends Service implements IBluetoothService {
     private void processNextMessage() {
     	if (nextNeighbor.hasNext()) {
 			currentNeighbor = nextNeighbor.next();
+			connect(currentNeighbor);
 		}
-    	
+    	else {
+    		messages.remove(0);
+    		nextNeighbor = neighborKeys.iterator();
+    		if (!messages.isEmpty()) {
+    			processNextMessage();
+    		}
+    		else {
+    			broadcasting = false;
+    			start();
+    		}
+    	}
     }
     
-    private void sendMessageToNextNeighbor() {
-    	
+    private void sendMessageToNeighbor() {
+    	write(messages.get(0));
     }
     
     public class BluetoothEventReceiver extends BroadcastReceiver {
@@ -129,20 +141,32 @@ public class BluetoothService extends Service implements IBluetoothService {
 				int result = intent.getIntExtra(BLUETOOTH_EVENT_RESULT, -1);
 				switch(result) {
 				case BLUETOOTH_CONNECTION_SUCCESS:
+					sendMessageToNeighbor();
 					break;
 				case BLUETOOTH_SEND_SUCCESS:
 					break;
 				case BLUETOOTH_SEND_FAILED:
-					break;
 				case BLUETOOTH_RECV_SUCCESS:
-					break;
 				case BLUETOOTH_RECV_FAILED:
-					break;
 				case BLUETOOTH_CONNECTION_LOST:
+					processNextMessage();
 					break;
 				}
 			}
 		}
+    }
+    
+    public void newBluetoothNeighbor(byte[] message) {
+    	BluetoothNeighbor temp = BluetoothNeighbor.parseByteArray(message);
+    	neighbors.put(currentNeighbor, temp);
+    	
+    	Intent i = new Intent(INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
+    	i.putExtra(BLUETOOTH_NEIGHBOR_DATA, message);
+    	sendBroadcast(i);
+    }
+    
+    public void newWifiNeighbor(byte[] message) {
+    	
     }
     
     //
@@ -268,13 +292,6 @@ public class BluetoothService extends Service implements IBluetoothService {
         mConnectedThread = new ConnectedThread(socket);
         mConnectedThread.start();
 
-        // Send the name of the connected device back to the UI Activity
-//        Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_DEVICE_NAME);
-//        Bundle bundle = new Bundle();
-//        bundle.putString(BluetoothChat.DEVICE_NAME, device.getName());
-//        msg.setData(bundle);
-//        mHandler.sendMessage(msg);
-
         setState(STATE_CONNECTED);
     }
 
@@ -312,12 +329,10 @@ public class BluetoothService extends Service implements IBluetoothService {
     private void connectionFailed() {
     	//setState(STATE_LISTEN);
     	setState(STATE_NONE);
-        // Send a failure message back to the Activity
-//        Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
-//        Bundle bundle = new Bundle();
-//        bundle.putString(BluetoothChat.TOAST, "Unable to connect device");
-//        msg.setData(bundle);
-//        mHandler.sendMessage(msg);
+        
+    	Intent i = new Intent(BLUETOOTH_CONNECTION_STATE_CHANGED);
+    	i.putExtra(BLUETOOTH_EVENT_RESULT, BLUETOOTH_CONNECTION_FAILED);
+    	sendBroadcast(i);
     }
 
     /**
@@ -326,12 +341,10 @@ public class BluetoothService extends Service implements IBluetoothService {
     private void connectionLost() {
     	//setState(STATE_LISTEN);
     	setState(STATE_NONE);
-        // Send a failure message back to the Activity
-//        Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
-//        Bundle bundle = new Bundle();
-//        bundle.putString(BluetoothChat.TOAST, "Device connection was lost");
-//        msg.setData(bundle);
-//        mHandler.sendMessage(msg);
+        
+    	Intent i = new Intent(BLUETOOTH_CONNECTION_STATE_CHANGED);
+    	i.putExtra(BLUETOOTH_EVENT_RESULT, BLUETOOTH_CONNECTION_LOST);
+    	sendBroadcast(i);
     }
 
     /**
@@ -504,14 +517,43 @@ public class BluetoothService extends Service implements IBluetoothService {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
             int bytes;
-
+            boolean receivingMessage = false;
+            int messageLength = 0;
+            int bytesRead = 0;
+            
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer);
 
-                    
+                    if (bytes > 0) {
+                    	byte[] message = null;
+                    	bytesRead += bytes;
+                    	if (!receivingMessage) {
+                    		receivingMessage = true;
+                    		messageLength = buffer[0];
+                    		message = new byte[messageLength];
+                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
+                    	}
+                    	else {
+                    		while(bytesRead < messageLength) {
+                    			bytes = mmInStream.read(buffer);
+                    			System.arraycopy(buffer, 0, message, bytesRead, bytes);
+                    			bytesRead += bytes;
+                    		}
+                    		receivingMessage = false;
+                    		
+                    		switch(message[1]) {
+                    		case CONTACT_INFO_HEADER:
+                    			newBluetoothNeighbor(message);
+                    			break;
+                    		case WIFI_FRIEND_HEADER:
+                    			newWifiNeighbor(message);
+                    			break;
+                    		}
+                    	}
+                    }
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
@@ -527,11 +569,14 @@ public class BluetoothService extends Service implements IBluetoothService {
         public void write(byte[] buffer) {
             try {
                 mmOutStream.write(buffer);
-                // Share the sent message back to the UI Activity
-//                mHandler.obtainMessage(BluetoothChat.MESSAGE_WRITE, -1, -1, buffer)
-//                        .sendToTarget();
+                Intent i = new Intent(BLUETOOTH_CONNECTION_STATE_CHANGED);
+            	i.putExtra(BLUETOOTH_EVENT_RESULT, BLUETOOTH_SEND_SUCCESS);
+            	sendBroadcast(i);
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
+                Intent i = new Intent(BLUETOOTH_CONNECTION_STATE_CHANGED);
+            	i.putExtra(BLUETOOTH_EVENT_RESULT, BLUETOOTH_SEND_FAILED);
+            	sendBroadcast(i);
             }
         }
 
