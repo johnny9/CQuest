@@ -5,13 +5,16 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
 import edu.illinois.CS598rhk.services.BluetoothService;
+import edu.illinois.CS598rhk.services.CoreTask;
 import edu.illinois.CS598rhk.services.PowerManagement;
 import edu.illinois.CS598rhk.services.SchedulerService;
 import edu.illinois.CS598rhk.services.WifiService;
@@ -22,6 +25,7 @@ public class MainActivity extends Activity {
 	private static String PHONEID_KEY = "phoneID";
 	private static String IPADDR_KEY = "ipAddr";
 	private static String STATE_KEY = "state";
+	private CoreTask coretask;
 	
 	private String phoneID;
 	private String ipAddr;
@@ -59,6 +63,12 @@ public class MainActivity extends Activity {
 		stopButton = (Button) findViewById(R.id.StopButton);
 		
 		updateButtons(servicesStarted);
+		coretask = new CoreTask();
+		if (coretask.hasRootPermission()) {
+            
+        } else {
+            this.openNotRootDialog();
+        }
 		
 		startButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -99,6 +109,24 @@ public class MainActivity extends Activity {
 			}
 		});
 	}
+	
+	// From MainActivity.java
+    private void openNotRootDialog() {
+        LayoutInflater li = LayoutInflater.from(this);
+        View view = li.inflate(R.layout.norootview, null);
+        new AlertDialog.Builder(this).setTitle("Not Root!").setIcon(R.drawable.warning)
+                .setView(view).setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        //Log.d(MSG_TAG, "Close pressed");
+                        // this.application.finish();
+                    }
+                }).setNeutralButton("Override", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        //Log.d(MSG_TAG, "Override pressed");
+                        //installBinaries();
+                    }
+                }).show();
+    }
 	
 	private void displayError() {
 		AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
