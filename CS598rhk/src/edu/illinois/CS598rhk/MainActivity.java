@@ -1,5 +1,13 @@
 package edu.illinois.CS598rhk;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -21,6 +29,7 @@ import edu.illinois.CS598rhk.services.WifiService;
 
 public class MainActivity extends Activity {
 	
+	private static final String MSG_TAG = "MainACtivity";
 	private static String ICICLE_KEY = "main-activity";
 	private static String PHONEID_KEY = "phoneID";
 	private static String IPADDR_KEY = "ipAddr";
@@ -63,13 +72,28 @@ public class MainActivity extends Activity {
 		stopButton = (Button) findViewById(R.id.StopButton);
 		
 		updateButtons(servicesStarted);
-		coretask = new CoreTask();
-		if (coretask.hasRootPermission()) {
-            
-        } else {
-            this.openNotRootDialog();
-        }
 		
+		coretask = new CoreTask();
+        coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
+        Log.d(MSG_TAG, "Current directory is "
+                + this.getApplicationContext().getFilesDir().getParent());
+
+     // Check Homedir, or create it
+        this.checkDirs();
+
+        // Check for binaries
+        boolean filesetOutdated = coretask.filesetOutdated();
+        if (binariesExists() == false || filesetOutdated) {
+            if (coretask.hasRootPermission()) {
+                installBinaries();
+                // if (filesetOutdated) {
+                // this.openConfigRecoverDialog();
+                // }
+            } else {
+                this.openNotRootDialog();
+            }
+        }
+        
 		startButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -170,8 +194,8 @@ public class MainActivity extends Activity {
 	private void startServices() {
 		startService(new Intent(MainActivity.this, PowerManagement.class));
 		startService(new Intent(MainActivity.this, WifiService.class));
-		startService(new Intent(MainActivity.this, BluetoothService.class));
-		startService(new Intent(MainActivity.this, SchedulerService.class));
+		//startService(new Intent(MainActivity.this, BluetoothService.class));
+		//startService(new Intent(MainActivity.this, SchedulerService.class));
 		
 	}
 	
@@ -179,6 +203,86 @@ public class MainActivity extends Activity {
 		stopService(new Intent(MainActivity.this, PowerManagement.class));
 		stopService(new Intent(MainActivity.this, WifiService.class));
 		stopService(new Intent(MainActivity.this, BluetoothService.class));
-		stopService(new Intent(MainActivity.this, SchedulerService.class));	
+		//stopService(new Intent(MainActivity.this, SchedulerService.class));	
 	}
+	
+	// Binary install
+    public boolean binariesExists() {
+        File file = new File(this.coretask.DATA_FILE_PATH + "/bin/tether");
+        if (file.exists()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public void setIPAddress(String ip) {
+    	this.coretask.runRootCommand("/sbin/ifconfig tiwlan0 "+ip+" netmask 255.255.255.0");
+    	
+    }
+
+    public void installBinaries() {
+        List<String> filenames = new ArrayList<String>();
+        // tether
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/netcontrol", edu.illinois.CS598rhk.R.raw.netcontrol);
+        filenames.add("netcontrol");
+        // dnsmasq
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/dnsmasq", edu.illinois.CS598rhk.R.raw.dnsmasq);
+        filenames.add("dnsmasq");
+        // iwconfig
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", edu.illinois.CS598rhk.R.raw.iwconfig);
+        filenames.add("iwconfig");
+        try {
+            this.coretask.chmodBin(filenames);
+        } catch (Exception e) {
+        	Log.d(MSG_TAG, "Unable to change permission on binary files!");
+        }
+        // dnsmasq.conf
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/dnsmasq.conf", edu.illinois.CS598rhk.R.raw.dnsmasq_conf);
+        // tiwlan.ini
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/tiwlan.ini", edu.illinois.CS598rhk.R.raw.tiwlan_ini);
+        Log.d(MSG_TAG, "Binaries and config-files installed!");
+    }
+
+    private void copyBinary(String filename, int resource) {
+        File outFile = new File(filename);
+        InputStream is = this.getResources().openRawResource(resource);
+        byte buf[] = new byte[1024];
+        int len;
+        try {
+            OutputStream out = new FileOutputStream(outFile);
+            while ((len = is.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            out.close();
+            is.close();
+        } catch (IOException e) {
+        	Log.d(MSG_TAG, "Couldn't install file - " + filename + "!");
+        }
+    }
+
+    private void checkDirs() {
+        File dir = new File(this.coretask.DATA_FILE_PATH);
+        if (dir.exists() == false) {
+        	Log.d(MSG_TAG, "Application data-dir does not exist!");
+        } else {
+            dir = new File(this.coretask.DATA_FILE_PATH + "/bin");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create bin-directory!");
+                }
+            }
+            dir = new File(this.coretask.DATA_FILE_PATH + "/var");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create var-directory!");
+                }
+            }
+            dir = new File(this.coretask.DATA_FILE_PATH + "/conf");
+            if (dir.exists() == false) {
+                if (!dir.mkdir()) {
+                	Log.d(MSG_TAG, "Couldn't create conf-directory!");
+                }
+            }
+        }
+    }
 }

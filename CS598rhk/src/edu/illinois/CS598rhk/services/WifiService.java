@@ -83,7 +83,8 @@ public class WifiService extends Service implements IWifiService {
         myBroadcast = "192.168.1.255";
         discoveryScheduler = new SearchLightSchedule(7);
         coretask = new CoreTask();
-        setIPAddress(myIPAddress);
+        
+        
         try {
             dest = InetAddress.getByName(myBroadcast);
         } catch (UnknownHostException e) {
@@ -99,114 +100,27 @@ public class WifiService extends Service implements IWifiService {
     	messageReceiver = new WifiMessageReceiver();
     	registerReceiver(messageReceiver, messageFilter);
     	
-        if(wifiManager.isWifiEnabled())
-            wifiManager.setWifiEnabled(false);
-        enableWifi();
-        
-        wifiController.start();
-        
-        coretask = new CoreTask();
+    	coretask = new CoreTask();
         coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
         Log.d(MSG_TAG, "Current directory is "
                 + this.getApplicationContext().getFilesDir().getParent());
         
-     // Check Homedir, or create it
-        this.checkDirs();
-
-        // Check for binaries
-        boolean filesetOutdated = coretask.filesetOutdated();
-        if (binariesExists() == false || filesetOutdated) {
-            if (coretask.hasRootPermission()) {
-                installBinaries();
-                // if (filesetOutdated) {
-                // this.openConfigRecoverDialog();
-                // }
-            } else {
-                //this.openNotRootDialog();
-            }
-        }
+        if(wifiManager.isWifiEnabled())
+            wifiManager.setWifiEnabled(false);
+        enableWifi();
+        
+       // setIPAddress("192.168.1.2");
+        
+        wifiController.start();
+        
         
         return START_STICKY;
     }
-    // Binary install
-    public boolean binariesExists() {
-        File file = new File(this.coretask.DATA_FILE_PATH + "/bin/tether");
-        if (file.exists()) {
-            return true;
-        }
-        return false;
-    }
-    
     public void setIPAddress(String ip) {
-    	this.coretask.runRootCommand("/sbin/ifconfig tiwlan0 "+ip+" netmask 255.255.255.0");
+    	this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 "+ip+" netmask 255.255.255.0");
     	
     }
-
-    public void installBinaries() {
-        List<String> filenames = new ArrayList<String>();
-        // tether
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/netcontrol", edu.illinois.CS598rhk.R.raw.netcontrol);
-        filenames.add("netcontrol");
-        // dnsmasq
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/dnsmasq", edu.illinois.CS598rhk.R.raw.dnsmasq);
-        filenames.add("dnsmasq");
-        // iwconfig
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", edu.illinois.CS598rhk.R.raw.iwconfig);
-        filenames.add("iwconfig");
-        try {
-            this.coretask.chmodBin(filenames);
-        } catch (Exception e) {
-        	Log.d(MSG_TAG, "Unable to change permission on binary files!");
-        }
-        // dnsmasq.conf
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/dnsmasq.conf", edu.illinois.CS598rhk.R.raw.dnsmasq_conf);
-        // tiwlan.ini
-        this.copyBinary(this.coretask.DATA_FILE_PATH + "/conf/tiwlan.ini", edu.illinois.CS598rhk.R.raw.tiwlan_ini);
-        Log.d(MSG_TAG, "Binaries and config-files installed!");
-    }
-
-    private void copyBinary(String filename, int resource) {
-        File outFile = new File(filename);
-        InputStream is = this.getResources().openRawResource(resource);
-        byte buf[] = new byte[1024];
-        int len;
-        try {
-            OutputStream out = new FileOutputStream(outFile);
-            while ((len = is.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-            out.close();
-            is.close();
-        } catch (IOException e) {
-        	Log.d(MSG_TAG, "Couldn't install file - " + filename + "!");
-        }
-    }
-
-    private void checkDirs() {
-        File dir = new File(this.coretask.DATA_FILE_PATH);
-        if (dir.exists() == false) {
-        	Log.d(MSG_TAG, "Application data-dir does not exist!");
-        } else {
-            dir = new File(this.coretask.DATA_FILE_PATH + "/bin");
-            if (dir.exists() == false) {
-                if (!dir.mkdir()) {
-                	Log.d(MSG_TAG, "Couldn't create bin-directory!");
-                }
-            }
-            dir = new File(this.coretask.DATA_FILE_PATH + "/var");
-            if (dir.exists() == false) {
-                if (!dir.mkdir()) {
-                	Log.d(MSG_TAG, "Couldn't create var-directory!");
-                }
-            }
-            dir = new File(this.coretask.DATA_FILE_PATH + "/conf");
-            if (dir.exists() == false) {
-                if (!dir.mkdir()) {
-                	Log.d(MSG_TAG, "Couldn't create conf-directory!");
-                }
-            }
-        }
-    }
+    
     
     @Override
     public void onDestroy() {
