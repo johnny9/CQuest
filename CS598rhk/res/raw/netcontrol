@@ -97,93 +97,10 @@ stopint() {
         'ifconfig tiwlan0 down'
 }
 
-startipt() {
-    ## Setting up firewall rules
-    run '{ echo; lsmod; } | while read m; do case "$m" in wlan*) break;; esac; false; done' \
-        "Setting up firewall rules" \
-        '"$iptables" -F &&
-         "$iptables" -F -t nat &&
-         "$iptables" -I FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT &&
-         "$iptables" -I FORWARD -s 192.168.2.0/24 -j ACCEPT &&
-         "$iptables" -P FORWARD DROP &&
-         "$iptables" -t nat -I POSTROUTING -s 192.168.2.0/24 -j MASQUERADE'
-}
-
-stopipt() {
-    ## Tearing down firewall rules
-    run :\
-        "Tearing down firewall rules" \
-        '"$iptables" -F &&
-		"$iptables" -t nat -F &&
-		"$iptables" -X &&
-		"$iptables" -t nat -X &&
-        "$iptables" -P FORWARD ACCEPT'
-}
-
-startipfw() {
-    ## Enabling IP forwarding
-    run 'case "`cat /proc/sys/net/ipv4/ip_forward`" in 1) false;; esac' \
-        "Enabling IP forwarding" \
-        '{ echo 1 > /proc/sys/net/ipv4/ip_forward; }'
-}
-stopipfw() {
-    ## Disabling IP forwarding
-    run 'case "`cat /proc/sys/net/ipv4/ip_forward`" in 0) false;; esac' \
-        "Disabling IP forwarding" \
-        '{ echo 0 > /proc/sys/net/ipv4/ip_forward; }'
-}
-
-startdnsmasq() {
-    ## Starting dnsmasq
-    run '!(ps | while read u p pp v r w pc s n; do case "$n" in *dnsmasq*) break;; esac; false; done)' \
-        "Starting dnsmasq" \
-        '"$dnsmasq" --conf-file="$dnsmasq_conf"'
-}
-
-stopdnsmasq() {
-    ## Stopping dnsmasq
-    run 'ps | while read u p pp v r w pc s n; do case "$n" in *dnsmasq*) break;; esac; false; done' \
-        "Stopping dnsmasq" \
-        'ps | while read u p pp v r w pc s n; do case "$n" in *dnsmasq*) really_kill "$p";; esac; done; rm '"'$dnsmasq_pidfile' 2>/dev/null"
-}
-
-startsecnat() {
-    ## Activating MAC access control
-    run "dd if='$mac_whitelist' >/dev/null 2>&1" \
-        "Activating MAC access control" \
-        '"$iptables" -t nat -I PREROUTING -s 192.168.2.0/24 -j DROP'
-}
-
-startmacwhitelist() {
-    ## Adding MAC addresses for allowed clients
-    run "(read i <'$mac_whitelist') 2>/dev/null" \
-        "Adding MAC addresses for allowed clients" \
-        "(while read mac; do '$iptables' -t nat -I PREROUTING -m mac --mac-source \$mac -j ACCEPT || exit 1; done) <'$mac_whitelist'"
-}
 
 case "$1" in
-'start_server')
-    rm "$adhoclog" 2>/dev/null
-    startwifi
-    startint_server
-#    startipt
-#    startipfw
-    startdnsmasq
-#    startsecnat
-#    startmacwhitelist
-;;
-'start_client')
-    rm "$adhoclog" 2>/dev/null
-    startwifi
-    startint_client
-#    startipt
-#    startipfw
-#    startdnsmasq
-#    startsecnat
-#    startmacwhitelist
-;;
 'start_wifi')
-#    startwifi
+    startwifi
     startint_server
 #    startipt
 #    startipfw
@@ -199,30 +116,6 @@ case "$1" in
 #    startdnsmasq
 #    startsecnat
 #    startmacwhitelist
-;;
-'stop_server')
-    rm "$adhoclog" 2>/dev/null
-    rm "$dnsmasq_leasefile" 2>/dev/null    
-    stopdnsmasq
-    stopint
-#    stopipfw
-#    stopipt
-    stopwifi
-;;
-'stop_client')
-    rm "$adhoclog" 2>/dev/null
-    rm "$dnsmasq_leasefile" 2>/dev/null    
-    rm "$dhcpclient_log" 2>/dev/null
-    stopint
-#    stopipfw
-#    stopipt
-    stopwifi
-;;
-'restartsecwifi')
-#    stopipt
-#    startipt
-    startsecnat
-    startmacwhitelist
 ;;
 *)
 echo "Usage: $0 [start|stop] [directory]"
