@@ -16,12 +16,14 @@ public class BluetoothNeighbor extends Neighbor {
 		byte[] tempName = name.getBytes();
 		byte[] tempAddress = address.getBytes();
 		
-		int msgLength = 5 + tempName.length + tempAddress.length + 1;
+		int msgLength = 9 + tempName.length + tempAddress.length + 1;
 		byte[] msgLengthBytes = ByteBuffer.allocate(4).putInt(msgLength).array();
 		
 		byte[] bytes = new byte[msgLength];
 		System.arraycopy(msgLengthBytes, 0, bytes, 0, 4);
 		bytes[4] = BLUETOOTH_NEIGHBOR_HEADER;
+		byte[] nameLengthBytes = ByteBuffer.allocate(4).putInt(tempName.length).array();
+		System.arraycopy(nameLengthBytes, 0, bytes, INDEX_OF_NAME_LENGTH, 4);
 		System.arraycopy(tempName, 0, bytes, INDEX_OF_NAME, tempName.length);
 		System.arraycopy(tempAddress, 0, bytes, INDEX_OF_NAME + tempName.length, tempAddress.length);
 		bytes[bytes.length-1] = Integer.valueOf(progress).byteValue();
@@ -35,8 +37,7 @@ public class BluetoothNeighbor extends Neighbor {
 		byte[] temp = new byte[4];
 		System.arraycopy(bytes, INDEX_OF_NAME_LENGTH, temp, 0, 4);
 		
-		ByteBuffer bb = ByteBuffer.wrap(temp);
-		int nameLength = bb.getInt();
+		int nameLength = ByteBuffer.wrap(temp).getInt();
 		
 		neighbor.name = new String(bytes, INDEX_OF_NAME, nameLength);
 		int indexOfAddress = INDEX_OF_NAME + nameLength;

@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 import edu.illinois.CS598rhk.models.Neighbor;
@@ -57,7 +56,15 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	myContactInfo.name = intent.getStringExtra(MainActivity.NAME_KEY);
+    	if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+    		BluetoothAdapter.getDefaultAdapter().enable();
+    	}
+    	
+    	while(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {}
+    	
+    	// We could use setName() here to allow the user to change the name we use
+    	
+    	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
     	myContactInfo.progress = 0;
     	
@@ -67,7 +74,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     	messages = new ArrayList<byte[]>();
     	
     	updateNeighbors();
-    	start();
     	return START_STICKY;
     }
     

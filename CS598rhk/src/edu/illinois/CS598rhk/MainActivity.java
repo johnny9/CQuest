@@ -126,11 +126,23 @@ public class MainActivity extends Activity {
 		}
 		
 		phoneIdText.setOnKeyListener(new OnKeyListener() {
-
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if (event.getAction() == KeyEvent.ACTION_DOWN) {
 					phoneID = phoneIdText.getText().toString();
+					return true;
+				}
+				return false;
+			}
+		});
+		
+		ipAddrText.setOnKeyListener(new OnKeyListener() {
+
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (event.getAction() == KeyEvent.ACTION_DOWN) {
+					ipAddr = ipAddrText.getText().toString();
+					return true;
 				}
 				return false;
 			}
@@ -197,8 +209,8 @@ public class MainActivity extends Activity {
 	private void startServices() {
 		startService(new Intent(MainActivity.this, PowerManagement.class));
 		Intent i = new Intent(MainActivity.this, SchedulerService.class);
-		i.putExtra(PHONEID_KEY, phoneID);
-		i.putExtra(IPADDR_KEY, ipAddr);
+		i.putExtra(NAME_KEY, phoneID);
+		i.putExtra(ADDRESS_KEY, ipAddr);
 		startService(i);
 	}
 	
