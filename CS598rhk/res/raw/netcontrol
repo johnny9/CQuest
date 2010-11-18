@@ -77,7 +77,8 @@ startint_server() {
     # Configuring network interface
     run '{ echo; lsmod; } | while read m; do case "$m" in wlan*) break;; esac; false; done' \
         "Configuring network interface" \
-        'ifconfig tiwlan0 192.168.2.4 netmask 255.255.255.0 && ifconfig tiwlan0 up'
+        #'ifconfig tiwlan0 192.168.2.4 netmask 255.255.255.0 && ifconfig tiwlan0 up'
+        'ifconfig tiwlan0 up'
 }
 
 startint_client() {

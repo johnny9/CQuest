@@ -68,6 +68,11 @@ public class PowerManagement extends Service implements Runnable {
 	private class BatteryInfoReceiver extends BroadcastReceiver {
 
 		public void onReceive(Context context, Intent intent) {
+			long curTime = SystemClock.elapsedRealtime();
+			Date now = new Date(curTime - startTime);
+			String timeString = "Time: " + now.getHours() + ":"
+					+ now.getMinutes() + ":" + now.getSeconds();
+			
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 				int rawlevel = intent.getIntExtra("level", -1);
 				int scale = intent.getIntExtra("scale", -1);
@@ -79,9 +84,8 @@ public class PowerManagement extends Service implements Runnable {
 				if (rawlevel >= 0 && scale > 0) {
 					level = (rawlevel * 100) / scale;
 				}
-
-				long curTime = SystemClock.elapsedRealtime();
-				String log_output = "Time: " + curTime + "; Battery: level = "
+				
+				String log_output = timeString +"; Battery: level = "
 						+ level + ", scale = " + scale + ", status = " + status
 						+ ", health = " + health + ", plugged = " + plugged
 						+ ", voltage = " + voltage + "\n";
@@ -103,10 +107,7 @@ public class PowerManagement extends Service implements Runnable {
 
 			else if (intent.getAction().equals(ACTION_LOG_UPDATE)) {
 				String message = intent.getStringExtra(LOG_MESSAGE);
-				long curTime = SystemClock.elapsedRealtime();
-				Date now = new Date(curTime - startTime);
-				String log_output = "Time: " + now.getHours() + ":"
-						+ now.getMinutes() + ":" + now.getSeconds() + "; "
+				String log_output = timeString + "; "
 						+ message + "\n";
 
 				Log.d(LOG_MESSAGE_TAG, log_output);

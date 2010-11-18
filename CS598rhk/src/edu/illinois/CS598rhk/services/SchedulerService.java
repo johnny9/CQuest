@@ -94,9 +94,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 		i.putExtra(MainActivity.ADDRESS_KEY, address);
 		startService(i);
 		
-		i = new Intent(SchedulerService.this, BluetoothService.class);
-		i.putExtra(MainActivity.NAME_KEY, name);
-		startService(i);
+		//i = new Intent(SchedulerService.this, BluetoothService.class);
+		//i.putExtra(MainActivity.NAME_KEY, name);
+		//startService(i);
 		
 		return START_STICKY;
 	}

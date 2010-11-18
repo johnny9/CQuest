@@ -105,10 +105,15 @@ public class WifiService extends Service implements IWifiService {
 
 		if (wifiManager.isWifiEnabled())
 			wifiManager.setWifiEnabled(false);
-		enableWifi();
 		
 		this.myPhoneName = intent.getStringExtra(MainActivity.NAME_KEY);
-		setIPAddress(intent.getStringExtra(MainActivity.ADDRESS_KEY));
+		if(myPhoneName == null)
+			myPhoneName = "HTC Magic";
+		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
+		if(myIPAddress == null || !validateIPAddress(myIPAddress))
+			myIPAddress = "192.168.1.2";
+
+		enableWifi();
 
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
@@ -119,7 +124,7 @@ public class WifiService extends Service implements IWifiService {
 	public void setIPAddress(String ip) {
 		if (!validateIPAddress(ip))
 			return;
-		myBroadcast = ip.substring(0, ip.lastIndexOf(".")) + "255";
+		myBroadcast = ip.substring(0, ip.lastIndexOf(".")) + ".255";
 		this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 " + ip
 				+ " netmask 255.255.255.0");
 		try {
@@ -131,7 +136,7 @@ public class WifiService extends Service implements IWifiService {
 
 	private boolean validateIPAddress(String ipAddress) {
 		String[] parts = ipAddress.split("\\.");
-		if (parts.length != 3) {
+		if (parts.length != 4) {
 			return false;
 		}
 		for (String s : parts) {
@@ -157,6 +162,7 @@ public class WifiService extends Service implements IWifiService {
 			// Log.d(MSG_TAG, "netcontrol start_wifi failed");
 			// fall down below anyway
 		}
+		setIPAddress(myIPAddress);
 		Log.d(MSG_TAG, "Wifi Enabled");
 		wifiEnabled = true;
 	}
