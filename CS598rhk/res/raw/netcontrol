@@ -110,7 +110,7 @@ case "$1" in
 ;;
 'stop_wifi')
     stopint
-#    stopwifi
+    stopwifi
 #    startipt
 #    startipfw
 #    startdnsmasq
