@@ -73,8 +73,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	broadcasting = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
     	nextNeighbor = neighbors.iterator();
-    	messages = new ArrayList<byte[]>();
-    	
+    	synchronized(messages) {
+    		messages = new ArrayList<byte[]>();
+    	}
     	updateNeighbors();
     	return START_STICKY;
     }
@@ -97,44 +98,53 @@ public class BluetoothService extends Service implements IBluetoothService {
     }
     
     private void broadcast(byte[] message) {
-    	messages.add(message);
-    	if (!broadcasting) {
-    		stop();
-			broadcasting = true;
-			processNextMessage();
-		}
-    	else {
-    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + new String(messages.get(0))
-    				+ "\n\tQueuing message: " + new String(message) + "\n");
+    	synchronized(messages) {
+	    	messages.add(message);
+	    	if (!broadcasting) {
+	    		stop();
+				broadcasting = true;
+				processNextMessage();
+			}
+	    	else {
+	    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + new String(messages.get(0))
+	    				+ "\n\tQueuing message: " + new String(message) + "\n");
+	    	}
     	}
     }
     
     private void processNextMessage() {
-    	if (nextNeighbor.hasNext()) {
-			currentNeighbor = nextNeighbor.next();
-			sendToLogger("Bluetooth: Attempting to connect to\n\tNeighbor: " + currentNeighbor.getName() 
-					+ " with address " + currentNeighbor.getAddress()
-					+ "\n\tand message: " + new String(messages.get(0)) + "\n");
-			connect(currentNeighbor);
-		}
-    	else {
-    		messages.remove(0);
-    		nextNeighbor = neighbors.iterator();
-    		if (!messages.isEmpty()) {
-    			processNextMessage();
-    		}
-    		else {
-    			broadcasting = false;
-    			start();
-    		}
+    	synchronized(messages) {
+	     	if (nextNeighbor.hasNext()) {
+				currentNeighbor = nextNeighbor.next();
+				sendToLogger("Bluetooth: Attempting to connect to\n\tNeighbor: " + currentNeighbor.getName() 
+						+ " with address " + currentNeighbor.getAddress()
+						+ "\n\tand message: " + new String(messages.get(0)) + "\n");
+				connect(currentNeighbor);
+			}
+	    	else {
+	    		messages.remove(0);
+	    		nextNeighbor = neighbors.iterator();
+	    		if (!messages.isEmpty()) {
+	    			processNextMessage();
+	    		}
+	    		else {
+	    			broadcasting = false;
+	    			start();
+	    		}
+	    	}
     	}
     }
     
-    private void sendMessageToNeighbor() {
-    	sendToLogger("Bluetooth: Connected to\n\tNeighbor: " + currentNeighbor.getName() 
-    			+ " with address " + currentNeighbor.getAddress()
-    			+ "\n\tsending message: " + new String(messages.get(0)) + "\n");
-    	write(messages.get(0));
+    private void sendMessageToNeighbor(byte[] message) {
+    	synchronized(messages) {
+	    	if (message == null) {
+	    		message = messages.get(0);
+	    	}
+	    	sendToLogger("Bluetooth: Connected to\n\tNeighbor: " + currentNeighbor.getName() 
+	    			+ " with address " + currentNeighbor.getAddress()
+	    			+ "\n\tsending message: " + new String(messages.get(0)) + "\n");
+	    	write(messages.get(0));
+    	}
     }
     
     public void newBluetoothNeighbor(byte[] message) {
@@ -280,7 +290,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
         setState(STATE_CONNECTED);
         if (broadcasting) {
-        	sendMessageToNeighbor();
+        	sendMessageToNeighbor(null);
         }
     }
 
@@ -550,6 +560,10 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		case Neighbor.WIFI_NEIGHBOR_HEADER:
                     			newWifiNeighbor(message);
                     			break;
+                    		}
+                    		
+                    		if (!broadcasting) {
+                    			sendMessageToNeighbor(myContactInfo.getBytes());
                     		}
                     	}
                     }
