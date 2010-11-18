@@ -58,15 +58,17 @@ public class BluetoothService extends Service implements IBluetoothService {
     public int onStartCommand(Intent intent, int flags, int startId) {
     	if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
     		BluetoothAdapter.getDefaultAdapter().enable();
+    		sendToLogger("Turning on Bluetooth Adapter\n");
     	}
     	
-    	while(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {}
+    	while(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {} // This is TERRIBLE ...
     	
     	// We could use setName() here to allow the user to change the name we use
     	
     	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
     	myContactInfo.progress = 0;
+    	sendToLogger("Bluetooth name: " + myContactInfo.name + " Bluetooth address: " + myContactInfo.address + "\n");
     	
     	broadcasting = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
@@ -79,15 +81,18 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     public void updateScheduleProgress(int progress) {
     	synchronized(myContactInfo) {
+    		sendToLogger("Bluetooth received progress update from " + myContactInfo.progress + " to " + progress);
     		myContactInfo.progress = progress;
     	}
     }
     
     public void updateNeighbors() {
+    	sendToLogger("Bluetooth: Begin updating neighbors\n");
     	broadcast(myContactInfo.getBytes());
     }
     
     public void broadcast(String message) {
+    	sendToLogger("Bluetoooth: Received message to broadcast\n\tMessage: " + message + "\n");
     	broadcast(message.getBytes());
     }
     
@@ -98,11 +103,18 @@ public class BluetoothService extends Service implements IBluetoothService {
 			broadcasting = true;
 			processNextMessage();
 		}
+    	else {
+    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + new String(messages.get(0))
+    				+ "\n\tQueuing message: " + new String(message) + "\n");
+    	}
     }
     
     private void processNextMessage() {
     	if (nextNeighbor.hasNext()) {
 			currentNeighbor = nextNeighbor.next();
+			sendToLogger("Bluetooth: Attempting to connect to\n\tNeighbor: " + currentNeighbor.getName() 
+					+ " with address " + currentNeighbor.getAddress()
+					+ "\n\tand message: " + new String(messages.get(0)) + "\n");
 			connect(currentNeighbor);
 		}
     	else {
@@ -119,6 +131,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     }
     
     private void sendMessageToNeighbor() {
+    	sendToLogger("Bluetooth: Connected to\n\tNeighbor: " + currentNeighbor.getName() 
+    			+ " with address " + currentNeighbor.getAddress()
+    			+ "\n\tsending message: " + new String(messages.get(0)) + "\n");
     	write(messages.get(0));
     }
     
@@ -133,6 +148,12 @@ public class BluetoothService extends Service implements IBluetoothService {
     	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, message);
     	sendBroadcast(i);
     }
+    
+	public void sendToLogger(String message) {
+		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
+		sendBroadcast(intentToLog);
+	}
     
     //
     //
@@ -516,6 +537,11 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		receivingMessage = false;
                     		bytesRead = 0;
                     		messageLength = 4;
+                    		
+                    		sendToLogger("Bluetooth: Received message\n\t"
+                    				+ "Message: " + new String(message)
+                    				+ "\n\tfrom\n\tNeighbor: " + mmSocket.getRemoteDevice().getName()
+                    				+ " with address " + mmSocket.getRemoteDevice().getAddress() + "\n");
                     		
                     		switch(message[Neighbor.INDEX_OF_HEADER]) {
                     		case Neighbor.BLUETOOTH_NEIGHBOR_HEADER:
