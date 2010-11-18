@@ -43,13 +43,13 @@ public class PowerManagement extends Service implements Runnable {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	File outputFile = new File("data/data/edu.illinois.CS598rhk/files", filename);
-        if (outputFile.exists()) {
-        	deleteFile(filename);
-        }
+    	//File outputFile = new File("data/data/edu.illinois.CS598rhk/files", filename);
+        //if (outputFile.exists()) {
+        //	deleteFile(filename);
+        //}
     	
-    	//long curTime = SystemClock.elapsedRealtime();
-    	//filename = filename + "." + curTime;
+    	long curTime = SystemClock.elapsedRealtime();
+    	filename = filename + "." + curTime;
     	
         IntentFilter batteryFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         batteryFilter.addAction(POWER_SERVICE);
