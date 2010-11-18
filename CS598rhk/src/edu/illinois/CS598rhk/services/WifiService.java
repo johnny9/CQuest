@@ -18,6 +18,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
@@ -105,7 +106,11 @@ public class WifiService extends Service implements IWifiService {
 		if (wifiManager.isWifiEnabled())
 			wifiManager.setWifiEnabled(false);
 		enableWifi();
+		
+		this.myPhoneName = intent.getStringExtra(MainActivity.NAME_KEY);
+		setIPAddress(intent.getStringExtra(MainActivity.ADDRESS_KEY));
 
+		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
 
 		return START_STICKY;
