@@ -112,9 +112,12 @@ public class WifiService extends Service implements IWifiService {
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if(myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.2";
+		sendToLogger("My IP address is "+myIPAddress);
+		
+		enableWifi();	
+		
 
-		enableWifi();
-
+		
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
 
