@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.PowerManager;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
@@ -30,6 +31,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	private List<WifiNeighbor> wifiNeighbors;
 	private List<BluetoothNeighbor> bluetoothNeighbors;
+	private PowerManager pm;
+	private PowerManager.WakeLock wl;
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -77,14 +80,14 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
-		registerReceiver(neighborReceiver, filter);
+		//IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+		//registerReceiver(neighborReceiver, filter);
 		
-		filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
-		registerReceiver(neighborReceiver, filter);
+		//filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
+		//registerReceiver(neighborReceiver, filter);
 		
 		bindService( new Intent( SchedulerService.this, WifiService.class ), mWifiConnection, Context.BIND_AUTO_CREATE );
-		bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
+		//bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
 
 		String name = intent.getStringExtra(MainActivity.NAME_KEY);
 		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
@@ -98,7 +101,16 @@ public class SchedulerService extends Service implements ISchedulerService {
 		//i.putExtra(MainActivity.NAME_KEY, name);
 		//startService(i);
 		
+		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
+		wl.acquire();
+
+		
 		return START_STICKY;
+	}
+	
+	public void onDestroy() {
+		wl.release();
 	}
 	
 	private class MessageReceiver extends BroadcastReceiver {

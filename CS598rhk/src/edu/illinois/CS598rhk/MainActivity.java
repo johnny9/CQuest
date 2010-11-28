@@ -10,6 +10,8 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -68,6 +70,10 @@ public class MainActivity extends Activity {
 		}
 
 		setContentView( R.layout.main );
+		
+		Intent blueTest = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		blueTest.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+		startActivity(blueTest);
 		
 		phoneIdText = (EditText) findViewById(R.id.PhoneIdText);
 		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
@@ -226,6 +232,31 @@ public class MainActivity extends Activity {
         // iwconfig
         this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/iwconfig", edu.illinois.CS598rhk.R.raw.iwconfig);
         filenames.add("iwconfig");
+        //wl1251 modules
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/compat.ko", edu.illinois.CS598rhk.R.raw.compat);
+        filenames.add("compat.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/crc7.ko", edu.illinois.CS598rhk.R.raw.crc7);
+        filenames.add("crc7.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/cfg80211.ko", edu.illinois.CS598rhk.R.raw.cfg80211);
+        filenames.add("cfg80211.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/mac80211.ko", edu.illinois.CS598rhk.R.raw.mac80211);
+        filenames.add("mac80211.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/wl1251.ko", edu.illinois.CS598rhk.R.raw.wl1251);
+        filenames.add("compat.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/wl1251_sdio.ko", edu.illinois.CS598rhk.R.raw.wl1251_sdio);
+        filenames.add("wl1251_sdio.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/msm_wifi.ko", edu.illinois.CS598rhk.R.raw.msm_wifi);
+        filenames.add("msm_wfi.ko");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/msm_wifi.ko", edu.illinois.CS598rhk.R.raw.msm_wifi);
+        filenames.add("msm_wfi.ko");
+        //wifi scripts
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/load.sh", edu.illinois.CS598rhk.R.raw.load);
+        filenames.add("load.sh");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/up.sh", edu.illinois.CS598rhk.R.raw.up);
+        filenames.add("up.sh");
+        this.copyBinary(this.coretask.DATA_FILE_PATH + "/bin/down.sh", edu.illinois.CS598rhk.R.raw.down);
+        filenames.add("down.sh");
+        
         try {
             this.coretask.chmodBin(filenames);
         } catch (Exception e) {

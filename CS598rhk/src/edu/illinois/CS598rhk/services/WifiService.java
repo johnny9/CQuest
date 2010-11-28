@@ -22,6 +22,7 @@ import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
+import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
 public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_UPDATE_SCHEDULE_PROGRESS = "intent to update schedule progress";
@@ -78,7 +79,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new AlwaysSchedule();
+		discoveryScheduler = new SearchLightSchedule(20);
 		coretask = new CoreTask();
 
 		try {
@@ -114,9 +115,8 @@ public class WifiService extends Service implements IWifiService {
 			myIPAddress = "192.168.1.2";
 		sendToLogger("My IP address is "+myIPAddress);
 		
-		enableWifi();	
-		
-
+		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+				+ "/bin/load.sh");
 		
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
@@ -160,22 +160,15 @@ public class WifiService extends Service implements IWifiService {
 	}
 
 	public void enableWifi() {
-		if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH)) {
-			// Log.d(MSG_TAG, "netcontrol start_wifi failed");
-			// fall down below anyway
-		}
-		setIPAddress(myIPAddress);
+		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+				+ "/bin/up.sh " + this.myIPAddress);
 		Log.d(MSG_TAG, "Wifi Enabled");
 		wifiEnabled = true;
 	}
 
 	public void disableWifi() {
-		if (this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH)) {
-			// Log.d(MSG_TAG, "netcontrol stop_wifi failed");
-			// fall down below anyway
-		}
+		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+				+ "/bin/down.sh");
 		Log.d(MSG_TAG, "Wifi disabled");
 		wifiEnabled = false;
 	}
