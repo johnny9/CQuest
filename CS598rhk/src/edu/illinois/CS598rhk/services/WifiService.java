@@ -22,6 +22,7 @@ import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
+import edu.illinois.CS598rhk.schedules.NeverSchedule;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
 public class WifiService extends Service implements IWifiService {
@@ -79,7 +80,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new SearchLightSchedule(20);
+		discoveryScheduler = new NeverSchedule();
 		coretask = new CoreTask();
 
 		try {
@@ -116,7 +117,7 @@ public class WifiService extends Service implements IWifiService {
 		sendToLogger("My IP address is "+myIPAddress);
 		
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/load.sh");
+				+ "/bin/load.sh "+myIPAddress);
 		
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();

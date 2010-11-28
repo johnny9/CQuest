@@ -1,2 +1,2 @@
 #!/system/bin/sh
-ifconfig wlan0 down
+iw dev wlan0 set txpower fixed 0 
