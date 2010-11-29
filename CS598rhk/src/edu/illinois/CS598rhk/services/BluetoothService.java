@@ -56,14 +56,11 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-    		BluetoothAdapter.getDefaultAdapter().enable();
-    		sendToLogger("Turning on Bluetooth Adapter\n");
-    	}
-    	
-    	while(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {} // This is TERRIBLE ...
+    	// TODO: This dies if Bluetooth is not enabled at this point!
     	
     	// We could use setName() here to allow the user to change the name we use
+    	
+    	mStateString = "STATE_INIT";
     	
     	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
@@ -73,9 +70,8 @@ public class BluetoothService extends Service implements IBluetoothService {
     	broadcasting = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
     	nextNeighbor = neighbors.iterator();
-    	synchronized(messages) {
-    		messages = new ArrayList<byte[]>();
-    	}
+    	
+    	messages = new ArrayList<byte[]>();
     	updateNeighbors();
     	return START_STICKY;
     }
@@ -129,6 +125,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    		}
 	    		else {
 	    			broadcasting = false;
+	    			sendToLogger("Bluetooth: Done Broadcasting\n");
 	    			start();
 	    		}
 	    	}
@@ -190,6 +187,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private int mState;
+    private String mStateString;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
@@ -212,10 +210,34 @@ public class BluetoothService extends Service implements IBluetoothService {
      * Set the current state of the chat connection
      * @param state  An integer defining the current connection state
      */
-    private synchronized void setState(int state) {
-        if (D) Log.d(TAG, "setState() " + mState + " -> " + state);
+    private synchronized void setState(int state) { 
+        String log = "";
+        switch(state) {
+        case 0:
+        	log = "setState() " + mStateString + " -> STATE_NONE";
+        	mStateString = "STATE_NONE";
+        	break;
+        case 1:
+        	log = "setState() " + mStateString + " -> STATE_LISTEN";
+        	mStateString = "STATE_LISTEN";
+        	break;
+        case 2:
+        	log = "setState() " + mStateString + " -> STATE_CONNECTING";
+        	mStateString = "STATE_CONNECTING";
+        	break;
+        case 3:
+        	log = "setState() " + mStateString + " -> STATE_CONNECTED";
+        	mStateString = "STATE_CONNECTED";
+        	break;
+        default:
+        	log = "setState() " + mStateString + " -> STATE_UNKNOWN";
+        	mStateString = "STATE_UNKNOWN";
+        	break;
+        }
+        
         mState = state;
-
+        
+        sendToLogger(log);
         // Give the new state to the Handler so the UI Activity can update
 //        mHandler.obtainMessage(BluetoothChat.MESSAGE_STATE_CHANGE, state, -1).sendToTarget();
     }

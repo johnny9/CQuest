@@ -74,21 +74,21 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			bluetoothService = null;	
+			bluetoothService = null;
 		}
     };
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		//IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
-		//registerReceiver(neighborReceiver, filter);
+		IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+		registerReceiver(neighborReceiver, filter);
 		
-		//filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
-		//registerReceiver(neighborReceiver, filter);
+		filter = new IntentFilter(BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
+		registerReceiver(neighborReceiver, filter);
 		
 		bindService( new Intent( SchedulerService.this, WifiService.class ), mWifiConnection, Context.BIND_AUTO_CREATE );
-		//bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
-
+		bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
+		
 		String name = intent.getStringExtra(MainActivity.NAME_KEY);
 		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		
@@ -97,20 +97,22 @@ public class SchedulerService extends Service implements ISchedulerService {
 		i.putExtra(MainActivity.ADDRESS_KEY, address);
 		startService(i);
 		
-		//i = new Intent(SchedulerService.this, BluetoothService.class);
-		//i.putExtra(MainActivity.NAME_KEY, name);
-		//startService(i);
+		i = new Intent(SchedulerService.this, BluetoothService.class);
+		i.putExtra(MainActivity.NAME_KEY, name);
+		startService(i);
 		
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
 		wl.acquire();
 
-		
 		return START_STICKY;
 	}
 	
 	public void onDestroy() {
 		wl.release();
+		unregisterReceiver(neighborReceiver);
+		unbindService(mBluetoothConnection);
+		unbindService(mWifiConnection);
 	}
 	
 	private class MessageReceiver extends BroadcastReceiver {

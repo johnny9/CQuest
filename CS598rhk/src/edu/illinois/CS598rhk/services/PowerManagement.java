@@ -128,6 +128,13 @@ public class PowerManagement extends Service implements Runnable {
 	}
 
 	@Override
+	public void onDestroy() {
+		unregisterReceiver(myBatteryInfoReceiver);
+		unregisterReceiver(myBatteryInfoReceiver2);
+		super.onDestroy();
+	}
+	
+	@Override
 	public IBinder onBind(Intent arg0) {
 		// TODO Auto-generated method stub
 		return null;

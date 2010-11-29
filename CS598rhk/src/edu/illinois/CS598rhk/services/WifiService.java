@@ -155,8 +155,7 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public void onDestroy() {
-		if (wifiEnabled)
-			disableWifi();
+		unregisterReceiver(messageReceiver);
 		super.onDestroy();
 	}
 
