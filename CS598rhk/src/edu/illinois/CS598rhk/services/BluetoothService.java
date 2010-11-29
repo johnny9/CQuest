@@ -102,8 +102,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 				processNextMessage();
 			}
 	    	else {
-	    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + new String(messages.get(0))
-	    				+ "\n\tQueuing message: " + new String(message) + "\n");
+	    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + messages.get(0)
+	    				+ "\n\tQueuing message: " + message + "\n");
 	    	}
     	}
     }
@@ -112,9 +112,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	synchronized(messages) {
 	     	if (nextNeighbor.hasNext()) {
 				currentNeighbor = nextNeighbor.next();
-				sendToLogger("Bluetooth: Attempting to connect to\n\tNeighbor: " + currentNeighbor.getName() 
+				sendToLogger("Bluetooth: Attempting to connect to Neighbor:\n\t" + currentNeighbor.getName() 
 						+ " with address " + currentNeighbor.getAddress()
-						+ "\n\tand message: " + new String(messages.get(0)) + "\n");
+						+ "\n\tand message: " + messages.get(0) + "\n");
 				connect(currentNeighbor);
 			}
 	    	else {
@@ -137,10 +137,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    	if (message == null) {
 	    		message = messages.get(0);
 	    	}
-	    	sendToLogger("Bluetooth: Connected to\n\tNeighbor: " + currentNeighbor.getName() 
+	    	sendToLogger("Bluetooth: Connected to Neighbor:\n\t" + currentNeighbor.getName() 
 	    			+ " with address " + currentNeighbor.getAddress()
-	    			+ "\n\tsending message: " + new String(messages.get(0)) + "\n");
-	    	write(messages.get(0));
+	    			+ "\n\tSending message: " + message + "\n");
+	    	write(message);
     	}
     }
     
@@ -148,12 +148,14 @@ public class BluetoothService extends Service implements IBluetoothService {
     	Intent i = new Intent(INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
     	i.putExtra(BLUETOOTH_NEIGHBOR_DATA, message);
     	sendBroadcast(i);
+    	sendToLogger("Bluetooth: Found Bluetooth Nieghbor:\n\t" + message + "\n");
     }
     
     public void newWifiNeighbor(byte[] message) {
     	Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
     	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, message);
     	sendBroadcast(i);
+    	sendToLogger("Bluetooth: Found Wifi Nieghbor:\n\t" + message + "\n");
     }
     
 	public void sendToLogger(String message) {
@@ -354,6 +356,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	if (broadcasting) {
     		processNextMessage();
     	}
+    	else {
+    		start();
+    	}
     }
 
     /**
@@ -365,6 +370,9 @@ public class BluetoothService extends Service implements IBluetoothService {
         
     	if (broadcasting) {
     		processNextMessage();
+    	}
+    	else {
+    		start();
     	}
     }
 
@@ -572,7 +580,7 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		
                     		sendToLogger("Bluetooth: Received message\n\t"
                     				+ "Message: " + new String(message)
-                    				+ "\n\tfrom\n\tNeighbor: " + mmSocket.getRemoteDevice().getName()
+                    				+ "\n\tfrom Neighbor: " + mmSocket.getRemoteDevice().getName()
                     				+ " with address " + mmSocket.getRemoteDevice().getAddress() + "\n");
                     		
                     		switch(message[Neighbor.INDEX_OF_HEADER]) {
@@ -586,6 +594,9 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		
                     		if (!broadcasting) {
                     			sendMessageToNeighbor(myContactInfo.getBytes());
+                    		}
+                    		else {
+                    			processNextMessage();
                     		}
                     	}
                     }
@@ -607,9 +618,6 @@ public class BluetoothService extends Service implements IBluetoothService {
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }
-            if (broadcasting) {
-        		processNextMessage();
-        	}
         }
 
         public void cancel() {
