@@ -46,6 +46,8 @@ public class WifiService extends Service implements IWifiService {
 	public static final String RESUME_DELAY = "O_o";
 	public static final String NEW_PHONE_NAME = "<><><><><><><><><><<";
 	public static final String INTENT_TO_UPDATE_NAME = "^^;;";
+	public static final String WIFI_NEIGHBOR_CURRENT_TIMESLICE = null;
+	public static final String WIFI_NEIGHBOR_SCHEDULE_LENGTH = null;
 
 	private DiscoverSchedule discoveryScheduler;
 	private boolean wifiEnabled = false;
@@ -82,7 +84,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new NeverSchedule();
+		discoveryScheduler = new AlwaysSchedule();
 		coretask = new CoreTask();
 
 		try {
@@ -197,7 +199,7 @@ public class WifiService extends Service implements IWifiService {
 
 		private void sendWifiBroadcast() {
 			byte[] buf = new byte[1024];
-			String msg = "name";
+			String msg = myPhoneName + "\t" + timeSlice + "\t" + discoveryScheduler.scheduleLength();
 			buf = msg.getBytes();
 			DatagramSocket sock;
 			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
@@ -230,11 +232,13 @@ public class WifiService extends Service implements IWifiService {
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(
 							INTENT_TO_ADD_WIFI_NEIGHBOR);
-					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, "");
-					foundNewNeighbor.putExtra(WIFI_IP_ADDRESS, "");
+					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, rcv.split("\t")[0]);
+					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_CURRENT_TIMESLICE, rcv.split("\t")[1]);
+					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_SCHEDULE_LENGTH, rcv.split("\t")[2]);
+					foundNewNeighbor.putExtra(WIFI_IP_ADDRESS, pkt.getAddress().getHostAddress());
 					sendBroadcast(foundNewNeighbor);
 
-					sendToLogger("Found neighbor ");
+					sendToLogger("Found neighbor address:" + pkt.getAddress().getHostAddress() + " rcv:" + rcv);
 					sock.close();
 				} catch (InterruptedIOException e) {
 					// timed out, so no message was received
