@@ -123,9 +123,13 @@ public class SchedulerService extends Service implements ISchedulerService {
 				neighbor.name = intent.getStringExtra(WifiService.WIFI_NEIGHBOR_NAME);
 				neighbor.address = intent.getStringExtra(WifiService.WIFI_IP_ADDRESS);
 				
+				
+				String sourceOfUpdate = intent.getStringExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE);
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
-					bluetoothService.broadcast(new String(neighbor.getBytes()));
+					if (WifiService.DISCOVERED_OVER_WIFI.equals(sourceOfUpdate)) {
+						bluetoothService.broadcast(new String(neighbor.getBytes()));
+					}
 				}
 			}
 			else if (BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR.equals(intent.getAction())) {

@@ -24,6 +24,7 @@ import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 import edu.illinois.CS598rhk.models.Neighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
+	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
 	public static final String INTENT_TO_ADD_BLUETOOTH_NEIGHBOR = "add bluetooth neighbor";
 	public static final String BLUETOOTH_NEIGHBOR_DATA = "bluetooth neighbor data";
 	
@@ -154,6 +155,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     public void newWifiNeighbor(byte[] message) {
     	Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
     	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, message);
+    	i.putExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, DISCOVERED_OVER_BLUETOOTH);
     	sendBroadcast(i);
     	sendToLogger("Bluetooth: Found Wifi Nieghbor:\n\t" + message + "\n");
     }
