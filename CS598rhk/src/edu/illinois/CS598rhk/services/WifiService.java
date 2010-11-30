@@ -46,8 +46,8 @@ public class WifiService extends Service implements IWifiService {
 	public static final String RESUME_DELAY = "O_o";
 	public static final String NEW_PHONE_NAME = "<><><><><><><><><><<";
 	public static final String INTENT_TO_UPDATE_NAME = "^^;;";
-	public static final String WIFI_NEIGHBOR_CURRENT_TIMESLICE = null;
-	public static final String WIFI_NEIGHBOR_SCHEDULE_LENGTH = null;
+	public static final String WIFI_NEIGHBOR_CURRENT_TIMESLICE = "())(())()()()()()()()(";
+	public static final String WIFI_NEIGHBOR_SCHEDULE_LENGTH = "+++++++++++";
 
 	private DiscoverSchedule discoveryScheduler;
 	private boolean wifiEnabled = false;
