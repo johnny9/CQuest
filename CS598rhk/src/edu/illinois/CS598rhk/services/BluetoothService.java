@@ -202,6 +202,8 @@ public class BluetoothService extends Service implements IBluetoothService {
     	Random rand = new Random();
     	int value = rand.nextInt(myElectionResponseWindow);
     	
+    	sendToLogger("BluetoothService: Responding to election with value " + String.valueOf(value) + "\n");
+    	
     	return new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER, new DiscoveryElectionMessage(value));
     }
     
@@ -219,6 +221,11 @@ public class BluetoothService extends Service implements IBluetoothService {
 			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 			i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY, delay);
 			sendBroadcast(i);
+			
+			myElectionResponseWindow = 1024;
+		}
+		else {
+			myElectionResponseWindow = Math.max(64, myElectionResponseWindow / 2);
 		}
 	}
     
@@ -255,7 +262,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 			byte[] delayUntilWinnerDiscovery = ByteBuffer.allocate(8)
 					.putLong(myContactInfo.progress).array();
-			System.arraycopy(electionResult, 1 + winnerAddress.length,
+			System.arraycopy(electionResult, winnerAddress.length,
 					delayUntilWinnerDiscovery, 0, 8);
 
 			broadcast(new BluetoothMessage(
@@ -270,6 +277,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			sendBroadcast(i);
 		}
 	}
+	
 	public void sendToLogger(String message) {
 		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
@@ -712,12 +720,13 @@ public class BluetoothService extends Service implements IBluetoothService {
                     			break;
                     		}
                     		
-                    		if (!broadcasting) {
-                    			sendMessageToNeighbor(new BluetoothMessage(myContactInfo.getMessageType(), myContactInfo));
-                    		}
-                    		else {
-                    			processNextMessage();
-                    		}
+							if (!broadcasting) {
+								sendMessageToNeighbor(new BluetoothMessage(
+										myContactInfo.getMessageType(),
+										myContactInfo));
+							} else {
+								processNextMessage();
+							}
                     	}
                     }
                 } catch (IOException e) {

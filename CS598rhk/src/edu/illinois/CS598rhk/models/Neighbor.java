@@ -13,7 +13,7 @@ public class Neighbor implements IBluetoothMessage {
 		byte[] tempName = name.getBytes();
 		byte[] tempAddress = address.getBytes();
 		
-		int msgLength = 4 + tempName.length + 4 + tempAddress.length + 12;
+		int msgLength = 4 + tempName.length + 4 + tempAddress.length;
 		byte[] bytes = new byte[msgLength];
 		int currentIndex = 0;
 		

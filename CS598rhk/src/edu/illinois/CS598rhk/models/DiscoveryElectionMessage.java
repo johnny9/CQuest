@@ -1,5 +1,7 @@
 package edu.illinois.CS598rhk.models;
 
+import java.nio.ByteBuffer;
+
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 
 public class DiscoveryElectionMessage implements IBluetoothMessage {
@@ -11,11 +13,13 @@ public class DiscoveryElectionMessage implements IBluetoothMessage {
 	public DiscoveryElectionMessage(byte messageType) {
 		this.messageType = messageType;
 		this.value = -1;
+		bytes = new byte[1];
 	}
 	
 	public DiscoveryElectionMessage(int value) {
 		this.messageType = BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER;
 		this.value = value;
+		bytes = new byte[1];
 	}
 	
 	public DiscoveryElectionMessage(byte[] bytes) {
@@ -26,7 +30,12 @@ public class DiscoveryElectionMessage implements IBluetoothMessage {
 	
 	@Override
 	public byte[] pack() {
-		return new byte[1];
+		byte[] valueBytes = ByteBuffer.allocate(4).putInt(value).array();
+		byte[] message = new byte[bytes.length + valueBytes.length];
+		
+		System.arraycopy(valueBytes, 0, message, 0, valueBytes.length);
+		System.arraycopy(bytes, 0, message, valueBytes.length, bytes.length);
+		return message;
 	}
 
 	@Override
