@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,14 +22,20 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
+import edu.illinois.CS598rhk.models.BluetoothMessage;
 import edu.illinois.CS598rhk.models.BluetoothNeighbor;
+import edu.illinois.CS598rhk.models.DiscoveryElectionMessage;
 import edu.illinois.CS598rhk.models.Neighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
 	public static final String INTENT_TO_ADD_BLUETOOTH_NEIGHBOR = "add bluetooth neighbor";
 	public static final String BLUETOOTH_NEIGHBOR_DATA = "bluetooth neighbor data";
+	
+	public static final String ACTION_ELECTED_FOR_WIFI_DISCOVERY = "action elected for wifi discovery";
+	public static final String DELY_UNTIL_STARTING_WIFI_DISCOVERY = "delay until starting wifi discovery";
 	
 	final IBinder mBinder = new BluetoothBinder();
     
@@ -43,11 +52,15 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     private BluetoothNeighbor myContactInfo;
     
-    private List<byte[]> messages;
+    private List<BluetoothMessage> messages;
     private Set<BluetoothDevice> neighbors;
     private Iterator<BluetoothDevice> nextNeighbor;
     private BluetoothDevice currentNeighbor;
     private boolean broadcasting;
+    
+    private boolean hostingElection;
+    private int myElectionResponseWindow;
+    private Map<BluetoothDevice, Integer> electionResponses;
     
     @Override
     public void onCreate() {
@@ -62,6 +75,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     	// We could use setName() here to allow the user to change the name we use
     	
     	mStateString = "STATE_INIT";
+    	myElectionResponseWindow = 1024;
     	
     	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
@@ -72,29 +86,36 @@ public class BluetoothService extends Service implements IBluetoothService {
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
     	nextNeighbor = neighbors.iterator();
     	
-    	messages = new ArrayList<byte[]>();
+    	messages = new ArrayList<BluetoothMessage>();
     	updateNeighbors();
     	return START_STICKY;
     }
     
-    public void updateScheduleProgress(int progress) {
+    public void updateScheduleProgress(long progress) {
     	synchronized(myContactInfo) {
     		sendToLogger("Bluetooth received progress update from " + myContactInfo.progress + " to " + progress);
     		myContactInfo.progress = progress;
     	}
     }
     
+	@Override
+	public void updateNeighborCount(int neighborCount) {
+		synchronized(myContactInfo) {
+			myContactInfo.neighborCount = neighborCount;
+		}
+	}
+    
     public void updateNeighbors() {
     	sendToLogger("Bluetooth: Begin updating neighbors\n");
-    	broadcast(myContactInfo.getBytes());
+    	broadcast(new BluetoothMessage(myContactInfo.getMessageType(), myContactInfo));
     }
     
-    public void broadcast(String message) {
+    public void broadcast(IBluetoothMessage message) {
     	sendToLogger("Bluetoooth: Received message to broadcast\n\tMessage: " + message + "\n");
-    	broadcast(message.getBytes());
+    	broadcast(new BluetoothMessage(message.getMessageType() ,message));
     }
     
-    private void broadcast(byte[] message) {
+    private void broadcast(BluetoothMessage message) {
     	synchronized(messages) {
 	    	messages.add(message);
 	    	if (!broadcasting) {
@@ -110,6 +131,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     }
     
     private void processNextMessage() {
+    	BluetoothMessage lastMessage = null;
     	synchronized(messages) {
 	     	if (nextNeighbor.hasNext()) {
 				currentNeighbor = nextNeighbor.next();
@@ -118,8 +140,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 						+ "\n\tand message: " + messages.get(0) + "\n");
 				connect(currentNeighbor);
 			}
-	    	else {
-	    		messages.remove(0);
+	    	else {	    		
+	    		lastMessage = messages.remove(0);
 	    		nextNeighbor = neighbors.iterator();
 	    		if (!messages.isEmpty()) {
 	    			processNextMessage();
@@ -131,9 +153,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    		}
 	    	}
     	}
+		if ( lastMessage != null && lastMessage.getMessageType() == BluetoothMessage.WIFI_ELECTION_HEADER && hostingElection) {
+			finalizeElection();
+		}
     }
     
-    private void sendMessageToNeighbor(byte[] message) {
+    private void sendMessageToNeighbor(BluetoothMessage message) {
     	synchronized(messages) {
 	    	if (message == null) {
 	    		message = messages.get(0);
@@ -141,25 +166,110 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    	sendToLogger("Bluetooth: Connected to Neighbor:\n\t" + currentNeighbor.getName() 
 	    			+ " with address " + currentNeighbor.getAddress()
 	    			+ "\n\tSending message: " + message + "\n");
-	    	write(message);
+	    	write(message.getMessageWithHeader());
     	}
     }
     
     public void newBluetoothNeighbor(byte[] message) {
     	Intent i = new Intent(INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
-    	i.putExtra(BLUETOOTH_NEIGHBOR_DATA, message);
+    	i.putExtra(BLUETOOTH_NEIGHBOR_DATA, BluetoothMessage.stripHeader(message));
     	sendBroadcast(i);
-    	sendToLogger("Bluetooth: Found Bluetooth Nieghbor:\n\t" + message + "\n");
+    	sendToLogger("Bluetooth: Found Bluetooth Nieghbor:\n\t" + new String(message) + "\n");
     }
     
     public void newWifiNeighbor(byte[] message) {
     	Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
-    	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, message);
+    	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, BluetoothMessage.stripHeader(message));
     	i.putExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, DISCOVERED_OVER_BLUETOOTH);
     	sendBroadcast(i);
     	sendToLogger("Bluetooth: Found Wifi Nieghbor:\n\t" + message + "\n");
     }
     
+    public void hostWifiDiscoveryElection() {
+    	if (!hostingElection) {
+    		sendToLogger("BluetoothService: Starting new Wifi discovery election!\n");
+    		hostingElection = true;
+    		electionResponses = new HashMap<BluetoothDevice, Integer>();
+    		BluetoothMessage election = new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_HEADER, new DiscoveryElectionMessage(BluetoothMessage.WIFI_ELECTION_HEADER));
+    		broadcast(election);
+    	}
+    	else {
+    		sendToLogger("BluetoothService: Already hosting election, request ignored.\n");
+    	}
+    }
+    
+    private BluetoothMessage getElectionResponse() {
+    	Random rand = new Random();
+    	int value = rand.nextInt(myElectionResponseWindow);
+    	
+    	return new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER, new DiscoveryElectionMessage(value));
+    }
+    
+	private void handleElectionResults(byte[] result) {
+		int addressLength = myContactInfo.address.getBytes().length;
+		byte[] winnerAddressBytes = new byte[addressLength];
+		System.arraycopy(result, 5, winnerAddressBytes, 0, addressLength);
+
+		String winnerAddress = new String(winnerAddressBytes);
+		if (myContactInfo.address.equals(winnerAddress)) {
+			byte[] temp = new byte[8];
+			System.arraycopy(result, 1 + addressLength, temp, 0, 8);
+			long delay = ByteBuffer.wrap(temp).getLong();
+
+			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
+			i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY, delay);
+			sendBroadcast(i);
+		}
+	}
+    
+    private void handleElectionResponse(byte[] message, BluetoothDevice neighbor) {
+    	byte[] temp = new byte[4];
+		System.arraycopy(message, 5, temp, 0, 4);
+		int value = ByteBuffer.wrap(temp).getInt();
+		synchronized(electionResponses) {
+			electionResponses.put(neighbor, value);
+		}
+    }
+    
+	private void finalizeElection() {
+		BluetoothDevice winner = null;
+		Integer currentBest = 1024;
+
+		Set<BluetoothDevice> neighbors = electionResponses.keySet();
+		for (BluetoothDevice neighbor : neighbors) {
+			Integer value = electionResponses.get(neighbor);
+			if (value <= currentBest) {
+				currentBest = value;
+				winner = neighbor;
+			}
+		}
+		electionResponses = null;
+		hostingElection = false;
+
+		if (winner != null) {
+			byte[] winnerAddress = winner.getAddress().getBytes();
+			int msgLength = winnerAddress.length + 8;
+			byte[] electionResult = new byte[msgLength];
+			System.arraycopy(winnerAddress, 0, electionResult, 0,
+					winnerAddress.length);
+
+			byte[] delayUntilWinnerDiscovery = ByteBuffer.allocate(8)
+					.putLong(myContactInfo.progress).array();
+			System.arraycopy(electionResult, 1 + winnerAddress.length,
+					delayUntilWinnerDiscovery, 0, 8);
+
+			broadcast(new BluetoothMessage(
+					BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER,
+					new DiscoveryElectionMessage(electionResult)));
+		} else {
+			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
+			synchronized (myContactInfo) {
+				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
+						myContactInfo.progress);
+			}
+			sendBroadcast(i);
+		}
+	}
 	public void sendToLogger(String message) {
 		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
@@ -570,12 +680,11 @@ public class BluetoothService extends Service implements IBluetoothService {
                     	if (!receivingMessage && bytesRead >= 4) {
                     		receivingMessage = true;
                     		
-                    		ByteBuffer bb = ByteBuffer.wrap(buffer,0,4);
-                    		messageLength = bb.getInt();
+                    		messageLength = ByteBuffer.wrap(buffer,0,4).getInt();
                     		message = new byte[messageLength];
-                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
                     	}
                     	else if (receivingMessage && bytesRead == messageLength){
+                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
                     		receivingMessage = false;
                     		bytesRead = 0;
                     		messageLength = 4;
@@ -585,17 +694,26 @@ public class BluetoothService extends Service implements IBluetoothService {
                     				+ "\n\tfrom Neighbor: " + mmSocket.getRemoteDevice().getName()
                     				+ " with address " + mmSocket.getRemoteDevice().getAddress() + "\n");
                     		
-                    		switch(message[Neighbor.INDEX_OF_HEADER]) {
-                    		case Neighbor.BLUETOOTH_NEIGHBOR_HEADER:
+                    		switch(message[BluetoothMessage.INDEX_OF_HEADER]) {
+                    		case BluetoothMessage.BLUETOOTH_NEIGHBOR_HEADER:
                     			newBluetoothNeighbor(message);
                     			break;
-                    		case Neighbor.WIFI_NEIGHBOR_HEADER:
+                    		case BluetoothMessage.WIFI_NEIGHBOR_HEADER:
                     			newWifiNeighbor(message);
+                    			break;
+                    		case BluetoothMessage.WIFI_ELECTION_HEADER:
+                    			sendMessageToNeighbor(getElectionResponse());
+                    			break;
+                    		case BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER:
+                    			handleElectionResults(message);
+                    			break;
+                    		case BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER:
+                    			handleElectionResponse(message, currentNeighbor);
                     			break;
                     		}
                     		
                     		if (!broadcasting) {
-                    			sendMessageToNeighbor(myContactInfo.getBytes());
+                    			sendMessageToNeighbor(new BluetoothMessage(myContactInfo.getMessageType(), myContactInfo));
                     		}
                     		else {
                     			processNextMessage();

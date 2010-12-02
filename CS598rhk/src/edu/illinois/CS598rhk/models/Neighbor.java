@@ -1,18 +1,61 @@
 package edu.illinois.CS598rhk.models;
 
-public abstract class Neighbor {
-	public static final byte INDEX_OF_HEADER = 4;
-	
-	protected static final int INDEX_OF_NAME_LENGTH = 5;
-	protected static final int INDEX_OF_NAME = 9;
-	
-	public static final byte BLUETOOTH_NEIGHBOR_HEADER = 0;
-	public static final byte WIFI_NEIGHBOR_HEADER = 1;
-	
+import java.nio.ByteBuffer;
+
+import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
+
+
+public class Neighbor implements IBluetoothMessage {
 	public String name;
 	public String address;
 	
-	public abstract byte[] getBytes();
+	public byte[] pack() {
+		byte[] tempName = name.getBytes();
+		byte[] tempAddress = address.getBytes();
+		
+		int msgLength = 4 + tempName.length + 4 + tempAddress.length + 12;
+		byte[] bytes = new byte[msgLength];
+		int currentIndex = 0;
+		
+		byte[] nameLengthBytes = ByteBuffer.allocate(4).putInt(tempName.length).array();
+		System.arraycopy(nameLengthBytes, 0, bytes, currentIndex, 4);
+		currentIndex += 4;
+		
+		System.arraycopy(tempName, 0, bytes, currentIndex, tempName.length);
+		currentIndex += tempName.length;
+		
+		byte[] addressLengthBytes = ByteBuffer.allocate(4).putInt(tempAddress.length).array();
+		System.arraycopy(addressLengthBytes, 0, bytes, currentIndex, 4);
+		currentIndex += 4;
+		
+		System.arraycopy(tempAddress, 0, bytes, currentIndex, tempAddress.length);
+		currentIndex += tempAddress.length;
+		
+		return bytes;
+	}
 	
-	public abstract byte getHeaderType();
+	public void unpack(byte[] bytes) {
+		byte[] temp = new byte[4];
+		System.arraycopy(bytes, 0, temp, 0, 4);
+		int nameLength = ByteBuffer.wrap(temp).getInt();
+		name = new String(bytes, 4, nameLength);
+		
+		System.arraycopy(bytes, 4 + nameLength, temp, 0, 4);
+		int addressLength = ByteBuffer.wrap(temp).getInt();
+		int indexOfAddress = 4 + nameLength + 4;
+		address = new String(bytes, indexOfAddress, addressLength);
+	}
+	
+	public byte getMessageType() {
+		return BluetoothMessage.NEIGHBOR_HEADER;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Neighbor) {
+			Neighbor neighbor = (Neighbor) o;
+			return (name.equals(neighbor.name) && address.equals(neighbor.address));
+		}
+		return false;
+	}
 }

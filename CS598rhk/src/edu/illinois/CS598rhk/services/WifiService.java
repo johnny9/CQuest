@@ -40,7 +40,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String WIFI_IP_ADDRESS = "ip address";
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
-
+	
 	private static final int DISCOVERY_PERIOD = 5000;
 	private static final String MSG_TAG = "MyWifiService";
 	public static final String RESUME_DELAY = "O_o";
@@ -321,7 +321,9 @@ public class WifiService extends Service implements IWifiService {
 				}
 
 				timeSlice = (timeSlice + 1) % mySchedule.length;
-
+				Intent i = new Intent(INTENT_TO_UPDATE_SCHEDULE_PROGRESS);
+				i.putExtra(SCHEDULE_PROGRESS_UPDATE, scheduleTimeRemaining());
+				sendBroadcast(i);
 			}
 		}
 	}
