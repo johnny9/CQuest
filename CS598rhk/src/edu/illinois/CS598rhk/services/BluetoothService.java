@@ -27,7 +27,6 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.models.BluetoothMessage;
 import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 import edu.illinois.CS598rhk.models.DiscoveryElectionMessage;
-import edu.illinois.CS598rhk.models.Neighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
@@ -80,7 +79,11 @@ public class BluetoothService extends Service implements IBluetoothService {
     	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
     	myContactInfo.progress = 0;
-    	sendToLogger("Bluetooth name: " + myContactInfo.name + " Bluetooth address: " + myContactInfo.address + "\n");
+    	
+    	sendToLogger("BluetoothService:" 
+    			+ "\n\tName: " + myContactInfo.name
+    			+ "\n\tAddress: " + myContactInfo.address
+    			+ "\n");
     	
     	broadcasting = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
@@ -93,39 +96,53 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     public void updateScheduleProgress(long progress) {
     	synchronized(myContactInfo) {
-    		sendToLogger("Bluetooth received progress update from " + myContactInfo.progress + " to " + progress);
+    		sendToLogger("BluetoothService:"
+    				+ "\n\tReceived progress update from " + myContactInfo.progress + " to " + progress
+    				+ "\n");
     		myContactInfo.progress = progress;
     	}
     }
     
 	@Override
 	public void updateNeighborCount(int neighborCount) {
+		sendToLogger("BluetoothService:"
+				+ "Updating neighborCount to " + neighborCount
+				+ "\n");
 		synchronized(myContactInfo) {
 			myContactInfo.neighborCount = neighborCount;
 		}
 	}
     
     public void updateNeighbors() {
-    	sendToLogger("Bluetooth: Begin updating neighbors\n");
+    	sendToLogger("BluetoothService:"
+    			+ "Begin updating neighbors\n");
     	broadcast(new BluetoothMessage(myContactInfo.getMessageType(), myContactInfo));
     }
     
     public void broadcast(IBluetoothMessage message) {
-    	sendToLogger("Bluetoooth: Received message to broadcast\n\tMessage: " + message + "\n");
+    	sendToLogger("BluetooothService:"
+    			+ "\n\tReceived message to broadcast"
+    			+ "\n\tMessage:" + message
+    			+ "\n");
     	broadcast(new BluetoothMessage(message.getMessageType() ,message));
     }
     
     private void broadcast(BluetoothMessage message) {
     	synchronized(messages) {
 	    	messages.add(message);
-	    	if (!broadcasting) {
+	    	if (!broadcasting && !(new Integer(STATE_CONNECTED).equals(getState()))) {
 	    		stop();
 				broadcasting = true;
 				processNextMessage();
 			}
 	    	else {
-	    		sendToLogger("Bluetooth: Currently broadcasting message\n\tMessage: " + messages.get(0)
-	    				+ "\n\tQueuing message: " + message + "\n");
+	    		sendToLogger("BluetoothService:"
+	    				+ "\n\tCurrently connected to neighbor...\n");
+//	    		sendToLogger("BluetoothService:"
+//	    				+ "\n\tCurrently broadcasting message"
+//	    				+ "\n\tMessage: " + messages.get(0)
+//	    				+ "\n\tQueuing message: " + message 
+//	    				+ "\n");
 	    	}
     	}
     }
@@ -135,9 +152,11 @@ public class BluetoothService extends Service implements IBluetoothService {
     	synchronized(messages) {
 	     	if (nextNeighbor.hasNext()) {
 				currentNeighbor = nextNeighbor.next();
-				sendToLogger("Bluetooth: Attempting to connect to Neighbor:\n\t" + currentNeighbor.getName() 
-						+ " with address " + currentNeighbor.getAddress()
-						+ "\n\tand message: " + messages.get(0) + "\n");
+				sendToLogger("BluetoothService: "
+						+ "\n\tAttempting to connect to Neighbor:"
+						+ "\n\t" + currentNeighbor
+						+ "\n\tWith message: " + messages.get(0)
+						+ "\n");
 				connect(currentNeighbor);
 			}
 	    	else {	    		
@@ -148,7 +167,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    		}
 	    		else {
 	    			broadcasting = false;
-	    			sendToLogger("Bluetooth: Done Broadcasting\n");
+	    			sendToLogger("BluetoothService:"
+	    					+ "\n\tDone Broadcasting"
+	    					+ "\n");
 	    			start();
 	    		}
 	    	}
@@ -163,9 +184,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    	if (message == null) {
 	    		message = messages.get(0);
 	    	}
-	    	sendToLogger("Bluetooth: Connected to Neighbor:\n\t" + currentNeighbor.getName() 
-	    			+ " with address " + currentNeighbor.getAddress()
-	    			+ "\n\tSending message: " + message + "\n");
+	    	sendToLogger("BluetoothService:"
+	    			+ "\n\tConnected to Neighbor:\n\t" + currentNeighbor
+	    			+ "\n\tSending message: " + message
+	    			+ "\n");
 	    	write(message.getMessageWithHeader());
     	}
     }
@@ -174,27 +196,37 @@ public class BluetoothService extends Service implements IBluetoothService {
     	Intent i = new Intent(INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
     	i.putExtra(BLUETOOTH_NEIGHBOR_DATA, BluetoothMessage.stripHeader(message));
     	sendBroadcast(i);
-    	sendToLogger("Bluetooth: Found Bluetooth Nieghbor:\n\t" + new String(message) + "\n");
+    	sendToLogger("BluetoothService:"
+    			+ "\n\tFound Bluetooth Nieghbor:"
+    			+ "\n\t" + BluetoothMessage.parse(message).toString()
+    			+ "\n");
     }
     
     public void newWifiNeighbor(byte[] message) {
+    	sendToLogger("BluetoothService:"
+    			+ "\n\tFound Wifi Nieghbor:"
+    			+ "\n\t" + BluetoothMessage.parse(message).toString()
+    			+ "\n");
     	Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
     	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, BluetoothMessage.stripHeader(message));
     	i.putExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, DISCOVERED_OVER_BLUETOOTH);
     	sendBroadcast(i);
-    	sendToLogger("Bluetooth: Found Wifi Nieghbor:\n\t" + message + "\n");
     }
     
     public void hostWifiDiscoveryElection() {
     	if (!hostingElection) {
-    		sendToLogger("BluetoothService: Starting new Wifi discovery election!\n");
+    		sendToLogger("BluetoothService:"
+    				+ "\n\tStarting new Wifi discovery election!"
+    				+ "\n");
     		hostingElection = true;
     		electionResponses = new HashMap<BluetoothDevice, Integer>();
     		BluetoothMessage election = new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_HEADER, new DiscoveryElectionMessage(BluetoothMessage.WIFI_ELECTION_HEADER));
     		broadcast(election);
     	}
     	else {
-    		sendToLogger("BluetoothService: Already hosting election, request ignored.\n");
+    		sendToLogger("BluetoothService:"
+    				+ "\n\tAlready hosting election, request ignored."
+    				+ "\n");
     	}
     }
     
@@ -202,7 +234,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	Random rand = new Random();
     	int value = rand.nextInt(myElectionResponseWindow);
     	
-    	sendToLogger("BluetoothService: Responding to election with value " + String.valueOf(value) + "\n");
+    	sendToLogger("BluetoothService:"
+    			+ "\n\tResponding to election with value " + String.valueOf(value)
+    			+ "\n");
     	
     	return new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER, new DiscoveryElectionMessage(value));
     }
@@ -222,10 +256,16 @@ public class BluetoothService extends Service implements IBluetoothService {
 			i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY, delay);
 			sendBroadcast(i);
 			
+			sendToLogger("BluetoothService:"
+					+ "\n\tIncreasing electionWindow from " + myElectionResponseWindow + " to 1024"
+					+ "\n");
 			myElectionResponseWindow = 1024;
 		}
 		else {
 			myElectionResponseWindow = Math.max(64, myElectionResponseWindow / 2);
+			sendToLogger("BluetoothService:"
+					+ "\n\tDecreasing electionWindow to " + myElectionResponseWindow
+					+ "\n");
 		}
 	}
     
@@ -233,6 +273,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	byte[] temp = new byte[4];
 		System.arraycopy(message, 5, temp, 0, 4);
 		int value = ByteBuffer.wrap(temp).getInt();
+		sendToLogger("BluetoothService:"
+				+ "\n\tReceived value " + value + " from neighbor " + neighbor.getAddress()
+				+ "\n");
 		synchronized(electionResponses) {
 			electionResponses.put(neighbor, value);
 		}
@@ -254,21 +297,26 @@ public class BluetoothService extends Service implements IBluetoothService {
 		hostingElection = false;
 
 		if (winner != null) {
-			byte[] winnerAddress = winner.getAddress().getBytes();
-			int msgLength = winnerAddress.length + 8;
-			byte[] electionResult = new byte[msgLength];
-			System.arraycopy(winnerAddress, 0, electionResult, 0,
-					winnerAddress.length);
-
-			byte[] delayUntilWinnerDiscovery = ByteBuffer.allocate(8)
-					.putLong(myContactInfo.progress).array();
-			System.arraycopy(electionResult, winnerAddress.length,
-					delayUntilWinnerDiscovery, 0, 8);
-
+			String winnerAddress = winner.getAddress();
+			long delay = myContactInfo.progress;
+			
+			sendToLogger("BluetoothService:"
+					+ "\n\tWinner of election is " + winner.getAddress()
+					+ "\n");
 			broadcast(new BluetoothMessage(
 					BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER,
-					new DiscoveryElectionMessage(electionResult)));
+					new DiscoveryElectionMessage(winnerAddress, delay)));
+			
+			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
+			synchronized (myContactInfo) {
+				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
+						(-1 * myContactInfo.progress));
+			}
+			sendBroadcast(i);
 		} else {
+			sendToLogger("BluetoothService:"
+					+ "\n\tNo winner from election, electing self..."
+					+ "\n");
 			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 			synchronized (myContactInfo) {
 				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
@@ -359,7 +407,7 @@ public class BluetoothService extends Service implements IBluetoothService {
         
         mState = state;
         
-        sendToLogger(log);
+        sendToLogger("BluetoothService:\n\t" + log + "\n");
         // Give the new state to the Handler so the UI Activity can update
 //        mHandler.obtainMessage(BluetoothChat.MESSAGE_STATE_CHANGE, state, -1).sendToTarget();
     }
@@ -690,21 +738,42 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		
                     		messageLength = ByteBuffer.wrap(buffer,0,4).getInt();
                     		message = new byte[messageLength];
+                    		sendToLogger("\n\nRECEIVING MESSAGE OF LENGTH " + messageLength + "\n\n");
                     	}
                     	else if (receivingMessage && bytesRead == messageLength){
-                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
                     		receivingMessage = false;
+                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
+                    		
+                    		sendToLogger("\n\nRECEIVING MESSAGE --(" + bytesRead + " of " + messageLength + ")\n\n");
                     		bytesRead = 0;
                     		messageLength = 4;
                     		
-                    		sendToLogger("Bluetooth: Received message\n\t"
-                    				+ "Message: " + new String(message)
-                    				+ "\n\tfrom Neighbor: " + mmSocket.getRemoteDevice().getName()
-                    				+ " with address " + mmSocket.getRemoteDevice().getAddress() + "\n");
+                    		byte[] messageHeader = new byte[BluetoothMessage.HEADER_LENGTH];
+                    		System.arraycopy(message, 0, messageHeader, 0, BluetoothMessage.HEADER_LENGTH);
+                    		
+                    		byte messageType = messageHeader[4];
+                    		
+                    		byte[] messageLengthBytes = new byte[4];
+                    		System.arraycopy(message, 0, messageLengthBytes, 0, 4);
+                    		int messageLength = ByteBuffer.wrap(messageLengthBytes).getInt();
+                    		
+                    		sendToLogger("\n\nTYPE: " + messageType + " LENGTH: " + messageLength + "\n\n");
+                    		
+                    		sendToLogger("BluetoothService:"
+                    				+ "\n\tReceived message from Neighbor:" 
+                    				+ "\n\tName: " + mmSocket.getRemoteDevice().getName()
+                    				+ "\n\tAddress: " + mmSocket.getRemoteDevice().getAddress()
+                    				+ "\n\tMessage: " + BluetoothMessage.parse(message).toString()
+                    				+ "\n");
                     		
                     		switch(message[BluetoothMessage.INDEX_OF_HEADER]) {
                     		case BluetoothMessage.BLUETOOTH_NEIGHBOR_HEADER:
                     			newBluetoothNeighbor(message);
+                    			if (!broadcasting) {
+    								sendMessageToNeighbor(new BluetoothMessage(
+    										myContactInfo.getMessageType(),
+    										myContactInfo));
+    							}
                     			break;
                     		case BluetoothMessage.WIFI_NEIGHBOR_HEADER:
                     			newWifiNeighbor(message);
@@ -720,11 +789,7 @@ public class BluetoothService extends Service implements IBluetoothService {
                     			break;
                     		}
                     		
-							if (!broadcasting) {
-								sendMessageToNeighbor(new BluetoothMessage(
-										myContactInfo.getMessageType(),
-										myContactInfo));
-							} else {
+							if (broadcasting) {
 								processNextMessage();
 							}
                     	}

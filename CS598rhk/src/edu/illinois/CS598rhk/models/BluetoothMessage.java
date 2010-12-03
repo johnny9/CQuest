@@ -6,6 +6,7 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 
 public class BluetoothMessage {
 	public static final int INDEX_OF_HEADER = 4;
+	public static final int HEADER_LENGTH = 5;
 	
 	public static final byte NEIGHBOR_HEADER = 0;
 	public static final byte BLUETOOTH_NEIGHBOR_HEADER = 1;
@@ -47,5 +48,57 @@ public class BluetoothMessage {
 		byte[] stripped = new byte[message.length - 5];
 		System.arraycopy(message, 5, stripped, 0, stripped.length);
 		return stripped;
+	}
+	
+	public static IBluetoothMessage parse(byte[] bytes) {
+		IBluetoothMessage parsedMessage = null;
+		
+		byte[] messageHeader = new byte[HEADER_LENGTH];
+		System.arraycopy(bytes, 0, messageHeader, 0, HEADER_LENGTH);
+		
+		byte messageType = messageHeader[4];
+		
+		byte[] messageLengthBytes = new byte[4];
+		System.arraycopy(bytes, 0, messageLengthBytes, 0, 4);
+		int messageLength = ByteBuffer.wrap(messageLengthBytes).getInt();
+		
+		if (messageLength == bytes.length) {
+			byte[] messageBytes = new byte[messageLength];
+			System.arraycopy(bytes, HEADER_LENGTH, messageBytes, 0, messageLength - HEADER_LENGTH);
+			
+			switch(messageType) {
+			case NEIGHBOR_HEADER:
+				parsedMessage = new Neighbor();
+				break;
+			case BLUETOOTH_NEIGHBOR_HEADER:
+				parsedMessage = new BluetoothNeighbor();
+				break;
+			case WIFI_NEIGHBOR_HEADER:
+				parsedMessage = new WifiNeighbor();
+				break;
+			case WIFI_ELECTION_HEADER:
+				parsedMessage = new DiscoveryElectionMessage(messageType);
+				break;
+			case WIFI_ELECTION_RESPONSE_HEADER:
+				parsedMessage = new DiscoveryElectionMessage(messageType);
+				break;
+			case WIFI_ELECTION_RESULTS_HEADER:
+				parsedMessage = new DiscoveryElectionMessage(messageType);
+				break;
+			default:
+				break;
+			}
+			
+			if (parsedMessage != null) {
+				parsedMessage.unpack(messageBytes);
+			}
+		}
+		
+		return parsedMessage;
+	}
+	
+	@Override
+	public String toString() {
+		return message.toString();
 	}
 }

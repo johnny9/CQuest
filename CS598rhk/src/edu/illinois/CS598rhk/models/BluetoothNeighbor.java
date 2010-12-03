@@ -53,4 +53,12 @@ public class BluetoothNeighbor extends Neighbor {
 	public byte getMessageType() {
 		return BluetoothMessage.BLUETOOTH_NEIGHBOR_HEADER;
 	}
+	
+	@Override
+	public String toString() {
+		String prettyString = super.toString();
+		prettyString += "\n\tProgress: " + String.valueOf(progress)
+					+ "\n\tNeighborCount: " + String.valueOf(neighborCount);
+		return prettyString;
+	}
 }

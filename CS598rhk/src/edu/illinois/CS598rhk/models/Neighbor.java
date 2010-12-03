@@ -51,6 +51,14 @@ public class Neighbor implements IBluetoothMessage {
 	}
 	
 	@Override
+	public String toString() {
+		String prettyString = "Neighbor:"
+			+ "\n\tName: " + name
+			+ "\n\tAddress: " + address;
+		return prettyString;
+	}
+	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Neighbor) {
 			Neighbor neighbor = (Neighbor) o;
