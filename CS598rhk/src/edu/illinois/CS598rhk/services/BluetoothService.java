@@ -5,10 +5,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -59,7 +58,12 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     private boolean hostingElection;
     private int myElectionResponseWindow;
-    private Map<BluetoothDevice, Integer> electionResponses;
+    private List<Pair<BluetoothDevice, Integer>> electionResponses;
+    
+    private List<ElectionAnnouncement> electionAnnouncements;
+    private Iterator<ElectionAnnouncement> nextAnnouncement;
+    private ElectionAnnouncement currentAnnouncement;
+    private boolean announcingResults;
     
     @Override
     public void onCreate() {
@@ -86,6 +90,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     			+ "\n");
     	
     	broadcasting = false;
+    	announcingResults = false;
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
     	nextNeighbor = neighbors.iterator();
     	
@@ -179,7 +184,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
     }
     
-    private void sendMessageToNeighbor(BluetoothMessage message) {
+    private void sendMessage(BluetoothMessage message) {
     	synchronized(messages) {
 	    	if (message == null) {
 	    		message = messages.get(0);
@@ -190,6 +195,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 	    			+ "\n");
 	    	write(message.getMessageWithHeader());
     	}
+    }
+    
+    private void connectToNeighbor(BluetoothDevice device) {
+    	sendToLogger("BluetoothService:"
+    			+ "\n\tConnecting to neighbor: " + device.getAddress());
+    	connect(device);
     }
     
     public void newBluetoothNeighbor(byte[] message) {
@@ -219,7 +230,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     				+ "\n\tStarting new Wifi discovery election!"
     				+ "\n");
     		hostingElection = true;
-    		electionResponses = new HashMap<BluetoothDevice, Integer>();
+    		electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
     		BluetoothMessage election = new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_HEADER, new DiscoveryElectionMessage(BluetoothMessage.WIFI_ELECTION_HEADER));
     		broadcast(election);
     	}
@@ -241,7 +252,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     	return new BluetoothMessage(BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER, new DiscoveryElectionMessage(value));
     }
     
-	private void handleElectionResults(byte[] result) {
+	private void handleElectionAnnouncement(byte[] result) {
 		int addressLength = myContactInfo.address.getBytes().length;
 		byte[] winnerAddressBytes = new byte[addressLength];
 		System.arraycopy(result, 5, winnerAddressBytes, 0, addressLength);
@@ -277,50 +288,70 @@ public class BluetoothService extends Service implements IBluetoothService {
 				+ "\n\tReceived value " + value + " from neighbor " + neighbor.getAddress()
 				+ "\n");
 		synchronized(electionResponses) {
-			electionResponses.put(neighbor, value);
+			electionResponses.add(new Pair<BluetoothDevice, Integer>(neighbor, value));
 		}
     }
     
 	private void finalizeElection() {
-		BluetoothDevice winner = null;
-		Integer currentBest = 1024;
-
-		Set<BluetoothDevice> neighbors = electionResponses.keySet();
-		for (BluetoothDevice neighbor : neighbors) {
-			Integer value = electionResponses.get(neighbor);
-			if (value <= currentBest) {
-				currentBest = value;
-				winner = neighbor;
-			}
+		sendToLogger("BluetoothService:"
+				+ "\n\tFinalizing Election...\n");
+		Collections.sort(electionResponses);
+		electionAnnouncements = new ArrayList<ElectionAnnouncement>();
+		
+		long delay = myContactInfo.progress;
+		for (Pair<BluetoothDevice, Integer> response : electionResponses) {
+			electionAnnouncements.add(new ElectionAnnouncement(response.first,
+					new DiscoveryElectionMessage(response.first.getAddress(),
+							delay)));
 		}
+		
+		nextAnnouncement = electionAnnouncements.iterator();
+		announcingResults = true;
+		try {
+			Thread.sleep(1000); // Allow neighbors to get back into listening state after election connections
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		announceResults();
+
 		electionResponses = null;
 		hostingElection = false;
-
-		if (winner != null) {
-			String winnerAddress = winner.getAddress();
-			long delay = myContactInfo.progress;
-			
+	}
+	
+	private void announceResults() {
+		sendToLogger("BluetoothService:"
+				+ "\n\tAnnouncing Election Results...\n");
+		if (announcingResults) {
+			if (nextAnnouncement.hasNext()) {
+				currentAnnouncement = nextAnnouncement.next();
+				sendToLogger("BluetoothService:"
+						+ "\n\tCurrentAnnouncement goes to: " + currentAnnouncement.destination.getAddress());
+				connectToNeighbor(currentAnnouncement.destination);
+			}
+			else {
+				sendToLogger("BluetoothService:"
+						+ "\n\tOut of Announcements...BAD\n");
+				announcingResults = false;
+				sendToLogger("BluetoothService:"
+						+ "\n\tNo winner from election, electing self..."
+						+ "\n");
+				Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
+				synchronized (myContactInfo) {
+					i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
+							myContactInfo.progress);
+				}
+				sendBroadcast(i);
+			}
+		}
+		else {
 			sendToLogger("BluetoothService:"
-					+ "\n\tWinner of election is " + winner.getAddress()
-					+ "\n");
-			broadcast(new BluetoothMessage(
-					BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER,
-					new DiscoveryElectionMessage(winnerAddress, delay)));
-			
+					+ "\n\tOut of Announcements...GOOD\n");
+			currentAnnouncement = null;
+			electionAnnouncements = null;
 			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 			synchronized (myContactInfo) {
 				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
 						(-1 * myContactInfo.progress));
-			}
-			sendBroadcast(i);
-		} else {
-			sendToLogger("BluetoothService:"
-					+ "\n\tNo winner from election, electing self..."
-					+ "\n");
-			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
-			synchronized (myContactInfo) {
-				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
-						myContactInfo.progress);
 			}
 			sendBroadcast(i);
 		}
@@ -482,7 +513,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 
         setState(STATE_CONNECTED);
         if (broadcasting) {
-        	sendMessageToNeighbor(null);
+        	sendMessage(null);
+        }
+        else if (announcingResults) {
+			sendMessage(new BluetoothMessage(
+					BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER,
+					currentAnnouncement.announcement));
         }
     }
 
@@ -524,6 +560,9 @@ public class BluetoothService extends Service implements IBluetoothService {
     	if (broadcasting) {
     		processNextMessage();
     	}
+    	else if (announcingResults) {
+    		announceResults();
+    	}
     	else {
     		start();
     	}
@@ -538,6 +577,9 @@ public class BluetoothService extends Service implements IBluetoothService {
         
     	if (broadcasting) {
     		processNextMessage();
+    	}
+    	else if (announcingResults) {
+    		announceResults();
     	}
     	else {
     		start();
@@ -770,7 +812,7 @@ public class BluetoothService extends Service implements IBluetoothService {
                     		case BluetoothMessage.BLUETOOTH_NEIGHBOR_HEADER:
                     			newBluetoothNeighbor(message);
                     			if (!broadcasting) {
-    								sendMessageToNeighbor(new BluetoothMessage(
+    								sendMessage(new BluetoothMessage(
     										myContactInfo.getMessageType(),
     										myContactInfo));
     							}
@@ -779,13 +821,21 @@ public class BluetoothService extends Service implements IBluetoothService {
                     			newWifiNeighbor(message);
                     			break;
                     		case BluetoothMessage.WIFI_ELECTION_HEADER:
-                    			sendMessageToNeighbor(getElectionResponse());
+                    			sendMessage(getElectionResponse());
                     			break;
                     		case BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER:
-                    			handleElectionResults(message);
+                    			sendMessage(new BluetoothMessage(
+                    					BluetoothMessage.WIFI_ELECTION_ACKNOWLEDGE_ELECTION,
+                    					new DiscoveryElectionMessage(
+                    							BluetoothMessage.WIFI_ELECTION_ACKNOWLEDGE_ELECTION)));
+                    			handleElectionAnnouncement(message);
                     			break;
                     		case BluetoothMessage.WIFI_ELECTION_RESPONSE_HEADER:
                     			handleElectionResponse(message, currentNeighbor);
+                    			break;
+                    		case BluetoothMessage.WIFI_ELECTION_ACKNOWLEDGE_ELECTION:
+                    			announcingResults = false;
+                    			announceResults();
                     			break;
                     		}
                     		
@@ -821,5 +871,30 @@ public class BluetoothService extends Service implements IBluetoothService {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
         }
+    }
+    
+    private class ElectionAnnouncement {
+    	public BluetoothDevice destination;
+    	public IBluetoothMessage announcement;
+    	
+    	public ElectionAnnouncement(BluetoothDevice destination, IBluetoothMessage announcement) {
+    		this.destination = destination;
+    		this.announcement = announcement;
+    	}
+    }
+    
+    private class Pair<T,E extends Comparable<E>> implements Comparable<Pair<T,E>> {
+    	public T first;
+    	public E second;
+    	
+    	public Pair(T t, E e) {
+    		this.first = t;
+    		this.second = e;
+    	}
+
+		@Override
+		public int compareTo(Pair<T,E> another) {
+			return second.compareTo(another.second);
+		}
     }
 }

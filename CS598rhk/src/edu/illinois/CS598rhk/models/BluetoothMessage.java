@@ -14,6 +14,7 @@ public class BluetoothMessage {
 	public static final byte WIFI_ELECTION_HEADER = 3;
 	public static final byte WIFI_ELECTION_RESULTS_HEADER = 4;
 	public static final byte WIFI_ELECTION_RESPONSE_HEADER = 5;
+	public static final byte WIFI_ELECTION_ACKNOWLEDGE_ELECTION = 6;
 	
 	private IBluetoothMessage message;
 	private byte[] header;
@@ -83,6 +84,9 @@ public class BluetoothMessage {
 				parsedMessage = new DiscoveryElectionMessage(messageType);
 				break;
 			case WIFI_ELECTION_RESULTS_HEADER:
+				parsedMessage = new DiscoveryElectionMessage(messageType);
+				break;
+			case WIFI_ELECTION_ACKNOWLEDGE_ELECTION:
 				parsedMessage = new DiscoveryElectionMessage(messageType);
 				break;
 			default:

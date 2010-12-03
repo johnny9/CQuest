@@ -93,6 +93,9 @@ public class DiscoveryElectionMessage implements IBluetoothMessage {
 		case BluetoothMessage.WIFI_ELECTION_RESULTS_HEADER:
 			prettyString = "Wifi Election Results Message with winner " + winnerAddress + " and delay " + String.valueOf(delayUntilWinnerStarts);
 			break;
+		case BluetoothMessage.WIFI_ELECTION_ACKNOWLEDGE_ELECTION:
+			prettyString = "Wifi Election Results Message Election Acknowledged";
+			break;
 		default:
 			break;
 		}
