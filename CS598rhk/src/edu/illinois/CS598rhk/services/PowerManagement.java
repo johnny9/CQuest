@@ -15,6 +15,7 @@ import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
+import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -48,6 +49,10 @@ public class PowerManagement extends Service implements Runnable {
 		// deleteFile(filename);
 		// }
 
+    	Notification notification = new Notification();
+    	notification.tickerText = "PowerManagement";
+    	startForeground(0, notification);
+		
 		startTime = SystemClock.elapsedRealtime();
 		filename = filename + "." + startTime;
 
@@ -131,6 +136,7 @@ public class PowerManagement extends Service implements Runnable {
 	public void onDestroy() {
 		unregisterReceiver(myBatteryInfoReceiver);
 		unregisterReceiver(myBatteryInfoReceiver2);
+		stopForeground(true);
 		super.onDestroy();
 	}
 	

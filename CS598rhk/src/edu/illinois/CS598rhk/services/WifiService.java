@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -96,6 +97,10 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+    	Notification notification = new Notification();
+    	notification.tickerText = "WifiService";
+    	startForeground(3, notification);
+    	
 		IntentFilter messageFilter = new IntentFilter();
 		messageFilter.addAction(INTENT_TO_PAUSE_WIFI);
 		messageFilter.addAction(INTENT_TO_RESUME_WIFI);
@@ -160,6 +165,7 @@ public class WifiService extends Service implements IWifiService {
 	@Override
 	public void onDestroy() {
 		unregisterReceiver(messageReceiver);
+		stopForeground(true);
 		super.onDestroy();
 	}
 

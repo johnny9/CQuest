@@ -3,6 +3,7 @@ package edu.illinois.CS598rhk.services;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -87,6 +88,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+    	Notification notification = new Notification();
+    	notification.tickerText = "SchedulerService";
+    	startForeground(1, notification);
+		
 		IntentFilter filter = new IntentFilter(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
 		registerReceiver(neighborReceiver, filter);
 		
@@ -130,6 +135,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 		unregisterReceiver(neighborReceiver);
 		unbindService(mBluetoothConnection);
 		unbindService(mWifiConnection);
+		stopForeground(true);
+		super.onDestroy();
 	}
 	
 	public void sendToLogger(String message) {
