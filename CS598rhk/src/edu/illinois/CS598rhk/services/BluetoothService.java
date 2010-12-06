@@ -67,7 +67,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     private boolean broadcasting;
     private boolean updatingNeighbors;
     
-    private static final long TIMEOUT_INTERVAL = 3500;
+    private static final long TIMEOUT_INTERVAL = 5000;
     private Timer timer;
     private BluetoothResponseTimeout responseTimeout;
     
@@ -812,10 +812,11 @@ public class BluetoothService extends Service implements IBluetoothService {
         
     	public void hostWifiDiscoveryElection() {
         	if (!hostingElection) {
+        		hostingElection = true;
         		sendToLogger("BluetoothService:"
         				+ "\n\tStarting new Wifi discovery election!"
         				+ "\n");
-        		hostingElection = true;
+        		
         		electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
         		broadcast(new ElectionMessage(BluetoothMessage.INITIATE_ELECTION_HEADER));
         	}
