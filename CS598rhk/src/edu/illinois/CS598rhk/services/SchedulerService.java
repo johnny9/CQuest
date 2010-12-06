@@ -204,15 +204,18 @@ public class SchedulerService extends Service implements ISchedulerService {
 			else if (WifiService.INTENT_TO_UPDATE_SCHEDULE_PROGRESS.equals(intent.getAction())) {
 				long progress = intent.getLongExtra(WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
-				
-				sendToLogger("SchedulerService:"
-						+ "\n\tUpdating BluetoothService with remaining schedule " + String.valueOf(progress)
-						+ "\n");
-				
-				if (progress <= 10000 && progress > 0 && !stoppingWifi) {
-					bluetoothService.hostWifiDiscoveryElection();
+				if (bluetoothNeighbors.size() > 0) {
+					if (progress <= 10000 && progress > 0 && !stoppingWifi) {
+						bluetoothService.hostWifiDiscoveryElection();
+						sendToLogger("SchedulerService:"
+								+ "\n\tInitiating Wifi discovery election with remaining schedule"
+								+ String.valueOf(progress) + "\n");
+					}
+				}
+				else {
+					bluetoothService.updateNeighbors();
 					sendToLogger("SchedulerService:"
-							+ "\n\tInitiating Wifi discovery election with remaining schedule " + String.valueOf(progress)
+							+ "\n\tNo Bluetooth neighbors, updating neighbors..."
 							+ "\n");
 				}
 			}

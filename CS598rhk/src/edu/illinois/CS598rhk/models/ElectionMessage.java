@@ -24,6 +24,13 @@ public class ElectionMessage implements IBluetoothMessage {
 		delayUntilWinnerStarts = 0;
 	}
 	
+	public ElectionMessage(byte messageType, int value) {
+		this.messageType = messageType;
+		this.value = value;
+		this.winnerAddress = "N/A";
+		this.delayUntilWinnerStarts = 0;
+	}
+	
 	public ElectionMessage(String address, long delay) {
 		messageType = BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER;
 		winnerAddress = address;

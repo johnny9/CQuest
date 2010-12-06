@@ -11,19 +11,19 @@ public class BluetoothMessage {
 	public static final byte NEIGHBOR_HEADER = 0;
 	public static final byte BLUETOOTH_NEIGHBOR_HEADER = 1;
 	public static final byte WIFI_NEIGHBOR_HEADER = 2;
-	public static final byte WIFI_ELECTION_HEADER = 3;
-	public static final byte WIFI_ELECTION_RESULTS_HEADER = 4;
-	public static final byte WIFI_ELECTION_RESPONSE_HEADER = 5;
-	public static final byte WIFI_ELECTION_ACKNOWLEDGE_ELECTION = 6;
+	public static final byte INITIATE_ELECTION_HEADER = 3;
+	public static final byte ELECTION_RESPONSE_HEADER = 4;
+	public static final byte ELECTION_WINNER_ANNOUNCEMENT_HEADER = 5;
+	public static final byte ACKNOWLEDGE_ELECTION_WINNER = 6;
 	
 	private IBluetoothMessage message;
 	private byte[] header;
 	
-	public BluetoothMessage(byte messageType, IBluetoothMessage message) {
+	public BluetoothMessage(IBluetoothMessage message) {
 		this.message = message;
 		
 		header = new byte[5];
-		header[4] = messageType;
+		header[4] = message.getMessageType();
 	}
 	
 	public byte[] getMessageWithHeader() {
@@ -77,17 +77,17 @@ public class BluetoothMessage {
 			case WIFI_NEIGHBOR_HEADER:
 				parsedMessage = new WifiNeighbor();
 				break;
-			case WIFI_ELECTION_HEADER:
-				parsedMessage = new DiscoveryElectionMessage(messageType);
+			case INITIATE_ELECTION_HEADER:
+				parsedMessage = new ElectionMessage(messageType);
 				break;
-			case WIFI_ELECTION_RESPONSE_HEADER:
-				parsedMessage = new DiscoveryElectionMessage(messageType);
+			case ELECTION_RESPONSE_HEADER:
+				parsedMessage = new ElectionMessage(messageType);
 				break;
-			case WIFI_ELECTION_RESULTS_HEADER:
-				parsedMessage = new DiscoveryElectionMessage(messageType);
+			case ELECTION_WINNER_ANNOUNCEMENT_HEADER:
+				parsedMessage = new ElectionMessage(messageType);
 				break;
-			case WIFI_ELECTION_ACKNOWLEDGE_ELECTION:
-				parsedMessage = new DiscoveryElectionMessage(messageType);
+			case ACKNOWLEDGE_ELECTION_WINNER:
+				parsedMessage = new ElectionMessage(messageType);
 				break;
 			default:
 				break;
