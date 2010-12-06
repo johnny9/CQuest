@@ -127,20 +127,19 @@ public class BluetoothService extends Service implements IBluetoothService {
     
 	@Override
 	public void updateNeighborCount(int neighborCount) {
-		if (!updatingNeighbors) {
-			updatingNeighbors = true;
 			sendToLogger("BluetoothService:" + "Updating neighborCount to "
 					+ neighborCount + "\n");
 			synchronized (myContactInfo) {
 				myContactInfo.neighborCount = neighborCount;
 			}
-		}
 	}
     
     public void updateNeighbors() {
-    	sendToLogger("BluetoothService:"
-    			+ "Begin updating neighbors\n");
-    	broadcast(myContactInfo);
+		if (!updatingNeighbors) {
+			updatingNeighbors = true;
+			sendToLogger("BluetoothService:" + "Begin updating neighbors\n");
+			broadcast(myContactInfo);
+		}
     }
     
     public void hostWifiDiscoveryElection() {
