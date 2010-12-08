@@ -11,7 +11,7 @@
 			</intent-filter>
 		</activity>
 		<service android:name=".services.SchedulerService" />
-		<service android:name=".services.BluetoothService" />
+		<service android:name=".services.BluetoothServiceTwo" />
 		<service android:name=".services.WifiService" />
 		<service android:name=".services.PowerManagement" />
 	</application>
