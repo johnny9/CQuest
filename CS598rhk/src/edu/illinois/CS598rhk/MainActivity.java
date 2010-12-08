@@ -20,7 +20,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import edu.illinois.CS598rhk.services.BluetoothServiceOld;
+import edu.illinois.CS598rhk.services.BluetoothServiceTwo;
 import edu.illinois.CS598rhk.services.CoreTask;
 import edu.illinois.CS598rhk.services.PowerManagement;
 import edu.illinois.CS598rhk.services.SchedulerService;
@@ -201,7 +201,7 @@ public class MainActivity extends Activity {
 		stopService(new Intent(MainActivity.this, PowerManagement.class));
 		stopService(new Intent(MainActivity.this, SchedulerService.class));
 		stopService(new Intent(MainActivity.this, WifiService.class));
-		stopService(new Intent(MainActivity.this, BluetoothServiceOld.class));
+		stopService(new Intent(MainActivity.this, BluetoothServiceTwo.class));
 	}
 	
 	// Binary install
