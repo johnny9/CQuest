@@ -76,6 +76,9 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
     private Object threadLock;
     
     private boolean connectedThreadStarted;
+    
+    private Object acceptThreadLock;
+    private Object connectThreadLock;
     private Object connectedThreadLock;
     
     @Override
@@ -112,7 +115,10 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
     	threadLock = new Object();
     	taskReceived = false;
     	
+    	acceptThreadLock = new Object();
+    	connectThreadLock = new Object();
     	connectedThreadLock = new Object();
+    	
     	connectedThreadStarted = false;
     	
     	start();
@@ -411,7 +417,9 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
 
 			// Start the thread to manage the connection and perform
 			// transmissions
+			connectedThreadStarted = false;
 			mConnectedThread = new ConnectedThread(socket);
+			mConnectedThread.start();
 			signalController(STATE_CONNECTED);
     	}
     }
@@ -559,8 +567,6 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
 				case STATE_CONNECTING:
 					break;
 				case STATE_CONNECTED:
-					connectedThreadStarted = false;
-					mConnectedThread.start();
 					while (!connectedThreadStarted) {
 						synchronized (connectedThreadLock) {
 							try {
@@ -581,7 +587,6 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
 					break;
 				}
 				taskReceived = false;
-				
     			while(!taskReceived) {
     				try {
     					synchronized(threadLock) {
@@ -618,70 +623,71 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
         }
 
         public void run() {
-            sendToLogger("BluetoothService:"
-            		+ "\n\tBegin acceptThread run()"
-            		+ this
-            		+ "\n");
-            setName("AcceptThread");
-            BluetoothSocket socket = null;
+        	synchronized(acceptThreadLock) {
 
-			try {
-				// This is a blocking call and will only return on a
-				// successful connection or an exception
-				socket = mmServerSocket.accept();
-			} catch (IOException e) {
-				sendToLogger("BluetoothService:" + "\n\tFailed in accept()"
-						+ "\n");
-				Log.e(TAG, "accept() failed error message", e);
-			}
+				sendToLogger("BluetoothService:"
+						+ "\n\tBegin acceptThread run()" + this + "\n");
+				setName("AcceptThread");
+				BluetoothSocket socket = null;
 
-			// If a connection was accepted
-			if (socket != null) {
-				synchronized (BluetoothServiceTwo.this) {
-					switch (mState) {
-					case STATE_LISTEN:
-					case STATE_LISTEN_AND_CONNECT:
-					case STATE_CONNECTING:
-						// Situation normal. Start the connected thread.
-						sendToLogger("BluetoothService:"
-								+ "\n\tAccepting connection to " + socket.getRemoteDevice().getAddress()
-								+ "\n");
-						connected(socket, socket.getRemoteDevice());
-						break;
-					case STATE_NONE:
-					case STATE_CONNECTED:
-						// Either not ready or already connected. Terminate
-						// new
-						// socket.
-						try {
+				try {
+					// This is a blocking call and will only return on a
+					// successful connection or an exception
+					socket = mmServerSocket.accept();
+				} catch (IOException e) {
+					sendToLogger("BluetoothService:" + "\n\tFailed in accept()"
+							+ "\n");
+					Log.e(TAG, "accept() failed error message", e);
+				}
+
+				// If a connection was accepted
+				if (socket != null) {
+					synchronized (BluetoothServiceTwo.this) {
+						switch (mState) {
+						case STATE_LISTEN:
+						case STATE_LISTEN_AND_CONNECT:
+						case STATE_CONNECTING:
+							// Situation normal. Start the connected thread.
 							sendToLogger("BluetoothService:"
-									+ "\n\tClosing unwanted socket because already connected or not ready to connect..."
+									+ "\n\tAccepting connection to "
+									+ socket.getRemoteDevice().getAddress()
 									+ "\n");
-							socket.close();
-						} catch (IOException e) {
-							Log.e(TAG, "Could not close unwanted socket", e);
+							connected(socket, socket.getRemoteDevice());
+							break;
+						case STATE_NONE:
+						case STATE_CONNECTED:
+							// Either not ready or already connected. Terminate
+							// new
+							// socket.
+							try {
+								sendToLogger("BluetoothService:"
+										+ "\n\tClosing unwanted socket because already connected or not ready to connect..."
+										+ "\n");
+								socket.close();
+							} catch (IOException e) {
+								Log.e(TAG, "Could not close unwanted socket", e);
+							}
+							break;
 						}
-						break;
 					}
 				}
-			}
-            sendToLogger("BluetoothService:"
-            		+ "\n\tEnd of acceptThread run()"
-            		+ "\n");
-            synchronized(BluetoothServiceTwo.this) {	
-            	if (mState != STATE_CONNECTED) {
-            		if (mAcceptThread != null) { 
-            			mAcceptThread.cancel(); 
-            			mAcceptThread = null;
-            		}
-                	signalController(STATE_NONE);
-            	}
-            }
+				sendToLogger("BluetoothService:"
+						+ "\n\tEnd of acceptThread run()" + "\n");
+				synchronized (BluetoothServiceTwo.this) {
+					if (mState != STATE_CONNECTED) {
+						if (mAcceptThread != null) {
+							mAcceptThread.cancel();
+							mAcceptThread = null;
+						}
+						signalController(STATE_NONE);
+					}
+				}
+        	}
         }
 
         public void cancel() {
             sendToLogger("BluetoothService:"
-            		+ "\n\tCancel acceptThread..."
+            		+ "\n\tCanceling acceptThread..."
             		+ "\n");
             try {
                 mmServerSocket.close();
@@ -734,9 +740,22 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
         	sendToLogger("BluetoothService:"
             		+ "\n\tBegin connectedThread run()"
             		+ "\n");
-        	synchronized(connectedThreadLock) {
-        		connectedThreadStarted = true;
-        		connectedThreadLock.notifyAll();
+        	synchronized(acceptThreadLock) {
+        		sendToLogger("BluetoothService:"
+        				+ "\n\tmConnectedThread run() got acceptThreadLock"
+        				+ "\n");
+        		synchronized(connectThreadLock) {
+        			sendToLogger("BluetoothService:"
+            				+ "\n\tmConnectedThread run() got connectThreadLock"
+            				+ "\n");
+        			synchronized(connectedThreadLock) {
+        				sendToLogger("BluetoothService:"
+                				+ "\n\tmConnectedThread run() got connectedThreadLock"
+                				+ "\n");
+        				connectedThreadStarted = true;
+                		connectedThreadLock.notifyAll();
+                	}		
+        		}
         	}
         	
             byte[] buffer = new byte[1024];
@@ -778,7 +797,15 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
                 	sendToLogger("BleutoothService:"
                 			+ "\n\tDisconnected, read interrupted"
                 			+ "\n");
-                    Log.e(TAG, "disconnected", e);
+                    synchronized(BluetoothServiceTwo.this) {
+                    	Log.e(TAG, "disconnected", e);
+                    	sendToLogger("BluetoothService:"
+                    			+ "\n\tmState: " + mState
+                    			+ "\n\tmAccecptThread: " + mAcceptThread
+                    			+ "\n\tmConnectThread: " + mConnectThread
+                    			+ "\n\tmConnectedThread: " + mConnectedThread
+                    			+ "\n");
+                    }
                     connectionLost();
                     break;
                 }
@@ -800,7 +827,16 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
             try {
                 mmOutStream.write(buffer);
             } catch (IOException e) {
-                Log.e(TAG, "Exception during write", e);
+                synchronized(BluetoothServiceTwo.this) {
+                	Log.e(TAG, "Exception during write", e);
+                	sendToLogger("BluetoothService:"
+                			+ "\n\tmState: " + mState
+                			+ "\n\tmAccecptThread: " + mAcceptThread
+                			+ "\n\tmConnectThread: " + mConnectThread
+                			+ "\n\tmConnectedThread: " + mConnectedThread
+                			+ "\n");
+                }
+                
             }
         }
 
@@ -843,65 +879,77 @@ public class BluetoothServiceTwo extends Service implements IBluetoothService {
         }
 
         public void run() {
-            sendToLogger("BluetoothService:"
-            		+ "\n\tBegin connectThread run()"
-            		+ "\n");
-            setName("ConnectThread");
+        	synchronized(connectThreadLock) {
+				sendToLogger("BluetoothService:"
+						+ "\n\tBegin connectThread run()" + "\n");
+				setName("ConnectThread");
 
-            // Always cancel discovery because it will slow down a connection
-            mAdapter.cancelDiscovery();
+				// Always cancel discovery because it will slow down a
+				// connection
+				mAdapter.cancelDiscovery();
 
-            // Make a connection to the BluetoothSocket
-            try {
-				synchronized (BluetoothServiceTwo.this) {
-					connectingTimeout = new BluetoothConnectingTimeout();
-					timer.schedule(connectingTimeout, TIMEOUT_INTERVAL);
+				// Make a connection to the BluetoothSocket
+				try {
+					synchronized (BluetoothServiceTwo.this) {
+						connectingTimeout = new BluetoothConnectingTimeout();
+						timer.schedule(connectingTimeout, TIMEOUT_INTERVAL);
+					}
+					sendToLogger("BluetoothService:"
+							+ "\n\tCONNECTING TIMEOUT SET" + "\n");
+					// This is a blocking call and will only return on a
+					// successful connection or an exception
+					mmSocket.connect();
+				} catch (IOException e) {
+					synchronized (BluetoothServiceTwo.this) {
+						if (mState != STATE_CONNECTED) {
+							// Close the socket
+							try {
+								sendToLogger("BluetoothService:"
+										+ "\n\tClosing connected socket in connectThread run()"
+										+ "\n\t###############################################"
+										+ "\n");
+								mmSocket.close();
+							} catch (IOException e2) {
+								Log.e(TAG,
+										"unable to close() socket during connection failure",
+										e2);
+							}
+
+							connectionFailed();
+							signalController(STATE_LISTEN);
+						} else {
+							if (connectingTimeout != null) {
+								connectingTimeout.cancel();
+								connectingTimeout = null;
+							}
+							sendToLogger("BluetoothService:"
+									+ "\n\tCONNECTING TIMEOUT CLEARED" + "\n");
+						}
+						if (mConnectThread != null) {
+							mConnectThread.cancel();
+							mConnectThread = null;
+						}
+						;
+					}
+					sendToLogger("BluetoothService:"
+							+ "\n\tEnd of connectThread run()" + "\n");
+					return;
 				}
-                sendToLogger("BluetoothService:"
-                		+ "\n\tCONNECTING TIMEOUT SET"
-                 		+ "\n");
-                // This is a blocking call and will only return on a
-                // successful connection or an exception
-                mmSocket.connect();
-            } catch (IOException e) {
-                // Close the socket
-                try {
-                    mmSocket.close();
-                } catch (IOException e2) {
-                    Log.e(TAG, "unable to close() socket during connection failure", e2);
-                }
-                
-                synchronized(BluetoothServiceTwo.this) {
-                	if (mState != STATE_CONNECTED) {
-                		connectionFailed();
-                		signalController(STATE_LISTEN);
-                	}
-                	else {
-                		if (connectingTimeout != null) { connectingTimeout.cancel(); connectingTimeout = null; }
-    					sendToLogger("BluetoothService:"
-    							+ "\n\tCONNECTING TIMEOUT CLEARED"
-    							+ "\n");
-                	}
-                	if (mConnectThread != null) { mConnectThread.cancel(); mConnectThread = null; };
-                }
-                sendToLogger("BluetoothService:"
-                		+ "\n\tEnd of connectThread run()"
-                		+ "\n");
-                return;
-            }
 
-			synchronized (BluetoothServiceTwo.this) {
-				if (connectingTimeout != null) { connectingTimeout.cancel(); connectingTimeout = null; }
-			}
-			sendToLogger("BluetoothService:"
-					+ "\n\tCONNECTING TIMEOUT CLEARED"
-					+ "\n");
-			// Start the connected thread
-			connected(mmSocket, mmDevice);
-			
-			sendToLogger("BluetoothService:"
-					+ "\n\tEnd of connectThread run()"
-					+ "\n");
+				synchronized (BluetoothServiceTwo.this) {
+					if (connectingTimeout != null) {
+						connectingTimeout.cancel();
+						connectingTimeout = null;
+					}
+				}
+				sendToLogger("BluetoothService:"
+						+ "\n\tCONNECTING TIMEOUT CLEARED" + "\n");
+				// Start the connected thread
+				connected(mmSocket, mmDevice);
+
+				sendToLogger("BluetoothService:"
+						+ "\n\tEnd of connectThread run()" + "\n");
+        	}
         }
 
         public void cancel() {
