@@ -21,6 +21,7 @@ import android.os.Looper;
 import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
+import edu.illinois.CS598rhk.models.WifiNeighbor;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.schedules.NeverSchedule;
@@ -31,7 +32,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String SCHEDULE_PROGRESS_UPDATE = "schedule progress update";
 	public static final String INTENT_TO_RESUME_WIFI = "intent to update the wifi state";
 	public static final String INTENT_TO_PAUSE_WIFI = "(g\")-O";
-	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "ASDFASDFSDFA";
+	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "intent to add a wifi neighbor";
 	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE = "source of discovered wifi neighbor";
 	public static final String DISCOVERED_OVER_WIFI = "Wifi neighbor found over wifi";
 	public static final String WIFI_NEIGHBOR_DATA = "wifi neighbor data";
@@ -42,7 +43,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
 	
-	private static final int DISCOVERY_PERIOD = 5000;
+	private static final int DISCOVERY_TIMESLICE = 1000;
 	private static final String MSG_TAG = "MyWifiService";
 	public static final String RESUME_DELAY = "O_o";
 	public static final String NEW_PHONE_NAME = "<><><><><><><><><><<";
@@ -63,6 +64,7 @@ public class WifiService extends Service implements IWifiService {
 	private String myPhoneName;
 	private int timeSlice;
 	private int wifiState;
+	private WifiNeighbor myInfo;
 
 	InetAddress dest;
 
@@ -122,11 +124,15 @@ public class WifiService extends Service implements IWifiService {
 			myPhoneName = "HTC Magic";
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if(myIPAddress == null || !validateIPAddress(myIPAddress))
-			myIPAddress = "192.168.1.2";
+			myIPAddress = "192.168.1.3";
 		sendToLogger("My IP address is "+myIPAddress);
 		
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh "+myIPAddress);
+		
+		myInfo = new WifiNeighbor();
+		myInfo.address = myIPAddress;
+		myInfo.name = myPhoneName;
 		
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
@@ -173,13 +179,16 @@ public class WifiService extends Service implements IWifiService {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/up.sh " + this.myIPAddress);
 		Log.d(MSG_TAG, "Wifi Enabled");
+
+		sendToLogger("Wifi Enabled");
 		wifiEnabled = true;
 	}
 
 	public void disableWifi() {
-		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/down.sh");
+		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		//		+ "/bin/down.sh");
 		Log.d(MSG_TAG, "Wifi disabled");
+		sendToLogger("Wifi Disabled");
 		wifiEnabled = false;
 	}
 
@@ -205,8 +214,7 @@ public class WifiService extends Service implements IWifiService {
 
 		private void sendWifiBroadcast() {
 			byte[] buf = new byte[1024];
-			String msg = myPhoneName + "\t" + timeSlice + "\t" + discoveryScheduler.scheduleLength();
-			buf = msg.getBytes();
+			buf = myInfo.pack();
 			DatagramSocket sock;
 			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
 			try {
@@ -229,7 +237,7 @@ public class WifiService extends Service implements IWifiService {
 			do {
 				try {
 					sock = new DatagramSocket(8888);
-					sock.setSoTimeout((int) (DISCOVERY_PERIOD - (System
+					sock.setSoTimeout((int) (DISCOVERY_TIMESLICE - (System
 							.currentTimeMillis() - startTime)));
 					sock.receive(pkt);
 
@@ -238,10 +246,8 @@ public class WifiService extends Service implements IWifiService {
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(
 							INTENT_TO_ADD_WIFI_NEIGHBOR);
-					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_NAME, rcv.split("\t")[0]);
-					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_CURRENT_TIMESLICE, rcv.split("\t")[1]);
-					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_SCHEDULE_LENGTH, rcv.split("\t")[2]);
-					foundNewNeighbor.putExtra(WIFI_IP_ADDRESS, pkt.getAddress().getHostAddress());
+					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_DATA, pkt.getData());
+					foundNewNeighbor.putExtra(INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, WifiService.DISCOVERED_OVER_WIFI);
 					sendBroadcast(foundNewNeighbor);
 
 					sendToLogger("Found neighbor address:" + pkt.getAddress().getHostAddress() + " rcv:" + rcv);
@@ -256,7 +262,7 @@ public class WifiService extends Service implements IWifiService {
 				} catch (IOException e) {
 					// error receiving the packet, try again
 				}
-			} while (System.currentTimeMillis() - startTime < DISCOVERY_PERIOD);
+			} while (System.currentTimeMillis() - startTime < DISCOVERY_TIMESLICE);
 
 		}
 
@@ -317,7 +323,7 @@ public class WifiService extends Service implements IWifiService {
 				}
 
 				try {
-					long sleepyTime = DISCOVERY_PERIOD
+					long sleepyTime = DISCOVERY_TIMESLICE
 							- (System.currentTimeMillis() - startTime);
 					if (sleepyTime < 0)
 						sleepyTime = 0;
@@ -347,7 +353,7 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public long scheduleTimeRemaining() {
-		return (discoveryScheduler.scheduleLength() - timeSlice)*DISCOVERY_PERIOD;
+		return (discoveryScheduler.scheduleLength() - timeSlice)*DISCOVERY_TIMESLICE;
 	}
 
 	public void sendToLogger(String message) {
