@@ -40,41 +40,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static final String ACTION_ELECTED_FOR_WIFI_DISCOVERY = "action elected for wifi discovery";
 	public static final String DELY_UNTIL_STARTING_WIFI_DISCOVERY = "delay until starting wifi discovery";
 	
-	private enum State {
-		INIT() {
-			@Override
-			public String getValue() {
-				return "INIT";
-			}
-		},
-		NONE() {
-			@Override
-			public String getValue() {
-				return "NONE";
-			}
-		},
-		LISTENING() {
-			@Override
-			public String getValue() {
-				return "LISTENING";
-			}
-		},
-		CONNECTING() {
-			@Override
-			public String getValue() {
-				return "CONNECTING";
-			}
-		},
-		CONNECTED() {
-			@Override
-			public String getValue() {
-				return "CONNECTED";
-			}
-		};
-		
-		public abstract String getValue();
-	}
-	
 	final IBinder mBinder = new BluetoothBinder();
     
 	@Override
@@ -92,29 +57,24 @@ public class BluetoothService extends Service implements IBluetoothService {
 
     private ElectionHandler electionHandler;
     
-    private List<BluetoothMessage> messages;
+    private List<IBluetoothMessage> messages;
     private Set<BluetoothDevice> neighbors;
     private Iterator<BluetoothDevice> nextNeighbor;
     private BluetoothDevice currentNeighbor;
-    private BluetoothMessage currentMessage;
+    private IBluetoothMessage currentMessage;
     
-    private boolean broadcasting;
-    private boolean updatingNeighbors;
+    private volatile boolean updatingNeighbors;
     
     private static final long TIMEOUT_INTERVAL = 5000;
     private Timer timer;
     private BluetoothResponseTimeout responseTimeout;
     private BluetoothConnectingTimeout connectingTimeout;
     
+    private BluetoothAcceptThread acceptThread;
     private BluetoothControllerThread controllerThread;
-    private boolean taskReceived;
-    private Object threadLock;
     
-//    private boolean connectedThreadStarted;
-    
-    private Object acceptThreadLock;
-    private Object connectThreadLock;
-//    private Object connectedThreadLock;
+    private volatile boolean controllerReady;
+    private Object controllerMonitor;
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -124,7 +84,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     	startForeground(2, notification);
     	
     	myContactInfo = new BluetoothNeighbor();
-    	messages = new ArrayList<BluetoothMessage>();
+    	messages = new ArrayList<IBluetoothMessage>();
     	electionHandler = new ElectionHandler();
     	timer = new Timer();
     	
@@ -134,10 +94,8 @@ public class BluetoothService extends Service implements IBluetoothService {
     	
     	sendToLogger("BluetoothService:" 
     			+ "\n\tName: " + myContactInfo.name
-    			+ "\n\tAddress: " + myContactInfo.address
-    			+ "\n");
+    			+ "\n\tAddress: " + myContactInfo.address);
     	
-    	broadcasting = false;
     	updatingNeighbors = false;
     	
     	neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
@@ -146,16 +104,24 @@ public class BluetoothService extends Service implements IBluetoothService {
     	currentNeighbor = null;
     	currentMessage = null;
     	
-    	threadLock = new Object();
-    	taskReceived = false;
-    	
-    	acceptThreadLock = new Object();
-    	connectThreadLock = new Object();
-    	
-    	start();
-    	updateNeighbors();
+    	acceptThread = new BluetoothAcceptThread();
     	controllerThread = new BluetoothControllerThread();
-    	controllerThread.start();
+    	
+    	controllerReady = false;
+    	controllerMonitor = new Object();
+    	
+    	acceptThread.start();
+    	
+    	synchronized(controllerMonitor) {
+    		controllerThread.start();
+    		try {
+    			while(!controllerReady)
+    				controllerMonitor.wait();
+    		} catch (InterruptedException e) {
+    			// Do nothing
+    		}
+    	}
+    	updateNeighbors();
     	
     	return START_STICKY;
     }
@@ -166,25 +132,24 @@ public class BluetoothService extends Service implements IBluetoothService {
 		super.onDestroy();
     }
     
-    public synchronized void updateScheduleProgress(long progress) {
+    public void updateScheduleProgress(long progress) {
     	synchronized(myContactInfo) {
     		sendToLogger("BluetoothService:"
-    				+ "\n\tReceived progress update from " + myContactInfo.progress + " to " + progress
-    				+ "\n");
+    				+ "\n\tReceived progress update from " + myContactInfo.progress + " to " + progress);
     		myContactInfo.progress = progress;
     	}
     }
     
 	@Override
-	public synchronized void updateNeighborCount(int neighborCount) {
+	public void updateNeighborCount(int neighborCount) {
 			sendToLogger("BluetoothService:" + "Updating neighborCount to "
-					+ neighborCount + "\n");
+					+ neighborCount);
 			synchronized (myContactInfo) {
 				myContactInfo.neighborCount = neighborCount;
 			}
 	}
     
-	public synchronized void hostWifiDiscoveryElection() {
+	public void hostWifiDiscoveryElection() {
 		electionHandler.hostWifiDiscoveryElection();
 	}
 	
@@ -195,26 +160,26 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
     }
     
-    public synchronized void broadcast(IBluetoothMessage message) {
+    public void broadcast(IBluetoothMessage message) {
     	sendToLogger("BluetooothService:"
     			+ "\n\tReceived message to broadcast"
-    			+ "\n\tMessage:" + message
-    			+ "\n");
-    	broadcast(new BluetoothMessage(message));
+    			+ "\n\tMessage:" + message);
+
+    	messages.add(message);
+    	synchronized(controllerMonitor) {
+    		try {
+    			while(!controllerReady)
+    				controllerMonitor.wait(); // Might be problematic ... blocking calling thread
+    		} catch(InterruptedException e) {
+    			// Do nothing
+    		}
+    		
+    		controllerMonitor.notify();
+    	}
     }
     
-    private synchronized void broadcast(BluetoothMessage message) {
-    	broadcasting = true;
-    	synchronized(messages) {
-	    	messages.add(message);
-    	}
-    	if (mState.equals(State.LISTENING)) {
-    		signalController(STATE_LISTEN_AND_CONNECT);
-    	}
-    }
-    
-    private synchronized BluetoothMessage processNextMessage() {
-    	BluetoothMessage lastMessage = null;
+    private synchronized IBluetoothMessage processNextMessage() {
+    	IBluetoothMessage lastMessage = null;
     	if (currentMessage == null) {
     		if (!messages.isEmpty()) {
     			currentMessage = messages.remove(0);
@@ -236,7 +201,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     	return lastMessage;
     }
     
-    private synchronized void handleLastBroadcastMessage(BluetoothMessage lastMessage) {
+    private synchronized void handleLastBroadcastMessage(IBluetoothMessage lastMessage) {
     	if (lastMessage != null) {
 			switch (lastMessage.getMessageType()) {
 			case BluetoothMessage.BLUETOOTH_NEIGHBOR_HEADER:
@@ -255,12 +220,11 @@ public class BluetoothService extends Service implements IBluetoothService {
     	}
     }
     
-    private synchronized void sendMessage(BluetoothMessage message) {
+    private synchronized void sendMessage(OutputStream outStream, IBluetoothMessage message) {
 	    	sendToLogger("BluetoothService:"
 	    			+ "\n\tConnected to Neighbor:\n\t" + currentNeighbor
-	    			+ "\n\tSending message: " + message
-	    			+ "\n");
-	    	write(message.getMessageWithHeader());
+	    			+ "\n\tSending message: " + message);
+	    	writeBluetoothMessage(outStream, message);
     }
     
     public synchronized void newBluetoothNeighbor(BluetoothNeighbor neighbor) {
@@ -269,15 +233,13 @@ public class BluetoothService extends Service implements IBluetoothService {
     	sendBroadcast(i);
     	sendToLogger("BluetoothService:"
     			+ "\n\tFound Bluetooth Nieghbor:"
-    			+ "\n\t" + neighbor
-    			+ "\n");
+    			+ "\n\t" + neighbor);
     }
     
     public synchronized void newWifiNeighbor(WifiNeighbor neihgbor) {
     	sendToLogger("BluetoothService:"
     			+ "\n\tFound Wifi Nieghbor:"
-    			+ "\n\t" + neihgbor
-    			+ "\n");
+    			+ "\n\t" + neihgbor);
     	Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
     	i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, neihgbor.pack());
     	i.putExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, DISCOVERED_OVER_BLUETOOTH);
@@ -287,20 +249,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public synchronized void sendToLogger(String message) {
 			Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 			intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message
-					+ "\t-- [" + new Date().toGMTString()
-					+ "] -- (mAcceptThred = " + mAcceptThread + ")\n");
+					+ "\n\t-- [" + new Date().toGMTString() + "]");
 			sendBroadcast(intentToLog);
-	}
-	
-	private void signalController(State state) {
-		synchronized(threadLock) {
-			setState(state);
-			taskReceived = true;
-			threadLock.notifyAll();
-		}
-		sendToLogger("BluetoothService:"
-				+ "\n\tController signaled..."
-				+ "\n");
 	}
 
     //
@@ -309,7 +259,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     
  // Debugging
     private static final String TAG = "BluetoothService";
-    private static final boolean D = true;
 
     // Name for the SDP record when creating server socket
     private static final String NAME = "BluetoothNeighborFinder";
@@ -319,133 +268,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 
     // Member fields
     private final BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
-    private AcceptThread mAcceptThread;
-    private ConnectThread mConnectThread;
-//    private ConnectedThread mConnectedThread;
-    private State mState;
-
-    // Constants that indicate the current connection state
-    public static final int STATE_NONE = 0;       // we're doing nothing
-    public static final int STATE_LISTEN = 1;     // now listening for incoming connections
-    public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
-    public static final int STATE_CONNECTED = 3;  // now connected to a remote device
-    public static final int STATE_LISTEN_AND_CONNECT = 4; // it's obvious right?
-    /**
-     * Set the current state of the chat connection
-     * @param state  An integer defining the current connection state
-     */
-    private synchronized void setState(State state) { 
-        String log = "setState() from: " + mState.getValue() + " to: " + state.getValue();
-        mState = state;
-        sendToLogger("BluetoothService:\n\t" + log + "\n");
-    }
-
-    /**
-     * Return the current connection state. */
-    public synchronized State getState() {
-        return mState;
-    }
-
-    /**
-     * Start the chat service. Specifically start AcceptThread to begin a
-     * session in listening (server) mode. Called by the Activity onResume() */
-    public synchronized void start() {
-			if (D)
-				sendToLogger("BluetoothService:" + "\n\tStart" + "\n");
-
-			// Cancel any thread attempting to make a connection
-			if (mConnectThread != null) {
-				mConnectThread.cancel();
-				mConnectThread = null;
-			}
-			
-			// Start the thread to listen on a BluetoothServerSocket
-			if (mAcceptThread == null) {
-				mAcceptThread = new AcceptThread();
-				mAcceptThread.start();
-				setState(State.LISTENING);
-			}
-    }
-
-    /**
-     * Start the ConnectThread to initiate a connection to a remote device.
-     * @param device  The BluetoothDevice to connect
-     */
-    public synchronized void connect(BluetoothDevice device) {
-        if (D) sendToLogger("BluetoothService:"
-        		+ "\n\tConnect to: "
-        		+ device
-        		+ "\n");
-
-        // Cancel any thread attempting to make a connection
-        if (mState.equals(State.CONNECTING)) {
-            if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
-        }
-        
-        // Start the thread to connect with the given device
-        mConnectThread = new ConnectThread(device);
-        mConnectThread.start();
-        setState(State.CONNECTING);
-    }
-
-    /**
-     * Start the ConnectedThread to begin managing a Bluetooth connection
-     * @param socket  The BluetoothSocket on which the connection was made
-     * @param device  The BluetoothDevice that has been connected
-     */
-    public synchronized void connected(BluetoothSocket socket, BluetoothDevice device) {
-    	if (!mState.equals(State.CONNECTED)) {
-			sendToLogger("BluetoothService:" + "\n\tConnected to: " + device
-					+ "\n");
-
-			// Cancel the thread that completed the connection
-			if (mConnectThread != null) { mConnectThread.cancel(); mConnectThread = null; }
-
-			// Cancel the accept thread because we only want to connect to one
-			// device
-			if (mAcceptThread != null) { mAcceptThread.cancel(); mAcceptThread = null; }
-
-			signalController(State.CONNECTED);
-    	}
-    }
-
-    /**
-     * Stop all threads
-     */
-    public synchronized void stop() {
-        if (D) sendToLogger("BluetoothService:"
-        		+ "\n\tStop()"
-        		+ "\n");
-        if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
-        if (mAcceptThread != null) {mAcceptThread.cancel(); mAcceptThread = null;}
-        setState(State.NONE);
-    }
-
-    /**
-     * Write to the ConnectedThread in an unsynchronized manner
-     * @param out The bytes to write
-     * @see ConnectedThread#write(byte[])
-     */
-    public void write(byte[] out) {
-    	sendToLogger("BluetoothService:"
-        		+ "\n\t(In write())"
-        		+ "\n");
-        // Create temporary object
-        ConnectedThread r;
-        // Synchronize a copy of the ConnectedThread
-        synchronized (this) {
-            if (!mState.equals(State.CONNECTED)) {
-            	sendToLogger("BluetoothService:"
-                		+ "\n\t(In write())"
-                		+ "\n\tWrite called with no connection, aborting..."
-                		+ "\n");
-            	return;
-            }
-            r = mConnectedThread;
-        }
-        // Perform the write unsynchronized
-        r.write(out);
-    }
 
     /**
      * Indicate that the connection attempt failed and notify the UI Activity.
@@ -458,8 +280,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     		connectingTimeout.cancel();
     		connectingTimeout = null;
     		sendToLogger("BluetoothService:"
-            		+ "\n\tCONNECTING TIMEOUT CLEARED (connectionFailed)"
-            		+ "\n");
+            		+ "\n\tCONNECTING TIMEOUT CLEARED (connectionFailed)");
     	}
     }
 
@@ -468,60 +289,68 @@ public class BluetoothService extends Service implements IBluetoothService {
      */
     private synchronized void connectionLost() {
     	sendToLogger("BluetoothService:"
-        		+ "\n\tConnection Lost..."
-        		+ "\n");
+        		+ "\n\tConnection Lost...");
     	if (responseTimeout != null) {
     		responseTimeout.cancel();
     		responseTimeout = null;
     		sendToLogger("BluetoothService:"
-            		+ "\n\tRESPONSE TIMEOUT CLEARED (connectionLost)"
-            		+ "\n");
+            		+ "\n\tRESPONSE TIMEOUT CLEARED (connectionLost)");
     	}
     }
 
-    public synchronized void handleReceivedMessage(IBluetoothMessage message) {
-		if (message instanceof BluetoothNeighbor) {
+    public synchronized IBluetoothMessage handleReceivedMessage(IBluetoothMessage message) {
+    	IBluetoothMessage response = null;
+    	
+    	if (message instanceof BluetoothNeighbor) {
+			newBluetoothNeighbor((BluetoothNeighbor)message);
+			response = myContactInfo;
+    	}
+		else if (message instanceof ElectionMessage) {
+			ElectionMessage electionMessage = (ElectionMessage) message;
+			switch (message.getMessageType()) {
+			case BluetoothMessage.INITIATE_ELECTION_HEADER:
+				response = electionHandler.getElectionResponse();
+				break;
+			case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
+				response = electionHandler.getElectionAcknowledgement(electionMessage);
+				break;
+			}
+		}	
+		return response;
+	}
+    
+    public synchronized void handleResponseMessage(IBluetoothMessage message) {
+		
+    	if (message instanceof BluetoothNeighbor) {
 			if (responseTimeout != null) {
 				responseTimeout.cancel();
 				responseTimeout = null;
 				sendToLogger("BluetoothService:"
-	            		+ "\n\tRESPONSE TIMEOUT CLEARED (BluetoothNeighbor)"
-	            		+ "\n");
+	            		+ "\n\tRESPONSE TIMEOUT CLEARED (BluetoothNeighbor)");
 			}
 			newBluetoothNeighbor((BluetoothNeighbor)message);
-			if (!broadcasting) {
-				sendMessage(new BluetoothMessage(myContactInfo));
-			}
-		}
-		else if (message instanceof WifiNeighbor) {
+    	}
+    	else if (message instanceof WifiNeighbor) {
 			newWifiNeighbor((WifiNeighbor)message);
 		}
 		else if (message instanceof ElectionMessage) {
 			ElectionMessage electionMessage = (ElectionMessage)message;
 			switch(message.getMessageType()) {
-    		case BluetoothMessage.INITIATE_ELECTION_HEADER:
-    			sendMessage(new BluetoothMessage(electionHandler.getElectionResponse()));
-    			break;
     		case BluetoothMessage.ELECTION_RESPONSE_HEADER:
     			if (responseTimeout != null) {
     				responseTimeout.cancel();
     				responseTimeout = null;
     				sendToLogger("BluetoothService:"
-    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (RESPONSE)"
-    	            		+ "\n");
+    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (RESPONSE)");
     			}
     			electionHandler.handleElectionResponse(electionMessage);
-    			break;
-    		case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
-    			sendMessage(new BluetoothMessage(electionHandler.getElectionAcknowledgement(electionMessage)));
     			break;
     		case BluetoothMessage.ACKNOWLEDGE_ELECTION_WINNER:
     			if (responseTimeout != null) {
     				responseTimeout.cancel();
     				responseTimeout = null;
     				sendToLogger("BluetoothService:"
-    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (ACKKNOWLEDGE)"
-    	            		+ "\n");
+    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (ACKKNOWLEDGE)");
     			}
     			electionHandler.handleElectionAcknowledgement(electionMessage);
     			break;
@@ -529,69 +358,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
 	}
     
-    private class BluetoothControllerThread extends Thread {
-    	@Override
-    	public void run() {
-    		while(true) {
-				switch (mState) {
-				case STATE_NONE:
-				case STATE_LISTEN:
-				case STATE_LISTEN_AND_CONNECT:
-					handleLastBroadcastMessage(processNextMessage());
-					if (currentNeighbor != null) {
-						connect(currentNeighbor);
-					} else {
-						broadcasting = false;
-						sendToLogger("BluetoothService:"
-								+ "\n\tDone Broadcasting"
-								+ "\n");
-						BluetoothService.this.start();
-					}
-					break;
-				case STATE_CONNECTING:
-					break;
-				case STATE_CONNECTED:
-					while (!connectedThreadStarted) {
-						synchronized (connectedThreadLock) {
-							try {
-								connectedThreadLock.wait();
-							} catch (InterruptedException e) {
-							}
-						}
-					}
-					if (broadcasting) {
-						sendToLogger("BluetoothService:"
-								+ "\n\tBroadcasting current message" + "\n");
-						responseTimeout = new BluetoothResponseTimeout();
-						timer.schedule(responseTimeout, TIMEOUT_INTERVAL);
-						sendToLogger("BluetoothService:"
-								+ "\n\tRESPONSE TIMEOUT SET" + "\n");
-						sendMessage(currentMessage);
-					}
-					break;
-				}
-				taskReceived = false;
-    			while(!taskReceived) {
-    				try {
-    					synchronized(threadLock) {
-    						threadLock.wait();
-    					}
-    				} catch (InterruptedException e) {}
-    			}
-    		}
-    	}
-    }
-    
-    /**
-     * This thread runs while listening for incoming connections. It behaves
-     * like a server-side client. It runs until a connection is accepted
-     * (or until cancelled).
-     */
-    private class AcceptThread extends Thread {
-        // The local server socket
-        private final BluetoothServerSocket mmServerSocket;
-
-        public AcceptThread() {
+    private class BluetoothAcceptThread extends Thread {
+    	private final BluetoothServerSocket serverSocket;
+    	
+        public BluetoothAcceptThread() {
             BluetoothServerSocket tmp = null;
 
             // Create a new listening server socket
@@ -601,351 +371,198 @@ public class BluetoothService extends Service implements IBluetoothService {
                 sendToLogger("BluetoothService:"
                 		+ "\n\tFailed to construct acceptThread"
                 		+ "\n");
-                Log.e(TAG, "accept() failed error message", e);
+                Log.e(TAG, "BluetoothAcceptThread() failed", e);
             }
-            mmServerSocket = tmp;
+            serverSocket = tmp;
         }
-
-        public void run() {
-        	synchronized(acceptThreadLock) {
-
-				sendToLogger("BluetoothService:"
-						+ "\n\tBegin acceptThread run()" + this + "\n");
-				setName("AcceptThread");
+    	
+    	@Override
+		public void run() {
+			while (true) {
 				BluetoothSocket socket = null;
-
+				
 				try {
-					// This is a blocking call and will only return on a
-					// successful connection or an exception
-					socket = mmServerSocket.accept();
+					socket = serverSocket.accept();
 				} catch (IOException e) {
-					sendToLogger("BluetoothService:" + "\n\tFailed in accept()"
-							+ "\n");
-					Log.e(TAG, "accept() failed error message", e);
+					sendToLogger("BluetoothService:" + "\n\tFailed in accept()");
+					Log.e(TAG, "accept() failed", e);
 				}
 
 				// If a connection was accepted
 				if (socket != null) {
-					synchronized (BluetoothService.this) {
-						switch (mState) {
-						case STATE_LISTEN:
-						case STATE_LISTEN_AND_CONNECT:
-						case STATE_CONNECTING:
-							// Situation normal. Start the connected thread.
-							sendToLogger("BluetoothService:"
-									+ "\n\tAccepting connection to "
-									+ socket.getRemoteDevice().getAddress()
-									+ "\n");
-							connected(socket, socket.getRemoteDevice());
-							break;
-						case STATE_NONE:
-						case STATE_CONNECTED:
-							// Either not ready or already connected. Terminate
-							// new
-							// socket.
-							try {
-								sendToLogger("BluetoothService:"
-										+ "\n\tClosing unwanted socket because already connected or not ready to connect..."
-										+ "\n");
-								socket.close();
-							} catch (IOException e) {
-								Log.e(TAG, "Could not close unwanted socket", e);
-							}
-							break;
+					InputStream inStream = null;
+					try {
+						inStream = socket.getInputStream();
+					} catch (IOException e) {
+						sendToLogger("BluetoothService:" + "\n\tgetInputStream failed");
+						Log.e(TAG, "getInputStream() failed", e);
+					}
+					
+					if (inStream != null) {
+						IBluetoothMessage message = readBluetoothMessage(inStream);
+						
+	            		sendToLogger("BluetoothService:"
+	            				+ "\n\tReceived message from Neighbor:" 
+	            				+ "\n\tName: " + socket.getRemoteDevice().getName()
+	            				+ "\n\tAddress: " + socket.getRemoteDevice().getAddress()
+	            				+ "\n\tMessage: " + message);
+	            		
+	            		
+						IBluetoothMessage response = handleReceivedMessage(message);;
+						
+						OutputStream outStream = null;
+						try {
+							outStream = socket.getOutputStream();
+						} catch (IOException e) {
+							sendToLogger("BluetoothService:" + "\n\tgetOutputStream failed");
+							Log.e(TAG, "getOutputStream() failed", e);
 						}
+						
+						if (outStream != null) {
+							writeBluetoothMessage(outStream, response);
+						}	
 					}
 				}
-				sendToLogger("BluetoothService:"
-						+ "\n\tEnd of acceptThread run()" + "\n");
-				synchronized (BluetoothService.this) {
-					if (!mState.equals(BluetoothService.State.CONNECTED)) {
-						if (mAcceptThread != null) {
-							mAcceptThread.cancel();
-							mAcceptThread = null;
-						}
-						signalController(BluetoothService.State.NONE);
-					}
-				}
-        	}
-        }
-
-        public void cancel() {
-            sendToLogger("BluetoothService:"
-            		+ "\n\tCanceling acceptThread..."
-            		+ "\n");
-            try {
-                mmServerSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "close() of server failed", e);
-            }
-        }
+			}
+		}
     }
     
-    /**
-     * This thread runs during a connection with a remote device.
-     * It handles all incoming and outgoing transmissions.
-     */
-    private class ConnectedThread extends Thread {
-        private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
+    private IBluetoothMessage readBluetoothMessage(InputStream inStream) {        
+    	IBluetoothMessage message = null;
+
+        byte[] buffer = new byte[4];
+
+        boolean receivingMessage = false;
+        byte[] rawMessage = null;
+        int messageLength = 4;
+        int bytesRead = 0;
+        int bytes = 0;
         
-        boolean receivingMessage;
-        byte[] message;
-        int messageLength;
-        int bytesRead;
-
-        public ConnectedThread(BluetoothSocket socket) {
-        	sendToLogger("BluetoothService:"
-            		+ "\n\tConstructing connectedThread..."
-            		+ "\n");
-            mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-
-            receivingMessage = false;
-            message = null;
-            messageLength = 4;
-            bytesRead = 0;
-            
-            // Get the BluetoothSocket input and output streams
+    	while (true) {            
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) {
-                Log.e(TAG, "temp sockets not created", e);
-            }
+                // Read from the InputStream
+                bytes = inStream.read(buffer, bytesRead, messageLength-bytesRead);
 
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
+                if (bytes > 0) {
+                	bytesRead += bytes;
+                	if (!receivingMessage && bytesRead >= 4) {
+                		receivingMessage = true;
+                		messageLength = ByteBuffer.wrap(buffer,0,4).getInt();
+                		rawMessage = new byte[messageLength];
+                	}
+                	else if (receivingMessage && bytesRead == messageLength){
+                		
+                		System.arraycopy(buffer, 0, rawMessage, 0, bytesRead);
 
-        public void run() {
-        	sendToLogger("BluetoothService:"
-            		+ "\n\tBegin connectedThread run()"
-            		+ "\n");
-        	synchronized(acceptThreadLock) {
-        		sendToLogger("BluetoothService:"
-        				+ "\n\tmConnectedThread run() got acceptThreadLock"
-        				+ "\n");
-        		synchronized(connectThreadLock) {
-        			sendToLogger("BluetoothService:"
-            				+ "\n\tmConnectedThread run() got connectThreadLock"
-            				+ "\n");
-        			synchronized(connectedThreadLock) {
-        				sendToLogger("BluetoothService:"
-                				+ "\n\tmConnectedThread run() got connectedThreadLock"
-                				+ "\n");
-        				connectedThreadStarted = true;
-                		connectedThreadLock.notifyAll();
-                	}		
-        		}
-        	}
-        	
-            byte[] buffer = new byte[1024];
-            int bytes;
-            
-            // Keep listening to the InputStream while connected
-            while (true) {
-                try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer, bytesRead, messageLength-bytesRead);
-
-                    if (bytes > 0) {
-                    	bytesRead += bytes;
-                    	if (!receivingMessage && bytesRead >= 4) {
-                    		receivingMessage = true;
-                    		messageLength = ByteBuffer.wrap(buffer,0,4).getInt();
-                    		message = new byte[messageLength];
-                    	}
-                    	else if (receivingMessage && bytesRead == messageLength){
-                    		receivingMessage = false;
-                    		System.arraycopy(buffer, 0, message, 0, bytesRead);
-
-                    		bytesRead = 0;
-                    		messageLength = 4;
-                    		
-                    		IBluetoothMessage tempMessage = BluetoothMessage.parse(message);
-                    		sendToLogger("BluetoothService:"
-                    				+ "\n\tReceived message from Neighbor:" 
-                    				+ "\n\tName: " + mmSocket.getRemoteDevice().getName()
-                    				+ "\n\tAddress: " + mmSocket.getRemoteDevice().getAddress()
-                    				+ "\n\tMessage: " + tempMessage
-                    				+ "\n");
-                    		
-                    		handleReceivedMessage(tempMessage);
-                			break;
-                    	}
-                    }
-                } catch (IOException e) {
-                	sendToLogger("BleutoothService:"
-                			+ "\n\tDisconnected, read interrupted"
-                			+ "\n");
-                    synchronized(BluetoothService.this) {
-                    	Log.e(TAG, "disconnected", e);
-                    	sendToLogger("BluetoothService:"
-                    			+ "\n\tmState: " + mState.getValue()
-                    			+ "\n\tmAccecptThread: " + mAcceptThread
-                    			+ "\n\tmConnectThread: " + mConnectThread
-                    			+ "\n");
-                    }
-                    connectionLost();
-                    break;
+                		receivingMessage = false;
+                		messageLength = 4;
+                		bytesRead = 0;
+                		bytes = 0;
+                		
+                		message = BluetoothMessage.parse(rawMessage);
+            			break;
+                	}
                 }
+            } catch (IOException e) {
+				sendToLogger("BleutoothService:"
+						+ "\n\tDisconnected, read interrupted");
+				Log.e(TAG, "disconnected", e);
+				connectionLost();
+                break;
             }
-        	sendToLogger("BluetoothService:"
-            		+ "\n\tEnd of connectedThread run()"
-            		+ "\n");
-        	synchronized(BluetoothService.this) {
-    			if ( mConnectedThread != null) { mConnectedThread.cancel(); mConnectedThread = null; }
+        }
+    	
+    	return message;
+    }
+    
+    private void writeBluetoothMessage(OutputStream outStream, IBluetoothMessage message) {
+    	try {
+    		outStream.write((new BluetoothMessage(message)).getMessageWithHeader());
+        } catch (IOException e) {
+			Log.e(TAG, "Exception during write", e);
+        }
+    }
+    
+    private class BluetoothControllerThread extends Thread {
+    	@Override
+    	public void run() {
+    		synchronized(controllerMonitor) {
+    			controllerReady = true;
+    			controllerMonitor.notify();
     		}
-        	signalController(BluetoothService.State.NONE);
-        }
-
-        /**
-         * Write to the connected OutStream.
-         * @param buffer  The bytes to write
-         */
-        public void write(byte[] buffer) {
-            try {
-                mmOutStream.write(buffer);
-            } catch (IOException e) {
-                synchronized(BluetoothService.this) {
-                	Log.e(TAG, "Exception during write", e);
-                	sendToLogger("BluetoothService:"
-                			+ "\n\tmState: " + mState.getValue()
-                			+ "\n\tmAccecptThread: " + mAcceptThread
-                			+ "\n\tmConnectThread: " + mConnectThread
-                			+ "\n");
-                }
-                
-            }
-        }
-
-        public void cancel() {
-            try {
-            	sendToLogger("BluetoothService:"
-            			+ "\n\tCancelling connectedThread..."
-            			+ "\n");
-                mmSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "close() of connect socket failed", e);
-            }
-        }
-    }
-    
-    /**
-     * This thread runs while attempting to make an outgoing connection
-     * with a device. It runs straight through; the connection either
-     * succeeds or fails.
-     */
-    private class ConnectThread extends Thread {
-        private final BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
-
-        public ConnectThread(BluetoothDevice device) {
-        	sendToLogger("BluetoothService:"
-            		+ "\n\tConstructing connectThread..."
-            		+ "\n");
-            mmDevice = device;
-            BluetoothSocket tmp = null;
-
-            // Get a BluetoothSocket for a connection with the
-            // given BluetoothDevice
-            try {
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                Log.e(TAG, "create() failed", e);
-            }
-            mmSocket = tmp;
-        }
-
-        public void run() {
-        	synchronized(connectThreadLock) {
-				sendToLogger("BluetoothService:"
-						+ "\n\tBegin connectThread run()" + "\n");
-				setName("ConnectThread");
-
-				// Always cancel discovery because it will slow down a
-				// connection
-				mAdapter.cancelDiscovery();
-
-				// Make a connection to the BluetoothSocket
-				try {
-					synchronized (BluetoothService.this) {
-						connectingTimeout = new BluetoothConnectingTimeout();
-						timer.schedule(connectingTimeout, TIMEOUT_INTERVAL);
-					}
-					sendToLogger("BluetoothService:"
-							+ "\n\tCONNECTING TIMEOUT SET" + "\n");
-					// This is a blocking call and will only return on a
-					// successful connection or an exception
-					mmSocket.connect();
-				} catch (IOException e) {
-					synchronized (BluetoothService.this) {
-						if (!mState.equals(BluetoothService.State.CONNECTED)) {
-							// Close the socket
-							try {
-								sendToLogger("BluetoothService:"
-										+ "\n\tClosing connected socket in connectThread run()"
-										+ "\n\t###############################################"
-										+ "\n");
-								mmSocket.close();
-							} catch (IOException e2) {
-								Log.e(TAG,
-										"unable to close() socket during connection failure",
-										e2);
-							}
-
-							connectionFailed();
-							signalController(BluetoothService.State.LISTENING);
-						} else {
-							if (connectingTimeout != null) {
-								connectingTimeout.cancel();
-								connectingTimeout = null;
-							}
-							sendToLogger("BluetoothService:"
-									+ "\n\tCONNECTING TIMEOUT CLEARED" + "\n");
+    		while(true) {
+    			synchronized(controllerMonitor) {
+    				try {
+    					while(controllerReady)
+    						controllerMonitor.wait();
+    				} catch(InterruptedException e) {
+    					// Do nothing
+    				}
+    			}
+    			
+    			// Do something based on state ? broadcasting or not?
+    			
+    			// if messages to send, connect and send message, wait for next signal ?
+    			
+				handleLastBroadcastMessage(processNextMessage());
+				if (currentNeighbor != null) {
+					BluetoothSocket socket = null;
+    				try {
+    					socket = currentNeighbor.createRfcommSocketToServiceRecord(MY_UUID);
+					} catch (IOException e) {
+                		Log.e(TAG, "createRFcommSocketServiceRecord() failed", e);
+            		}	
+   			
+					mAdapter.cancelDiscovery();
+					
+					try {
+						synchronized (BluetoothService.this) {
+							connectingTimeout = new BluetoothConnectingTimeout();
+							timer.schedule(connectingTimeout, TIMEOUT_INTERVAL);
 						}
-						if (mConnectThread != null) {
-							mConnectThread.cancel();
-							mConnectThread = null;
+						sendToLogger("BluetoothService:"
+								+ "\n\tCONNECTING TIMEOUT SET");
+						// This is a blocking call and will only return on a
+						// successful connection or an exception
+						socket.connect();
+					} catch (IOException e) {
+						try {
+							socket.close();
+						} catch (IOException e2) {
+							Log.e(TAG, "unable to close() socket during connection failure", e2);
 						}
-						;
+						connectionFailed();
 					}
-					sendToLogger("BluetoothService:"
-							+ "\n\tEnd of connectThread run()" + "\n");
-					return;
-				}
+					
+					if (socket != null) {    			
+						sendToLogger("BluetoothService:"
+							+ "\n\tBroadcasting current message");
+						
+    					responseTimeout = new BluetoothResponseTimeout();
+						timer.schedule(responseTimeout, TIMEOUT_INTERVAL);
+						sendToLogger("BluetoothService:"
+							+ "\n\tRESPONSE TIMEOUT SET");
+						
+    					OutputStream outStream = null;
+    					try {
+    						outStream = socket.getOutputStream();
+    					} catch(IOException e) {
+    						Log.e(TAG, "getOutputStream() failed", e);
+    					}
 
-				synchronized (BluetoothService.this) {
-					if (connectingTimeout != null) {
-						connectingTimeout.cancel();
-						connectingTimeout = null;
+						if (outStream != null) {
+    						sendMessage(outStream, currentMessage);
+			    		}
 					}
 				}
-				sendToLogger("BluetoothService:"
-						+ "\n\tCONNECTING TIMEOUT CLEARED" + "\n");
-				// Start the connected thread
-				connected(mmSocket, mmDevice);
-
-				sendToLogger("BluetoothService:"
-						+ "\n\tEnd of connectThread run()" + "\n");
-        	}
-        }
-
-        public void cancel() {
-            try {
-            	sendToLogger("BluetoothService:"
-                		+ "\n\tCancelling connectThread..."
-                		+ "\n");
-                mmSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "close() of connect socket failed", e);
-            }
-        }
+    			else {
+					sendToLogger("BluetoothService:"
+						+ "\n\tDone Broadcasting");
+				}
+    		}
+    	}
     }
-    
+
     private class ElectionHandler {
         private boolean hostingElection;
         private int myElectionResponseWindow;
@@ -964,16 +581,14 @@ public class BluetoothService extends Service implements IBluetoothService {
         	if (!hostingElection) {
         		hostingElection = true;
         		sendToLogger("BluetoothService:"
-        				+ "\n\tStarting new Wifi discovery election!"
-        				+ "\n");
+        				+ "\n\tStarting new Wifi discovery election!");
         		
         		electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
         		broadcast(new ElectionMessage(BluetoothMessage.INITIATE_ELECTION_HEADER));
         	}
         	else {
         		sendToLogger("BluetoothService:"
-        				+ "\n\tAlready hosting election, request ignored."
-        				+ "\n");
+        				+ "\n\tAlready hosting election, request ignored.");
         	}
         }
     	
@@ -982,8 +597,7 @@ public class BluetoothService extends Service implements IBluetoothService {
         	int value = rand.nextInt(myElectionResponseWindow);
         	
         	sendToLogger("BluetoothService:"
-        			+ "\n\tResponding to election with value " + String.valueOf(value)
-        			+ "\n");
+        			+ "\n\tResponding to election with value " + String.valueOf(value));
         	
         	return new ElectionMessage(value);
         }
@@ -992,7 +606,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			synchronized (currentNeighbor) {
 				sendToLogger("BluetoothService:" + "\n\tReceived value "
 						+ message.value + " from neighbor "
-						+ currentNeighbor.getAddress() + "\n");
+						+ currentNeighbor.getAddress());
 				electionResponses.add(new Pair<BluetoothDevice, Integer>(
 						currentNeighbor, message.value));
 			}
@@ -1000,7 +614,7 @@ public class BluetoothService extends Service implements IBluetoothService {
         
         public synchronized void determineElectionWinner() {
     		sendToLogger("BluetoothService:"
-    				+ "\n\tFinalizing Election...\n");
+    				+ "\n\tFinalizing Election...");
     		Collections.sort(electionResponses);
     		electionAnnouncements = new ArrayList<IBluetoothMessage>();
     		
@@ -1020,7 +634,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     	
     	private synchronized void announceElectionWinner() {
     		sendToLogger("BluetoothService:"
-    				+ "\n\tAnnouncing Election Results...\n");
+    				+ "\n\tAnnouncing Election Results...");
 
     		if (!winnerAcknowledgedElection) {
 				if (nextAnnouncement.hasNext()) {
@@ -1051,16 +665,14 @@ public class BluetoothService extends Service implements IBluetoothService {
     			sendBroadcast(i);
     			
     			sendToLogger("BluetoothService:"
-    					+ "\n\tResetting election window to 1024"
-    					+ "\n");
+    					+ "\n\tResetting election window to 1024");
     		}
     		else {
     			response.value = 0;
     			myElectionResponseWindow = Math.max(64, myElectionResponseWindow / 2);
     			
     			sendToLogger("BluetoothService:"
-    					+ "\n\tDecreasing electionWindow to " + myElectionResponseWindow
-    					+ "\n");
+    					+ "\n\tDecreasing electionWindow to " + myElectionResponseWindow);
     		}
     		return response;
     	}
@@ -1094,8 +706,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		@Override
 		public void run() {
 			sendToLogger("BluetoothService:"
-					+ "\n\tTimeout while connecting..."
-					+ "\n");
+					+ "\n\tTimeout while connecting...");
 			synchronized(BluetoothService.this) {
 				connectingTimeout = null;
 			}
@@ -1106,11 +717,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 		@Override
 		public void run() {
 			sendToLogger("BluetoothService:"
-					+ "\n\tTimeout while waiting for response..."
-					+ "\n");
+					+ "\n\tTimeout while waiting for response...");
 			synchronized(BluetoothService.this) {
 				responseTimeout = null;
-				if ( mConnectedThread != null ) {mConnectedThread.cancel(); mConnectedThread = null; }
 			}
 		}
 	}
