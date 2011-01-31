@@ -81,6 +81,10 @@ public class MainActivity extends Activity {
 		
 		updateButtons(servicesStarted);
 		
+		Intent blueIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 900);
+		startActivity(blueIntent);
+		
 		coretask = new CoreTask();
         coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
         Log.d(MSG_TAG, "Current directory is "

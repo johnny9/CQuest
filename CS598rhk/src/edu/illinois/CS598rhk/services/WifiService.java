@@ -89,6 +89,7 @@ public class WifiService extends Service implements IWifiService {
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new AlwaysSchedule();
 		coretask = new CoreTask();
+		
 
 		try {
 			dest = InetAddress.getByName(myBroadcast);
@@ -237,8 +238,11 @@ public class WifiService extends Service implements IWifiService {
 			do {
 				try {
 					sock = new DatagramSocket(8888);
-					sock.setSoTimeout((int) (DISCOVERY_TIMESLICE - (System
-							.currentTimeMillis() - startTime)));
+					int timeout = (int) (DISCOVERY_TIMESLICE - (System
+							.currentTimeMillis() - startTime));
+					if(timeout < 0) timeout = 0;
+					
+					sock.setSoTimeout(timeout);
 					sock.receive(pkt);
 
 					String rcv = new String(pkt.getData(), 0, pkt.getLength());

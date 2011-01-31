@@ -3,6 +3,7 @@ package edu.illinois.CS598rhk.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -433,7 +434,6 @@ public class BluetoothService extends Service implements IBluetoothService {
         byte[] buffer = new byte[4];
 
         boolean receivingMessage = false;
-        byte[] rawMessage = null;
         int messageLength = 4;
         int bytesRead = 0;
         int bytes = 0;
@@ -445,21 +445,21 @@ public class BluetoothService extends Service implements IBluetoothService {
 
                 if (bytes > 0) {
                 	bytesRead += bytes;
-                	if (!receivingMessage && bytesRead >= 4) {
+                	if (!receivingMessage && bytesRead == 4) {
                 		receivingMessage = true;
                 		messageLength = ByteBuffer.wrap(buffer,0,4).getInt();
-                		rawMessage = new byte[messageLength];
+                		byte[] newBuffer = new byte[messageLength];
+                		System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+                		buffer = newBuffer;
                 	}
                 	else if (receivingMessage && bytesRead == messageLength){
                 		
-                		System.arraycopy(buffer, 0, rawMessage, 0, bytesRead);
-
                 		receivingMessage = false;
                 		messageLength = 4;
                 		bytesRead = 0;
                 		bytes = 0;
                 		
-                		message = BluetoothMessage.parse(rawMessage);
+                		message = BluetoothMessage.parse(buffer);
             			break;
                 	}
                 }
@@ -493,8 +493,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     		while(true) {
     			synchronized(controllerMonitor) {
     				try {
-    					while(controllerReady)
-    						controllerMonitor.wait();
+    					controllerMonitor.wait();
     				} catch(InterruptedException e) {
     					// Do nothing
     				}
@@ -531,7 +530,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 							Log.e(TAG, "unable to close() socket during connection failure", e2);
 						}
 						connectionFailed();
-					}
+						continue;
+					} 
 					
 					if (socket != null) {    			
 						sendToLogger("BluetoothService:"
