@@ -408,7 +408,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 	            				+ "\n\tMessage: " + message);
 	            		
 	            		
-						IBluetoothMessage response = handleReceivedMessage(message);;
+						IBluetoothMessage response = handleReceivedMessage(message);
 						
 						OutputStream outStream = null;
 						try {
@@ -522,8 +522,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 						}
 						sendToLogger("BluetoothService:"
 								+ "\n\tCONNECTING TIMEOUT SET");
-						// This is a blocking call and will only return on a
-						// successful connection or an exception
+
 						socket.connect();
 					} catch (IOException e) {
 						try {
@@ -552,6 +551,27 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 						if (outStream != null) {
     						sendMessage(outStream, currentMessage);
+    						
+    						InputStream inStream = null;
+    						try {
+    							inStream = socket.getInputStream();
+    						} catch (IOException e) {
+    							sendToLogger("BluetoothService:" + "\n\tgetInputStream failed");
+    							Log.e(TAG, "getInputStream() failed", e);
+    						}
+    						
+    						if (inStream != null) {
+    							IBluetoothMessage message = readBluetoothMessage(inStream);
+        						
+        	            		sendToLogger("BluetoothService:"
+        	            				+ "\n\tReceived message from Neighbor:" 
+        	            				+ "\n\tName: " + socket.getRemoteDevice().getName()
+        	            				+ "\n\tAddress: " + socket.getRemoteDevice().getAddress()
+        	            				+ "\n\tMessage: " + message);
+        	            		
+        	            		
+        						handleResponseMessage(message);
+    						}	
 			    		}
 					}
 				}
@@ -701,6 +721,12 @@ public class BluetoothService extends Service implements IBluetoothService {
     		nextAnnouncement = null;
     	}
     }
+    
+    /*
+     * TODO: not sure if timeouts behave correctly anymore
+     * 		 also, not sure that controller signaling happens everywhere it should 
+     */
+    
     
 	private class BluetoothConnectingTimeout extends TimerTask {
 		@Override
