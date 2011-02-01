@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
 		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
 		startButton = (Button) findViewById(R.id.StartButton);
 		stopButton = (Button) findViewById(R.id.StopButton);
-		ipAddrText.setText("192.168.1.2");
+		ipAddrText.setText("192.168.1.4");
 		phoneIdText.setText("phone");
 		
 		updateButtons(servicesStarted);

@@ -15,6 +15,7 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
@@ -24,6 +25,8 @@ import edu.illinois.CS598rhk.models.WifiNeighbor;
 
 public class SchedulerService extends Service implements ISchedulerService {
 	
+	private static final String TAG = "SchedulerService";
+
 	private final IBinder mBinder = new SchedulerBinder();
 	
 	private IWifiService wifiService;
@@ -140,6 +143,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	}
 	
 	public void sendToLogger(String message) {
+		Log.d(TAG, message);
 		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
 		sendBroadcast(intentToLog);
@@ -209,7 +213,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 				}
 			}
 			else if (WifiService.INTENT_TO_UPDATE_SCHEDULE_PROGRESS.equals(intent.getAction())) {
-				long progress = intent.getLongExtra(WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
+				progress = intent.getLongExtra(WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
 				if (bluetoothNeighbors.size() > 0) {
 					if (progress <= 10000 && progress > 0 && !stoppingWifi) {

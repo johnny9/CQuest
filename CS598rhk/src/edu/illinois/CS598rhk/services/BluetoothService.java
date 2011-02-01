@@ -248,6 +248,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     }
 	
 	public synchronized void sendToLogger(String message) {
+		   	Log.d(TAG,message);
 			Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 			intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message
 					+ "\n\t-- [" + new Date().toGMTString() + "]");
@@ -259,7 +260,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     //
     
  // Debugging
-    private static final String TAG = "BluetoothService";
+    private static final String TAG = "AdHocBluetoothService";
 
     // Name for the SDP record when creating server socket
     private static final String NAME = "BluetoothNeighborFinder";
