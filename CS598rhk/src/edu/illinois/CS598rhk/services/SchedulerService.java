@@ -187,14 +187,15 @@ public class SchedulerService extends Service implements ISchedulerService {
 							+ "\n");
 				}
 				else if (neighbor.neighborCount == bluetoothNeighbors.size()) {
-					if (neighbor.progress < progress) {
+					/*if (neighbor.progress < progress) {
 						stoppingWifi = true;
 						wifiService.pauseWifiService();
 						sendToLogger("SchedulerService:"
 								+ "\n\tNew Bluetooth neighbor has less schedule remaining. Stopping Wifi."
 								+ "\n");
-					}
-					else if (neighbor.address.compareTo(myDevice.getAddress()) < 0) {
+					}*/
+					//else 
+					if (neighbor.address.compareTo(myDevice.getAddress()) < 0) {
 						stoppingWifi = true;
 						wifiService.pauseWifiService();
 						sendToLogger("SchedulerService:"
