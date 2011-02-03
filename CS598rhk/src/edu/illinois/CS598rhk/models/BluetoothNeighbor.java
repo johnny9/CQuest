@@ -17,7 +17,7 @@ public class BluetoothNeighbor extends Neighbor {
 	}
 
 	public BluetoothNeighbor() {
-		schedule = null;
+		schedule = new String[0];
 	}
 
 	@Override
@@ -76,12 +76,19 @@ public class BluetoothNeighbor extends Neighbor {
 		// parse the schedule names
 		ArrayList<String> scheduleList = new ArrayList<String>();
 		int currentIndex = indexOfAddress + addressLength + 12;
+		String newName = "";
 		while (currentIndex < bytes.length) {
-			String newName = "";
-			while (bytes[currentIndex] != '\t')
-				newName += bytes[currentIndex];
-			scheduleList.add(newName);
+			if (bytes[currentIndex] == '\t')
+			{
+				scheduleList.add(newName);
+				newName = "";
+			} else {
+				newName += (char) bytes[currentIndex];
+			}
+			
+			currentIndex++;
 		}
+		schedule = scheduleList.toArray(schedule);
 
 	}
 
