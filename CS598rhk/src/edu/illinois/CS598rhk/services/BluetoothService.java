@@ -353,7 +353,27 @@ public class BluetoothService extends Service implements IBluetoothService {
 								+ socket.getRemoteDevice().getAddress()
 								+ "\n\tMessage: " + message);
 
-						handleReceivedMessage(message);
+						message = handleReceivedMessage(message);
+
+						OutputStream outStream = null;
+						try {
+							outStream = socket.getOutputStream();
+						} catch (IOException e) {
+							Log.e(TAG, "getOutputStream() failed", e);
+							try {
+								socket.close();
+							} catch (IOException e2) {
+								Log.e(TAG, "bluetooth socket.close() failed",
+										e2);
+							}
+							continue;
+						}
+						sendMessage(outStream, message);
+						try {
+							socket.close();
+						} catch (IOException e) {
+							Log.e(TAG, "bluetooth socket.close() failed", e);
+						}
 					}
 				}
 			}
@@ -451,15 +471,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 					mAdapter.cancelDiscovery();
 
-					while (true) {
-						try {
-							socket.connect();
-							break;
-						} catch (IOException e) {
-							connectionFailed();
-							// continue;
-						}
+					try {
+						socket.connect();
+
+					} catch (IOException e) {
+						connectionFailed();
+						continue;
 					}
+
 					sendToLogger("BluetoothService:"
 							+ "\n\tBroadcasting current message");
 
@@ -476,6 +495,27 @@ public class BluetoothService extends Service implements IBluetoothService {
 						continue;
 					}
 					sendMessage(outStream, currentMessage);
+
+					InputStream inStream = null;
+					try {
+						inStream = socket.getInputStream();
+					} catch (IOException e) {
+						sendToLogger("BluetoothService:"
+								+ "\n\tgetInputStream failed");
+						Log.e(TAG, "getInputStream() failed", e);
+					}
+
+					IBluetoothMessage message = readBluetoothMessage(inStream);
+
+					sendToLogger("BluetoothService:"
+							+ "\n\tReceived message from Neighbor:"
+							+ "\n\tName: " + socket.getRemoteDevice().getName()
+							+ "\n\tAddress: "
+							+ socket.getRemoteDevice().getAddress()
+							+ "\n\tMessage: " + message);
+
+					handleReceivedMessage(message);
+					
 					try {
 						socket.close();
 					} catch (IOException e) {
