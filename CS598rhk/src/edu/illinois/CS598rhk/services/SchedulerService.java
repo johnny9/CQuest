@@ -190,7 +190,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 							+ "\n\tNew Bluetooth neighbor has " + (neighbor.neighborCount - bluetoothNeighbors.size())
 							+ " more neighbors than me. Stopping Wifi."
 							+ "\n");
-					
+					for(int i = 0; i < wifiSchedule.size(); i++)
+						wifiSchedule.remove();
+					for(int i = 0; i < neighbor.schedule.length; i++)
+						wifiSchedule.add(neighbor.schedule[i]);	
+					wifiSchedule.add(myDevice.getAddress());					
 				}
 				else if (neighbor.neighborCount == bluetoothNeighbors.size()) {
 					/*if (neighbor.progress < progress) {
@@ -207,7 +211,15 @@ public class SchedulerService extends Service implements ISchedulerService {
 						sendToLogger("SchedulerService:"
 								+ "\n\tNew Bluetooth neighbor has lower address. Stopping Wifi."
 								+ "\n");
-						wifiSchedule.add(neighbor.address);
+						Queue<String> tempQueue = new LinkedList<String>();
+						for(int i = 0; i < wifiSchedule.size(); i++)
+							tempQueue.add(wifiSchedule.remove());
+						for(int i = 0; i < neighbor.schedule.length; i++)
+							wifiSchedule.add(neighbor.schedule[i]);	
+						wifiSchedule.addAll(tempQueue);
+					} else {
+						for(int i = 0; i < neighbor.schedule.length; i++)
+							wifiSchedule.add(neighbor.schedule[i]);
 					}
 				}
 				
