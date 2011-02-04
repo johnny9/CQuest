@@ -135,14 +135,13 @@ public class BluetoothService extends Service implements IBluetoothService {
 			myContactInfo.progress = progress;
 		}
 	}
-	
+
 	@Override
 	public void updateScheduleInfo(String[] schedule) {
 		synchronized (myContactInfo) {
-			sendToLogger("BluetoothService:"
-					+ "\n\tReceived schedule update");
+			sendToLogger("BluetoothService:" + "\n\tReceived schedule update");
 			myContactInfo.schedule = schedule;
-		}		
+		}
 	}
 
 	@Override
@@ -162,6 +161,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	}
 
 	public void broadcast(IBluetoothMessage message) {
+		if (message == null) {
+			message = myContactInfo;
+		}
 		sendToLogger("BluetooothService:" + "\n\tReceived message to broadcast"
 				+ "\n\tMessage:" + message);
 
@@ -449,11 +451,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 					mAdapter.cancelDiscovery();
 
-					try {
-						socket.connect();
-					} catch (IOException e) {
-						connectionFailed();
-						continue;
+					while (true) {
+						try {
+							socket.connect();
+							break;
+						} catch (IOException e) {
+							connectionFailed();
+							// continue;
+						}
 					}
 					sendToLogger("BluetoothService:"
 							+ "\n\tBroadcasting current message");
@@ -481,6 +486,4 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
 	}
 
-	
-	
 }

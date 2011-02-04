@@ -129,7 +129,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 		i = new Intent(SchedulerService.this, BluetoothService.class);
 		i.putExtra(MainActivity.NAME_KEY, name);
-		wifiSchedule.add(name);
+		
 		startService(i);
 
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -138,6 +138,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 		myDevice = BluetoothAdapter.getDefaultAdapter();
 		this.address = address;
+		wifiSchedule.add(myDevice.getAddress());
 		stoppingWifi = false;
 
 		return START_STICKY;
@@ -249,7 +250,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 						wifiSchedule = new LinkedList<String>();
 						for (int i = 0; i < neighbor.schedule.length; i++)
 							wifiSchedule.add(neighbor.schedule[i]);
-						if(neighbor.progress <= 0)
+						if(neighbor.progress <= 1000)
 						{
 							wifiSchedule.add(wifiSchedule.remove());
 							if(wifiSchedule.element().equals(myDevice.getAddress()))
@@ -272,12 +273,12 @@ public class SchedulerService extends Service implements ISchedulerService {
 						// bluetoothService.hostWifiDiscoveryElection();
 						wifiSchedule.add(myDevice.getAddress());
 						wifiSchedule.remove();
-						BluetoothNeighbor updateMessage = new BluetoothNeighbor(
-								wifiSchedule.toArray(new String[0]));
-						bluetoothService.broadcast(updateMessage);
+						bluetoothService.broadcast(null);
 						sendToLogger("SchedulerService:"
 								+ "\n\tInforming neighbors that we're finished"
 								+ String.valueOf(progress) + "\n");
+						stoppingWifi = true;
+						wifiService.pauseWifiService();
 					}
 				}
 			} else if (BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY
