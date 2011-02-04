@@ -273,6 +273,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 						// bluetoothService.hostWifiDiscoveryElection();
 						wifiSchedule.add(myDevice.getAddress());
 						wifiSchedule.remove();
+						
 						bluetoothService.broadcast(null);
 						sendToLogger("SchedulerService:"
 								+ "\n\tInforming neighbors that we're finished"

@@ -162,7 +162,13 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public void broadcast(IBluetoothMessage message) {
 		if (message == null) {
-			message = myContactInfo;
+			BluetoothNeighbor response = new BluetoothNeighbor(myContactInfo.schedule);
+			response.address = myContactInfo.address;
+			response.name = myContactInfo.name;
+			response.progress = myContactInfo.progress;
+			response.neighborCount = myContactInfo.neighborCount;
+			response.schedule = myContactInfo.schedule;
+			message = response;
 		}
 		sendToLogger("BluetooothService:" + "\n\tReceived message to broadcast"
 				+ "\n\tMessage:" + message);
@@ -283,11 +289,15 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public synchronized IBluetoothMessage handleReceivedMessage(
 			IBluetoothMessage message) {
-		IBluetoothMessage response = myContactInfo;
+		BluetoothNeighbor response = new BluetoothNeighbor(myContactInfo.schedule);
+		response.address = myContactInfo.address;
+		response.name = myContactInfo.name;
+		response.progress = myContactInfo.progress;
+		response.neighborCount = myContactInfo.neighborCount;
+		response.schedule = myContactInfo.schedule;
 
 		if (message instanceof BluetoothNeighbor) {
 			newBluetoothNeighbor((BluetoothNeighbor) message);
-			response = myContactInfo;
 		}
 		return response;
 	}
