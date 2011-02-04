@@ -192,9 +192,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 						+ "\n\tReceived new Bluetooth neighbor" + "\n");
 				if (!bluetoothNeighbors.contains(neighbor)) {
 
-					bluetoothNeighbors.add(neighbor);
-					bluetoothService.updateNeighborCount(bluetoothNeighbors
-							.size());
 					sendToLogger("SchedulerService:"
 							+ "\n\tNeighbor is a new neighbor!" + "\n\t"
 							+ neighbor + "\n");
@@ -239,6 +236,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 								wifiSchedule.add(neighbor.schedule[i]);
 						}
 					}
+					bluetoothNeighbors.add(neighbor);
+					bluetoothService.updateNeighborCount(bluetoothNeighbors
+							.size());
+					bluetoothService.updateScheduleInfo(wifiSchedule.toArray(new String[0]));
+					
 				} else {
 					//received an update from a known neighbor (possibly the leader
 					if(neighbor.schedule[0].equals(neighbor.address))
@@ -266,12 +268,12 @@ public class SchedulerService extends Service implements ISchedulerService {
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
 				if (bluetoothNeighbors.size() > 0) {
-					if (progress <= 0 && !stoppingWifi) {
+					if (progress <= 1000 && !stoppingWifi) {
 						// bluetoothService.hostWifiDiscoveryElection();
 						wifiSchedule.add(myDevice.getAddress());
 						wifiSchedule.remove();
 						BluetoothNeighbor updateMessage = new BluetoothNeighbor(
-								(String[]) wifiSchedule.toArray());
+								wifiSchedule.toArray(new String[0]));
 						bluetoothService.broadcast(updateMessage);
 						sendToLogger("SchedulerService:"
 								+ "\n\tInforming neighbors that we're finished"

@@ -281,7 +281,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public synchronized IBluetoothMessage handleReceivedMessage(
 			IBluetoothMessage message) {
-		IBluetoothMessage response = null;
+		IBluetoothMessage response = myContactInfo;
 
 		if (message instanceof BluetoothNeighbor) {
 			newBluetoothNeighbor((BluetoothNeighbor) message);
@@ -351,20 +351,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 								+ socket.getRemoteDevice().getAddress()
 								+ "\n\tMessage: " + message);
 
-						IBluetoothMessage response = handleReceivedMessage(message);
-
-						OutputStream outStream = null;
-						try {
-							outStream = socket.getOutputStream();
-						} catch (IOException e) {
-							sendToLogger("BluetoothService:"
-									+ "\n\tgetOutputStream failed");
-							Log.e(TAG, "getOutputStream() failed", e);
-						}
-
-						if (outStream != null) {
-							writeBluetoothMessage(outStream, response);
-						}
+						handleReceivedMessage(message);
 					}
 				}
 			}
@@ -450,7 +437,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				// signal ?
 
 				handleLastBroadcastMessage(processNextMessage());
-				if (currentNeighbor != null) {
+				if (currentNeighbor != null && currentMessage != null) {
 					BluetoothSocket socket = null;
 					try {
 						socket = currentNeighbor
@@ -484,31 +471,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 						continue;
 					}
 					sendMessage(outStream, currentMessage);
-
-					InputStream inStream = null;
-					try {
-						inStream = socket.getInputStream();
-					} catch (IOException e) {
-						sendToLogger("BluetoothService:"
-								+ "\n\tgetInputStream failed");
-						Log.e(TAG, "getInputStream() failed", e);
-						try {
-							socket.close();
-						} catch (IOException e2) {
-							Log.e(TAG, "bluetooth socket.close() failed", e2);
-						}
-						continue;
-					}
-					IBluetoothMessage message = readBluetoothMessage(inStream);
-					
-					sendToLogger("BluetoothService:"
-							+ "\n\tReceived message from Neighbor:"
-							+ "\n\tName: " + socket.getRemoteDevice().getName()
-							+ "\n\tAddress: "
-							+ socket.getRemoteDevice().getAddress()
-							+ "\n\tMessage: " + message);
-
-					handleResponseMessage(message);
 					try {
 						socket.close();
 					} catch (IOException e) {

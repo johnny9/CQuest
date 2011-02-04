@@ -64,7 +64,7 @@ public class BluetoothMessage {
 		int messageLength = ByteBuffer.wrap(messageLengthBytes).getInt();
 		
 		if (messageLength == bytes.length) {
-			byte[] messageBytes = new byte[messageLength];
+			byte[] messageBytes = new byte[messageLength- HEADER_LENGTH];
 			System.arraycopy(bytes, HEADER_LENGTH, messageBytes, 0, messageLength - HEADER_LENGTH);
 			
 			switch(messageType) {
