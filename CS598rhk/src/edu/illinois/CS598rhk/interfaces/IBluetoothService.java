@@ -10,5 +10,7 @@ public interface IBluetoothService {
 	public void updateNeighbors();
 	
     public void broadcast(IBluetoothMessage message);
+
+	public void hostWifiDiscoveryElection();
     
 }

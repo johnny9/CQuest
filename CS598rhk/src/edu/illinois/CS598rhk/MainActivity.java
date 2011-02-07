@@ -205,29 +205,18 @@ public class MainActivity extends Activity {
 			if (servicesStarted) {
 
 				((TextView) findViewById(R.id.btmac)).setText("bt address: "
-						+ BluetoothService.address);
+						+ BluetoothAdapter.getDefaultAdapter().getAddress());
 				((TextView) findViewById(R.id.btname)).setText("name:"
-						+ BluetoothService.name);
+						+ BluetoothAdapter.getDefaultAdapter().getName());
 				((TextView) findViewById(R.id.btneighborcount))
 						.setText("bt neighbor count: "
-								+ BluetoothService.neighborCount);
+								+ BluetoothService.neighbors.size());
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
 				((TextView) findViewById(R.id.wifineighborcount))
 						.setText("wifi neighbor count: "
 								+ SchedulerService.wifiNeighbors.size());
-				
-				String scheduleString = "";
-				for(int i = 0; i < SchedulerService.wifiSchedule.size(); i++)
-				{
-					if(i == SchedulerService.wifiSchedule.size()-1)
-						scheduleString += SchedulerService.wifiSchedule.get(i);
-					else
-						scheduleString += SchedulerService.wifiSchedule.get(i) + ", ";
-				}
-				((TextView) findViewById(R.id.schedule))
-				.setText("schedule: "
-						+ scheduleString);
+					
 			}
 		}
 	}
