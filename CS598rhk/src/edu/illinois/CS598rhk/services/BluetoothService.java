@@ -66,10 +66,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     
     private volatile boolean updatingNeighbors;
     
-    private static final long TIMEOUT_INTERVAL = 5000;
-    private Timer timer;
-    private BluetoothResponseTimeout responseTimeout;
-    private BluetoothConnectingTimeout connectingTimeout;
     
     private BluetoothAcceptThread acceptThread;
     private BluetoothControllerThread controllerThread;
@@ -87,7 +83,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     	myContactInfo = new BluetoothNeighbor();
     	messages = new ArrayList<IBluetoothMessage>();
     	electionHandler = new ElectionHandler();
-    	timer = new Timer();
     	
     	myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
     	myContactInfo.address = BluetoothAdapter.getDefaultAdapter().getAddress();
@@ -277,13 +272,7 @@ public class BluetoothService extends Service implements IBluetoothService {
     private synchronized void connectionFailed() {
     	sendToLogger("BluetoothService:"
         		+ "\n\tConnection Failed..."
-        		+ "\n");
-    	if (connectingTimeout != null) {
-    		connectingTimeout.cancel();
-    		connectingTimeout = null;
-    		sendToLogger("BluetoothService:"
-            		+ "\n\tCONNECTING TIMEOUT CLEARED (connectionFailed)");
-    	}
+        		+ "\n");    	
     }
 
     /**
@@ -292,12 +281,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     private synchronized void connectionLost() {
     	sendToLogger("BluetoothService:"
         		+ "\n\tConnection Lost...");
-    	if (responseTimeout != null) {
-    		responseTimeout.cancel();
-    		responseTimeout = null;
-    		sendToLogger("BluetoothService:"
-            		+ "\n\tRESPONSE TIMEOUT CLEARED (connectionLost)");
-    	}
     }
 
     public synchronized IBluetoothMessage handleReceivedMessage(IBluetoothMessage message) {
@@ -324,12 +307,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     public synchronized void handleResponseMessage(IBluetoothMessage message) {
 		
     	if (message instanceof BluetoothNeighbor) {
-			if (responseTimeout != null) {
-				responseTimeout.cancel();
-				responseTimeout = null;
-				sendToLogger("BluetoothService:"
-	            		+ "\n\tRESPONSE TIMEOUT CLEARED (BluetoothNeighbor)");
-			}
 			newBluetoothNeighbor((BluetoothNeighbor)message);
     	}
     	else if (message instanceof WifiNeighbor) {
@@ -339,21 +316,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 			ElectionMessage electionMessage = (ElectionMessage)message;
 			switch(message.getMessageType()) {
     		case BluetoothMessage.ELECTION_RESPONSE_HEADER:
-    			if (responseTimeout != null) {
-    				responseTimeout.cancel();
-    				responseTimeout = null;
-    				sendToLogger("BluetoothService:"
-    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (RESPONSE)");
-    			}
     			electionHandler.handleElectionResponse(electionMessage);
     			break;
     		case BluetoothMessage.ACKNOWLEDGE_ELECTION_WINNER:
-    			if (responseTimeout != null) {
-    				responseTimeout.cancel();
-    				responseTimeout = null;
-    				sendToLogger("BluetoothService:"
-    	            		+ "\n\tRESPONSE TIMEOUT CLEARED (ACKKNOWLEDGE)");
-    			}
     			electionHandler.handleElectionAcknowledgement(electionMessage);
     			break;
     		}
@@ -516,13 +481,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 					mAdapter.cancelDiscovery();
 					
 					try {
-						synchronized (BluetoothService.this) {
-							connectingTimeout = new BluetoothConnectingTimeout();
-							timer.schedule(connectingTimeout, TIMEOUT_INTERVAL);
-						}
-						sendToLogger("BluetoothService:"
-								+ "\n\tCONNECTING TIMEOUT SET");
-
 						socket.connect();
 					} catch (IOException e) {
 						try {
@@ -538,9 +496,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 						sendToLogger("BluetoothService:"
 							+ "\n\tBroadcasting current message");
 						
-    					responseTimeout = new BluetoothResponseTimeout();
-						timer.schedule(responseTimeout, TIMEOUT_INTERVAL);
-						sendToLogger("BluetoothService:"
+    					sendToLogger("BluetoothService:"
 							+ "\n\tRESPONSE TIMEOUT SET");
 						
     					OutputStream outStream = null;
@@ -723,39 +679,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     	}
     }
     
-    /*
-     * TODO: not sure if timeouts behave correctly anymore
-     * 		 also, not sure that controller signaling happens everywhere it should 
-     */
-    
-    
-	private class BluetoothConnectingTimeout extends TimerTask {
-		@Override
-		public void run() {
-			sendToLogger("BluetoothService:"
-					+ "\n\tTimeout while connecting...");
-			synchronized(BluetoothService.this) {
-				connectingTimeout = null;
-			}
-		}
-    }
-    
-    /*
-     * TODO: not sure if timeouts behave correctly anymore
-     * 		 also, not sure that controller signaling happens everywhere it should 
-     */
-    
-    
-	private class BluetoothResponseTimeout extends TimerTask {
-		@Override
-		public void run() {
-			sendToLogger("BluetoothService:"
-					+ "\n\tTimeout while waiting for response...");
-			synchronized(BluetoothService.this) {
-				responseTimeout = null;
-			}
-		}
-	}
     
     
     private class Pair<T,E extends Comparable<E>> implements Comparable<Pair<T,E>> {
