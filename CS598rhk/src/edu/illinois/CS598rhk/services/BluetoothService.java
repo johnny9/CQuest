@@ -394,6 +394,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
     }
     
+    private class BluetoothAcceptHandlerThread extends Thread {
+    	
+    }
+    
     private IBluetoothMessage readBluetoothMessage(InputStream inStream) {        
     	IBluetoothMessage message = null;
 
@@ -457,13 +461,6 @@ public class BluetoothService extends Service implements IBluetoothService {
     			controllerMonitor.notify();
     		}
     		while(true) {
-    			synchronized(controllerMonitor) {
-    				try {
-    					controllerMonitor.wait();
-    				} catch(InterruptedException e) {
-    					// Do nothing
-    				}
-    			}
     			
     			// Do something based on state ? broadcasting or not?
     			
