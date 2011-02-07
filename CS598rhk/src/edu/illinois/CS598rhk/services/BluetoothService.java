@@ -40,6 +40,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public static final String ACTION_ELECTED_FOR_WIFI_DISCOVERY = "action elected for wifi discovery";
 	public static final String DELY_UNTIL_STARTING_WIFI_DISCOVERY = "delay until starting wifi discovery";
+	public static String name;
+	public static String address;
+	public static int neighborCount;
 
 	final IBinder mBinder = new BluetoothBinder();
 
@@ -81,6 +84,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 		myContactInfo = new BluetoothNeighbor();
 		messages = new ArrayList<IBluetoothMessage>();
 
+		name = BluetoothAdapter.getDefaultAdapter().getName();
+		address = BluetoothAdapter.getDefaultAdapter().getAddress();
 		myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
 		myContactInfo.address = BluetoothAdapter.getDefaultAdapter()
 				.getAddress();
@@ -95,6 +100,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
 		nextNeighbor = neighbors.iterator();
+		neighborCount = neighbors.size();
 
 		currentNeighbor = null;
 		currentMessage = null;
@@ -379,11 +385,11 @@ public class BluetoothService extends Service implements IBluetoothService {
 							continue;
 						}
 						sendMessage(outStream, message);
-						try {
-							socket.close();
-						} catch (IOException e) {
-							Log.e(TAG, "bluetooth socket.close() failed", e);
-						}
+					}
+					try {
+						socket.close();
+					} catch (IOException e) {
+						Log.e(TAG, "bluetooth socket.close() failed", e);
 					}
 				}
 			}

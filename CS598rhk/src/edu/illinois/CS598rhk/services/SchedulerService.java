@@ -36,9 +36,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	private List<WifiNeighbor> wifiNeighbors;
-	private List<BluetoothNeighbor> bluetoothNeighbors;
-	private Queue<String> wifiSchedule;
+	public static List<WifiNeighbor> wifiNeighbors;
+	private static List<BluetoothNeighbor> bluetoothNeighbors;
+	public static List<String> wifiSchedule;
 
 	private BluetoothAdapter myDevice;
 	private long progress;
@@ -119,16 +119,14 @@ public class SchedulerService extends Service implements ISchedulerService {
 		bindService(new Intent(SchedulerService.this, BluetoothService.class),
 				mBluetoothConnection, Context.BIND_AUTO_CREATE);
 
-		String name = intent.getStringExtra(MainActivity.NAME_KEY);
 		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 
 		Intent i = new Intent(SchedulerService.this, WifiService.class);
-		i.putExtra(MainActivity.NAME_KEY, name);
 		i.putExtra(MainActivity.ADDRESS_KEY, address);
+		i.putExtra(MainActivity.BT_ADDRESS_KEY, BluetoothAdapter.getDefaultAdapter().getAddress());
 		startService(i);
 
 		i = new Intent(SchedulerService.this, BluetoothService.class);
-		i.putExtra(MainActivity.NAME_KEY, name);
 		
 		startService(i);
 
@@ -206,7 +204,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 								+ " more neighbors than me. Stopping Wifi."
 								+ "\n");
 						for (int i = 0; i < wifiSchedule.size(); i++)
-							wifiSchedule.remove();
+							wifiSchedule.remove(0);
 						for (int i = 0; i < neighbor.schedule.length; i++)
 							wifiSchedule.add(neighbor.schedule[i]);
 						wifiSchedule.add(myDevice.getAddress());
@@ -228,7 +226,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 									+ "\n");
 							Queue<String> tempQueue = new LinkedList<String>();
 							for (int i = 0; i < wifiSchedule.size(); i++)
-								tempQueue.add(wifiSchedule.remove());
+								tempQueue.add(wifiSchedule.remove(0));
 							for (int i = 0; i < neighbor.schedule.length; i++)
 								wifiSchedule.add(neighbor.schedule[i]);
 							wifiSchedule.addAll(tempQueue);
@@ -252,8 +250,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 							wifiSchedule.add(neighbor.schedule[i]);
 						if(neighbor.progress <= 1000)
 						{
-							wifiSchedule.add(wifiSchedule.remove());
-							if(wifiSchedule.element().equals(myDevice.getAddress()))
+							wifiSchedule.add(wifiSchedule.remove(0));
+							if(wifiSchedule.get(0).equals(myDevice.getAddress()))
 							{
 								wifiService.resumeWifiService(0);
 							}
@@ -272,7 +270,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 					if (progress <= 1000 && !stoppingWifi) {
 						// bluetoothService.hostWifiDiscoveryElection();
 						wifiSchedule.add(myDevice.getAddress());
-						wifiSchedule.remove();
+						wifiSchedule.remove(0);
 						
 						bluetoothService.broadcast(null);
 						sendToLogger("SchedulerService:"

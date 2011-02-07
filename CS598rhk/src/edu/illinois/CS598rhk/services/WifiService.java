@@ -59,9 +59,9 @@ public class WifiService extends Service implements IWifiService {
 	private WifiMessageReceiver messageReceiver;
 	private WifiController wifiController;
 
-	private String myIPAddress;
+	public static String myIPAddress;
+	private static String myBluetoothAddress;
 	private String myBroadcast;
-	private String myPhoneName;
 	private int timeSlice;
 	private int wifiState;
 	private WifiNeighbor myInfo;
@@ -120,20 +120,18 @@ public class WifiService extends Service implements IWifiService {
 		if (wifiManager.isWifiEnabled())
 			wifiManager.setWifiEnabled(false);
 		
-		this.myPhoneName = intent.getStringExtra(MainActivity.NAME_KEY);
-		if(myPhoneName == null)
-			myPhoneName = "HTC Magic";
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if(myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
 		sendToLogger("My IP address is "+myIPAddress);
+		this.myBluetoothAddress = intent.getStringExtra(MainActivity.BT_ADDRESS_KEY);
 		
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh "+myIPAddress);
 		
 		myInfo = new WifiNeighbor();
-		myInfo.address = myIPAddress;
-		myInfo.name = myPhoneName;
+		myInfo.address = myBluetoothAddress;
+		myInfo.name = "phone";
 		
 		wifiState = WIFI_STATE_DISCOVERYING;
 		wifiController.start();
@@ -204,9 +202,7 @@ public class WifiService extends Service implements IWifiService {
 				pauseWifiService();
 			} else if (intent.getAction() == INTENT_TO_CHANGE_WIFI_ADDRESS) {
 				setIPAddress(intent.getStringExtra(NEW_WIFI_ADDRESS));
-			} else if (intent.getAction() == INTENT_TO_UPDATE_NAME) {
-				myPhoneName = intent.getStringExtra(NEW_PHONE_NAME);
-			}
+			} 
 
 		}
 	}
