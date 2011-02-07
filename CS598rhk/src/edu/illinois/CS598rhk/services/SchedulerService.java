@@ -221,12 +221,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 								+ String.valueOf(progress) + "\n");
 					}
 				}
-				else if (progress > 45000){
-					bluetoothService.updateNeighbors();
-					sendToLogger("SchedulerService:"
-							+ "\n\tNo Bluetooth neighbors, updating neighbors..."
-							+ "\n");
-				}
 			}
 			else if (BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY.equals(intent.getAction())) {
 				Long delay = intent.getLongExtra(BluetoothService.DELY_UNTIL_STARTING_WIFI_DISCOVERY, 0);
