@@ -134,6 +134,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 			}
 		}
 
+		bindService( new Intent( SchedulerService.this, WifiService.class ), mWifiConnection, Context.BIND_AUTO_CREATE );
+		bindService( new Intent( SchedulerService.this, BluetoothService.class ), mBluetoothConnection, Context.BIND_AUTO_CREATE );
+
 		Intent i = new Intent(SchedulerService.this, WifiService.class);
 		i.putExtra(MainActivity.ADDRESS_KEY, address);
 		i.putExtra(WifiService.WIFI_START_STATE, wifiStartState);
@@ -184,54 +187,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
 				}
-			} else if (BluetoothService.INTENT_TO_ADD_BLUETOOTH_NEIGHBOR
-					.equals(intent.getAction())) {
-				BluetoothNeighbor neighbor = new BluetoothNeighbor();
-				neighbor.unpack(intent
-						.getByteArrayExtra(BluetoothService.BLUETOOTH_NEIGHBOR_DATA));
-
-				sendToLogger("SchedulerService:"
-						+ "\n\tReceived new Bluetooth neighbor" + "\n");
-
-				if (neighbor.neighborCount > bluetoothNeighbors.size()) {
-					stoppingWifi = true;
-					wifiService.pauseWifiService();
-					sendToLogger("SchedulerService:"
-							+ "\n\tNew Bluetooth neighbor has "
-							+ (neighbor.neighborCount - bluetoothNeighbors
-									.size())
-							+ " more neighbors than me. Stopping Wifi." + "\n");
-				} else if (neighbor.neighborCount == bluetoothNeighbors.size()) {
-					/*
-					 * if (neighbor.progress < progress) { stoppingWifi = true;
-					 * wifiService.pauseWifiService();
-					 * sendToLogger("SchedulerService:" +
-					 * "\n\tNew Bluetooth neighbor has less schedule remaining. Stopping Wifi."
-					 * + "\n"); }
-					 */
-					// else
-					if (neighbor.address.compareTo(myDevice.getAddress()) < 0) {
-						stoppingWifi = true;
-						wifiService.pauseWifiService();
-						sendToLogger("SchedulerService:"
-								+ "\n\tNew Bluetooth neighbor has lower address. Stopping Wifi."
-								+ "\n");
-					}
-				}
-
-				if (!bluetoothNeighbors.contains(neighbor)) {
-					bluetoothNeighbors.add(neighbor);
-					bluetoothService.updateNeighborCount(bluetoothNeighbors
-							.size());
-					sendToLogger("SchedulerService:"
-							+ "\n\tNeighbor is a new neighbor!" + "\n\t"
-							+ neighbor + "\n");
-				}
 			} else if (WifiService.INTENT_TO_UPDATE_SCHEDULE_PROGRESS
 					.equals(intent.getAction())) {
 				progress = intent.getLongExtra(
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
-				bluetoothService.updateScheduleProgress(progress);
 				if (bluetoothNeighbors.size() > 0) {
 					if (progress <= 10000 && progress > 0 && !stoppingWifi) {
 						bluetoothService.hostWifiDiscoveryElection();
