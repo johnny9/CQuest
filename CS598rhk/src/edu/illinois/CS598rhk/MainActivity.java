@@ -215,11 +215,18 @@ public class MainActivity extends Activity {
 				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
-				if(SchedulerService.wifiNeighbors != null) {
-				((TextView) findViewById(R.id.wifineighborcount))
-						.setText("wifi neighbor count: "
-								+ SchedulerService.wifiNeighbors.size());
+				if (SchedulerService.wifiNeighbors != null) {
+					((TextView) findViewById(R.id.wifineighborcount))
+							.setText("wifi neighbor count: "
+									+ SchedulerService.wifiNeighbors.size());
 				}
+				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING)
+					((TextView) findViewById(R.id.wifion))
+							.setText("doing discovery over wifi");
+				else
+					((TextView) findViewById(R.id.wifion))
+							.setText("wifi discovery paused");
+
 			}
 		}
 	}

@@ -64,7 +64,7 @@ public class WifiService extends Service implements IWifiService {
 	private static String myBluetoothAddress;
 	private String myBroadcast;
 	private int timeSlice;
-	private int wifiState;
+	public static int wifiState;
 	private WifiNeighbor myInfo;
 
 	InetAddress dest;
