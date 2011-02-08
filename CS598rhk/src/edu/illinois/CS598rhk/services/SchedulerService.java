@@ -113,8 +113,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 				BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 		registerReceiver(neighborReceiver, filter);
 		
-		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
-		
+		address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		stoppingWifi = false;
 		myDevice = BluetoothAdapter.getDefaultAdapter();
 		bluetoothNeighborDevices.addAll(myDevice.getBondedDevices());
@@ -147,7 +146,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
 		wl.acquire();		
 				
-		this.address = address;
+		
 		
 		return START_STICKY;
 	}
