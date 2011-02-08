@@ -63,6 +63,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		super.onCreate();
 		wifiNeighbors = new ArrayList<WifiNeighbor>();
 		bluetoothNeighbors = new ArrayList<BluetoothNeighbor>();
+		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
 	private ServiceConnection mWifiConnection = new ServiceConnection() {
@@ -111,16 +112,32 @@ public class SchedulerService extends Service implements ISchedulerService {
 		filter = new IntentFilter(
 				BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 		registerReceiver(neighborReceiver, filter);
-
-		bindService(new Intent(SchedulerService.this, WifiService.class),
-				mWifiConnection, Context.BIND_AUTO_CREATE);
-		bindService(new Intent(SchedulerService.this, BluetoothService.class),
-				mBluetoothConnection, Context.BIND_AUTO_CREATE);
-
+		
 		String address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
+		
+		stoppingWifi = false;
+		myDevice = BluetoothAdapter.getDefaultAdapter();
+		bluetoothNeighborDevices.addAll(myDevice.getBondedDevices());
+
+		// on startup, since bt neighbors are currently static
+		// set leader to be the one with the lowest mac address
+		// this way a leader can be decided before the first election is even
+		// held
+		int wifiStartState = WifiService.WIFI_STATE_DISCOVERYING;
+		for (BluetoothDevice neighbor : bluetoothNeighborDevices) {
+			if (neighbor.getAddress().compareTo(myDevice.getAddress()) < 0) {
+				stoppingWifi = true;
+				wifiStartState = WifiService.WIFI_STATE_PAUSED;
+				sendToLogger("SchedulerService:"
+						+ "\n\tStarting wifi in the paused state."
+						+ "\n");
+				break;
+			}
+		}
 
 		Intent i = new Intent(SchedulerService.this, WifiService.class);
 		i.putExtra(MainActivity.ADDRESS_KEY, address);
+		i.putExtra(WifiService.WIFI_START_STATE, wifiStartState);
 		startService(i);
 
 		i = new Intent(SchedulerService.this, BluetoothService.class);
@@ -128,29 +145,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
-		wl.acquire();
-
-		myDevice = BluetoothAdapter.getDefaultAdapter();
+		wl.acquire();		
+				
 		this.address = address;
-		stoppingWifi = false;
-
-		bluetoothNeighborDevices.addAll(myDevice.getBondedDevices());
-
-		// on startup, since bt neighbors are currently static
-		// set leader to be the one with the lowest mac address
-		// this way a leader can be decided before the first election is even
-		// held
-		for (BluetoothDevice neighbor : bluetoothNeighborDevices) {
-			if (neighbor.getAddress().compareTo(myDevice.getAddress()) < 0) {
-				stoppingWifi = true;
-				wifiService.pauseWifiService();
-				sendToLogger("SchedulerService:"
-						+ "\n\tNew Bluetooth neighbor has lower address. Stopping Wifi."
-						+ "\n");
-				break;
-			}
-		}
-
+		
 		return START_STICKY;
 	}
 

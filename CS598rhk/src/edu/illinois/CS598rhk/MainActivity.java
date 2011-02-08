@@ -208,15 +208,18 @@ public class MainActivity extends Activity {
 						+ BluetoothAdapter.getDefaultAdapter().getAddress());
 				((TextView) findViewById(R.id.btname)).setText("name:"
 						+ BluetoothAdapter.getDefaultAdapter().getName());
-				((TextView) findViewById(R.id.btneighborcount))
-						.setText("bt neighbor count: "
-								+ BluetoothService.neighbors.size());
+				if (BluetoothService.neighbors != null) {
+					((TextView) findViewById(R.id.btneighborcount))
+							.setText("bt neighbor count: "
+									+ BluetoothService.neighbors.size());
+				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
+				if(SchedulerService.wifiNeighbors != null) {
 				((TextView) findViewById(R.id.wifineighborcount))
 						.setText("wifi neighbor count: "
 								+ SchedulerService.wifiNeighbors.size());
-					
+				}
 			}
 		}
 	}
@@ -282,8 +285,7 @@ public class MainActivity extends Activity {
 		servicesStarted = state;
 		startButton.setEnabled(!servicesStarted);
 		stopButton.setEnabled(servicesStarted);
-		if(servicesStarted)
-		{
+		if (servicesStarted) {
 			debugViewUp = true;
 			setContentView(R.layout.debug);
 		}
@@ -294,7 +296,7 @@ public class MainActivity extends Activity {
 		Intent i = new Intent(MainActivity.this, SchedulerService.class);
 		i.putExtra(ADDRESS_KEY, ipAddrText.getText().toString());
 		startService(i);
-		
+
 	}
 
 	private void stopServices() {

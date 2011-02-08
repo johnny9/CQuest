@@ -40,6 +40,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String NEW_WIFI_ADDRESS = "asdfasdfasdfasdfasdf";
 	public static final String WIFI_NEIGHBOR_NAME = "phone name";
 	public static final String WIFI_IP_ADDRESS = "ip address";
+	public static final String WIFI_START_STATE = "initial wifi state";
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
 	
@@ -125,7 +126,6 @@ public class WifiService extends Service implements IWifiService {
 			myIPAddress = "192.168.1.3";
 		sendToLogger("My IP address is "+myIPAddress);
 		this.myBluetoothAddress = intent.getStringExtra(MainActivity.BT_ADDRESS_KEY);
-		
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh "+myIPAddress);
 		
@@ -133,7 +133,7 @@ public class WifiService extends Service implements IWifiService {
 		myInfo.address = myBluetoothAddress;
 		myInfo.name = "phone";
 		
-		wifiState = WIFI_STATE_DISCOVERYING;
+		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE, WIFI_STATE_DISCOVERYING);
 		wifiController.start();
 
 		return START_STICKY;
