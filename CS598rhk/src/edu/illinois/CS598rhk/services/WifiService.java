@@ -10,6 +10,8 @@ import java.net.UnknownHostException;
 
 import android.app.Notification;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -125,7 +127,7 @@ public class WifiService extends Service implements IWifiService {
 		if(myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
 		sendToLogger("My IP address is "+myIPAddress);
-		this.myBluetoothAddress = intent.getStringExtra(MainActivity.BT_ADDRESS_KEY);
+		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh "+myIPAddress);
 		
