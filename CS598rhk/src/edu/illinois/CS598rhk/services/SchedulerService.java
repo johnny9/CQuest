@@ -191,7 +191,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 					.equals(intent.getAction())) {
 				progress = intent.getLongExtra(
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
-				if (bluetoothNeighbors.size() > 0) {
+				if (bluetoothNeighborDevices.size() > 0) {
 					if (progress <= 10000 && progress > 0 && !stoppingWifi) {
 						bluetoothService.hostWifiDiscoveryElection();
 						sendToLogger("SchedulerService:"
