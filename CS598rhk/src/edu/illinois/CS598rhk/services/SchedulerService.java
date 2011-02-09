@@ -193,7 +193,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
 				if (bluetoothNeighborDevices.size() > 0) {
-					if (progress <= 10000 && progress > 0 && !stoppingWifi) {
+					if (progress <= 15000 && progress > 0 && !stoppingWifi) {
 						bluetoothService.hostWifiDiscoveryElection();
 						sendToLogger("SchedulerService:"
 								+ "\n\tInitiating Wifi discovery election with remaining schedule"
