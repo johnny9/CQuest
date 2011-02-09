@@ -227,7 +227,7 @@ public class MainActivity extends Activity {
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: paused");
 				((TextView) findViewById(R.id.wifiprog))
-				.setText("wifi progress: "+WifiService.timeSlice);
+				.setText("wifi progress: "+WifiService.timeSlice + "/25");
 			}
 		}
 	}
