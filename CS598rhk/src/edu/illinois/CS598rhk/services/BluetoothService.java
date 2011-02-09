@@ -63,8 +63,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static Set<BluetoothDevice> neighbors;
 	private Iterator<BluetoothDevice> nextNeighbor;
 
-	private volatile boolean updatingNeighbors;
-
 	private BluetoothAcceptThread acceptThread;
 
 	private volatile boolean controllerReady;
@@ -90,7 +88,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 		sendToLogger("BluetoothService:" + "\n\tName: " + myContactInfo.name
 				+ "\n\tAddress: " + myContactInfo.address);
 
-		updatingNeighbors = false;
 
 		neighbors = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
 		nextNeighbor = neighbors.iterator();
@@ -299,7 +296,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		@Override
 		public void run() {
 			setName("Broadcast");
-			Set<Thread> threads = new HashSet<Thread>();
+			List<Thread> threads = new ArrayList<Thread>();
 			for(BluetoothDevice neighbor : neighbors)
 			{
 				Thread tempThread = new BluetoothConnectThread(message, neighbor);
@@ -313,10 +310,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 			}
 			while(threads.size() > 0)
 			{
-				for(Thread t : threads)
+				for(int i = 0; i < threads.size();)
 				{
-					if(!t.isAlive())
-						threads.remove(t);
+					if(!threads.get(i).isAlive())
+						threads.remove(i);
+					else 
+						i++;
 				}
 			}
 			
@@ -538,10 +537,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
 				broadcast(new ElectionMessage(
 						BluetoothMessage.INITIATE_ELECTION_HEADER));
-			} else {
-				sendToLogger("BluetoothService:"
-						+ "\n\tAlready hosting election, request ignored.");
-			}
+			} 
 		}
 
 		public synchronized IBluetoothMessage getElectionResponse() {
