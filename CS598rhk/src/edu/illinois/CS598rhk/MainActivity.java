@@ -222,11 +222,12 @@ public class MainActivity extends Activity {
 				}
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING)
 					((TextView) findViewById(R.id.wifion))
-							.setText("doing discovery over wifi");
+							.setText("wifi state: discoverying");
 				else
 					((TextView) findViewById(R.id.wifion))
-							.setText("wifi discovery paused");
-
+							.setText("wifi state: paused");
+				((TextView) findViewById(R.id.wifiprog))
+				.setText("wifi progress: "+WifiService.timeSlice);
 			}
 		}
 	}

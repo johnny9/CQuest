@@ -12,4 +12,5 @@
 <TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/wifiip"></TextView>
 <TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btmac"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@+id/wifion" android:id="@+id/wifion"></TextView>
+<TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/wifiprog"></TextView>
 </LinearLayout>
