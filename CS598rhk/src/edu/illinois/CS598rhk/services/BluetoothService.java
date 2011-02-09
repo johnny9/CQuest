@@ -606,14 +606,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 			if (myAddress.equals(result.winnerAddress)) {
 				response.value = 1;
 				myElectionResponseWindow = 1024;
-
+				
+				sendToLogger("BluetoothService:"
+						+ "\n\tResetting election window to 1024");
+				
 				Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
 						result.delayUntilWinnerStarts);
 				sendBroadcast(i);
-
-				sendToLogger("BluetoothService:"
-						+ "\n\tResetting election window to 1024");
 			} else {
 				response.value = 0;
 				myElectionResponseWindow = Math.max(64,
@@ -622,7 +622,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 				sendToLogger("BluetoothService:"
 						+ "\n\tDecreasing electionWindow to "
 						+ myElectionResponseWindow);
+				
+				Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
+				i.putExtra(DELY_UNTIL_STARTING_WIFI_DISCOVERY,
+						0);
+				sendBroadcast(i);
 			}
+			
+			
 			return response;
 		}
 
