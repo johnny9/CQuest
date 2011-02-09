@@ -507,9 +507,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 						}
 					}
 				}
-			} else {
-				sendToLogger("BluetoothService:" + "\n\tDone Broadcasting");
-			}
+				try {
+					socket.close();
+				} catch (IOException e) {
+					
+				}
+			} 
 
 		}
 	}
