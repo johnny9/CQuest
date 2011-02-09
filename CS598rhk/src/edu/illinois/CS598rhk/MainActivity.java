@@ -118,8 +118,8 @@ public class MainActivity extends Activity {
 				sendBroadcast(updateDebug);
 			}
 		};
-		debugViewUpdateTimer.scheduleAtFixedRate(debugViewUpdateTask, 1000,
-				1000);
+		debugViewUpdateTimer.scheduleAtFixedRate(debugViewUpdateTask, 500,
+				500);
 
 		// Check Homedir, or create it
 		this.checkDirs();
