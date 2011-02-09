@@ -108,12 +108,11 @@ public class BluetoothService extends Service implements IBluetoothService {
 	}
 
 	public void updateScheduleProgress(long progress) {
-		synchronized (myContactInfo) {
-			sendToLogger("BluetoothService:"
+		sendToLogger("BluetoothService:"
 					+ "\n\tReceived progress update from "
 					+ myContactInfo.progress + " to " + progress);
 			myContactInfo.progress = progress;
-		}
+		
 	}
 
 	@Override
@@ -568,9 +567,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 			electionAnnouncements = new ArrayList<IBluetoothMessage>();
 
 			long delay = 0;
-			synchronized (myContactInfo) {
-				delay = myContactInfo.progress;
-			}
+			delay = myContactInfo.progress;
+			
 			for (Pair<BluetoothDevice, Integer> response : electionResponses) {
 				electionAnnouncements.add(new ElectionMessage(response.first
 						.getAddress(), delay));

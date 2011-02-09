@@ -45,7 +45,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String WIFI_START_STATE = "initial wifi state";
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
-	
+
 	private static final int DISCOVERY_TIMESLICE = 1000;
 	private static final String MSG_TAG = "MyWifiService";
 	public static final String RESUME_DELAY = "O_o";
@@ -92,7 +92,6 @@ public class WifiService extends Service implements IWifiService {
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new AlwaysSchedule();
 		coretask = new CoreTask();
-		
 
 		try {
 			dest = InetAddress.getByName(myBroadcast);
@@ -103,10 +102,10 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-    	Notification notification = new Notification();
-    	notification.tickerText = "WifiService";
-    	startForeground(3, notification);
-    	
+		Notification notification = new Notification();
+		notification.tickerText = "WifiService";
+		startForeground(3, notification);
+
 		IntentFilter messageFilter = new IntentFilter();
 		messageFilter.addAction(INTENT_TO_PAUSE_WIFI);
 		messageFilter.addAction(INTENT_TO_RESUME_WIFI);
@@ -122,20 +121,21 @@ public class WifiService extends Service implements IWifiService {
 
 		if (wifiManager.isWifiEnabled())
 			wifiManager.setWifiEnabled(false);
-		
+
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
-		if(myIPAddress == null || !validateIPAddress(myIPAddress))
+		if (myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
-		sendToLogger("My IP address is "+myIPAddress);
+		sendToLogger("My IP address is " + myIPAddress);
 		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/load.sh "+myIPAddress);
-		
+				+ "/bin/load.sh " + myIPAddress);
+
 		myInfo = new WifiNeighbor();
 		myInfo.address = myBluetoothAddress;
 		myInfo.name = "phone";
-		
-		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE, WIFI_STATE_DISCOVERYING);
+
+		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE,
+				WIFI_STATE_DISCOVERYING);
 		wifiController.start();
 
 		return START_STICKY;
@@ -186,8 +186,8 @@ public class WifiService extends Service implements IWifiService {
 	}
 
 	public void disableWifi() {
-		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-		//		+ "/bin/down.sh");
+		// this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		// + "/bin/down.sh");
 		Log.d(MSG_TAG, "Wifi disabled");
 		sendToLogger("Wifi Disabled");
 		wifiEnabled = false;
@@ -198,13 +198,12 @@ public class WifiService extends Service implements IWifiService {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction() == INTENT_TO_RESUME_WIFI) {
-				resumeWifiService(intent.getLongExtra(
-						RESUME_DELAY, 0));
+				resumeWifiService(intent.getLongExtra(RESUME_DELAY, 0));
 			} else if (intent.getAction() == INTENT_TO_PAUSE_WIFI) {
 				pauseWifiService();
 			} else if (intent.getAction() == INTENT_TO_CHANGE_WIFI_ADDRESS) {
 				setIPAddress(intent.getStringExtra(NEW_WIFI_ADDRESS));
-			} 
+			}
 
 		}
 	}
@@ -238,8 +237,9 @@ public class WifiService extends Service implements IWifiService {
 					sock = new DatagramSocket(8888);
 					int timeout = (int) (DISCOVERY_TIMESLICE - (System
 							.currentTimeMillis() - startTime));
-					if(timeout < 0) timeout = 0;
-					
+					if (timeout < 0)
+						timeout = 0;
+
 					sock.setSoTimeout(timeout);
 					sock.receive(pkt);
 
@@ -248,11 +248,15 @@ public class WifiService extends Service implements IWifiService {
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(
 							INTENT_TO_ADD_WIFI_NEIGHBOR);
-					foundNewNeighbor.putExtra(WIFI_NEIGHBOR_DATA, pkt.getData());
-					foundNewNeighbor.putExtra(INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE, WifiService.DISCOVERED_OVER_WIFI);
+					foundNewNeighbor
+							.putExtra(WIFI_NEIGHBOR_DATA, pkt.getData());
+					foundNewNeighbor.putExtra(
+							INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+							WifiService.DISCOVERED_OVER_WIFI);
 					sendBroadcast(foundNewNeighbor);
 
-					sendToLogger("Found neighbor address:" + pkt.getAddress().getHostAddress() + " rcv:" + rcv);
+					sendToLogger("Found neighbor address:"
+							+ pkt.getAddress().getHostAddress() + " rcv:" + rcv);
 					sock.close();
 				} catch (InterruptedIOException e) {
 					// timed out, so no message was received
@@ -285,59 +289,62 @@ public class WifiService extends Service implements IWifiService {
 					try {
 						Thread.sleep(resumeDelay);
 					} catch (InterruptedException e) {
-						//interrupted from sleep >=(
+						// interrupted from sleep >=(
 					}
 					timeSlice = 0;
 
 				}
 
-				if (timeSlice == 0)
-					mySchedule = discoveryScheduler.generateScedule();
+				do {
+					if (timeSlice == 0)
+						mySchedule = discoveryScheduler.generateScedule();
 
-				long startTime = System.currentTimeMillis();
-				if (!wifiEnabled) {
-					if (mySchedule[(timeSlice + 1) % mySchedule.length] != DiscoverSchedule.DO_NOTHING) {
-						enableWifi();
+					long startTime = System.currentTimeMillis();
+					if (!wifiEnabled) {
+						if (mySchedule[(timeSlice + 1) % mySchedule.length] != DiscoverSchedule.DO_NOTHING) {
+							enableWifi();
+						}
+					} else {
+						if (mySchedule[timeSlice] != DiscoverSchedule.DO_NOTHING) {
+							if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+									|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
+								sendWifiBroadcast();
+							}
+
+							if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+									|| mySchedule[timeSlice] == DiscoverSchedule.LISTEN) {
+								listenForWifiBroadcast(startTime);
+							}
+							if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
+									|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
+								sendWifiBroadcast();
+							}
+
+						}
+
 					}
-				} else {
-					if (mySchedule[timeSlice] != DiscoverSchedule.DO_NOTHING) {
-						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-								|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
-							sendWifiBroadcast();
-						}
 
-						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-								|| mySchedule[timeSlice] == DiscoverSchedule.LISTEN) {
-							listenForWifiBroadcast(startTime);
-						}
-						if (mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT_N_LISTEN
-								|| mySchedule[timeSlice] == DiscoverSchedule.TRANSMIT) {
-							sendWifiBroadcast();
-						}
-
+					if (mySchedule[(timeSlice + 1) % mySchedule.length] == DiscoverSchedule.DO_NOTHING
+							&& wifiEnabled) {
+						disableWifi();
 					}
 
-				}
+					try {
+						long sleepyTime = DISCOVERY_TIMESLICE
+								- (System.currentTimeMillis() - startTime);
+						if (sleepyTime < 0)
+							sleepyTime = 0;
+						Thread.sleep(sleepyTime);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 
-				if (mySchedule[(timeSlice + 1) % mySchedule.length] == DiscoverSchedule.DO_NOTHING
-						&& wifiEnabled) {
-					disableWifi();
-				}
-
-				try {
-					long sleepyTime = DISCOVERY_TIMESLICE
-							- (System.currentTimeMillis() - startTime);
-					if (sleepyTime < 0)
-						sleepyTime = 0;
-					Thread.sleep(sleepyTime);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-
-				timeSlice = (timeSlice + 1) % mySchedule.length;
-				Intent i = new Intent(INTENT_TO_UPDATE_SCHEDULE_PROGRESS);
-				i.putExtra(SCHEDULE_PROGRESS_UPDATE, scheduleTimeRemaining());
-				sendBroadcast(i);
+					timeSlice = (timeSlice + 1) % mySchedule.length;
+					Intent i = new Intent(INTENT_TO_UPDATE_SCHEDULE_PROGRESS);
+					i.putExtra(SCHEDULE_PROGRESS_UPDATE,
+							scheduleTimeRemaining());
+					sendBroadcast(i);
+				} while (timeSlice > 0);
 			}
 		}
 	}
@@ -355,7 +362,8 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public long scheduleTimeRemaining() {
-		return (discoveryScheduler.scheduleLength() - timeSlice)*DISCOVERY_TIMESLICE;
+		return (discoveryScheduler.scheduleLength() - timeSlice)
+				* DISCOVERY_TIMESLICE;
 	}
 
 	public void sendToLogger(String message) {
