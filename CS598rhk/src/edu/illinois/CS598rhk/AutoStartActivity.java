@@ -163,7 +163,7 @@ public class AutoStartActivity extends Activity {
 		
 		//start the services without user interaction
 		updateButtons(true);
-
+		startServices();
 	}
 
 	private class DebugViewMessageReceiver extends BroadcastReceiver {
