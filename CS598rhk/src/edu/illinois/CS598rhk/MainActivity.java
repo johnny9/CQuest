@@ -1,6 +1,8 @@
 package edu.illinois.CS598rhk;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +40,7 @@ import edu.illinois.CS598rhk.services.WifiService;
 public class MainActivity extends Activity {
 
 	private static final String MSG_TAG = "MainACtivity";
+	private static final String CONFIG_FILENAME = "config";
 	private static String ICICLE_KEY = "main-activity";
 	private static String PHONEID_KEY = "phoneID";
 	private static String IPADDR_KEY = "ipAddr";
@@ -91,14 +94,8 @@ public class MainActivity extends Activity {
 		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
 		startButton = (Button) findViewById(R.id.StartButton);
 		stopButton = (Button) findViewById(R.id.StopButton);
-		ipAddrText.setText("192.168.1.2");
-
+		
 		updateButtons(servicesStarted);
-
-		Intent blueIntent = new Intent(
-				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 900);
-		startActivity(blueIntent);
 
 		coretask = new CoreTask();
 		coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
@@ -107,6 +104,7 @@ public class MainActivity extends Activity {
 
 		IntentFilter messageFilter = new IntentFilter();
 		messageFilter.addAction(INTENT_TO_UPDATE_UI);
+		messageFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
 		messageReceiver = new DebugViewMessageReceiver();
 		registerReceiver(messageReceiver, messageFilter);
 		debugViewUpdateTimer = new Timer();
@@ -141,6 +139,11 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				if (canStart()) {
+					try {
+						saveConfigFile();
+					} catch (IOException e) {
+						
+					}
 					updateButtons(true);
 					startServices();
 				} else {
@@ -157,10 +160,14 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		if (ipAddr != null) {
-			ipAddrText.setText(ipAddr);
+	    try 
+		{
+			loadConfigFile();
+		} catch (IOException e) {
+			ipAddr = "192.168.1.2";
 		}
-
+		
+		ipAddrText.setText(ipAddr);
 	}
 
 	private class DebugViewMessageReceiver extends BroadcastReceiver {
@@ -169,6 +176,14 @@ public class MainActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(INTENT_TO_UPDATE_UI)) {
 				updateDebugView();
+			} else if (BluetoothAdapter.ACTION_SCAN_MODE_CHANGED.equals(intent.getAction())) {
+				if(intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, 0) != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE)
+				{
+					Intent blueIntent = new Intent(
+							BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+					blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
+					startActivity(blueIntent);
+				}
 			}
 		}
 	}
@@ -178,6 +193,23 @@ public class MainActivity extends Activity {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_menu, menu);
 		return true;
+	}
+	
+	public void loadConfigFile() throws IOException {
+		byte[] buffer = new byte[1024];
+		FileInputStream fis = openFileInput(CONFIG_FILENAME);
+		fis.read(buffer);
+		fis.close();
+		
+		String input = new String(buffer);
+		ipAddr = input.split("\n")[0];
+		
+	}
+	
+	public void saveConfigFile() throws IOException {
+		FileOutputStream fos = openFileOutput(CONFIG_FILENAME, MODE_WORLD_READABLE);
+		fos.write((ipAddr+"\n").getBytes());
+		fos.close();
 	}
 
 	@Override
@@ -208,10 +240,15 @@ public class MainActivity extends Activity {
 						+ BluetoothAdapter.getDefaultAdapter().getAddress());
 				((TextView) findViewById(R.id.btname)).setText("name:"
 						+ BluetoothAdapter.getDefaultAdapter().getName());
-				if (BluetoothService.neighbors != null) {
+				if (BluetoothService.activeNeighbors != null) {
 					((TextView) findViewById(R.id.btneighborcount))
-							.setText("bt neighbor count: "
-									+ BluetoothService.neighbors.size());
+							.setText("bt active count: "
+									+ BluetoothService.activeNeighbors.size());
+				}
+				if (BluetoothService.potentialNeighbors != null) {
+					((TextView) findViewById(R.id.btneighborcount2))
+							.setText("bt potential count: "
+									+ BluetoothService.potentialNeighbors.size());
 				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
@@ -305,6 +342,10 @@ public class MainActivity extends Activity {
 		i.putExtra(ADDRESS_KEY, ipAddrText.getText().toString());
 		startService(i);
 
+		Intent blueIntent = new Intent(
+				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
+		startActivity(blueIntent);
 	}
 
 	private void stopServices() {

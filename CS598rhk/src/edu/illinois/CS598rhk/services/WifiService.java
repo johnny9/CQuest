@@ -46,7 +46,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
 
-	private static final int DISCOVERY_TIMESLICE = 1000;
+	private static final int DISCOVERY_TIMESLICE = 5000;
 	private static final String MSG_TAG = "MyWifiService";
 	public static final String RESUME_DELAY = "O_o";
 	public static final String NEW_PHONE_NAME = "<><><><><><><><><><<";
@@ -68,11 +68,12 @@ public class WifiService extends Service implements IWifiService {
 	public static int timeSlice;
 	public static int wifiState;
 	private WifiNeighbor myInfo;
+	private boolean pauseForced;
 
 	InetAddress dest;
 
 	private final IBinder mBinder = new WifiBinder();
-	public long resumeDelay;
+	public static long resumeDelay;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -92,7 +93,6 @@ public class WifiService extends Service implements IWifiService {
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new AlwaysSchedule();
 		coretask = new CoreTask();
-
 		try {
 			dest = InetAddress.getByName(myBroadcast);
 		} catch (UnknownHostException e) {
@@ -125,7 +125,7 @@ public class WifiService extends Service implements IWifiService {
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if (myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
-		sendToLogger("My IP address is " + myIPAddress);
+		
 		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh " + myIPAddress);
@@ -133,7 +133,8 @@ public class WifiService extends Service implements IWifiService {
 		myInfo = new WifiNeighbor();
 		myInfo.address = myBluetoothAddress;
 		myInfo.name = "phone";
-
+		
+		pauseForced = false;
 		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE,
 				WIFI_STATE_DISCOVERYING);
 		wifiController.start();
@@ -149,6 +150,7 @@ public class WifiService extends Service implements IWifiService {
 				+ " netmask 255.255.255.0");
 		try {
 			dest = InetAddress.getByName(myBroadcast);
+			
 		} catch (UnknownHostException e) {
 			Log.d(MSG_TAG, "Broadcast address " + myBroadcast + " as unknown.");
 		}
@@ -171,6 +173,8 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public void onDestroy() {
+		wifiController.stop();
+		disableWifi();
 		unregisterReceiver(messageReceiver);
 		stopForeground(true);
 		super.onDestroy();
@@ -180,8 +184,6 @@ public class WifiService extends Service implements IWifiService {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/up.sh " + this.myIPAddress);
 		Log.d(MSG_TAG, "Wifi Enabled");
-
-		sendToLogger("Wifi Enabled");
 		wifiEnabled = true;
 	}
 
@@ -189,7 +191,6 @@ public class WifiService extends Service implements IWifiService {
 		// this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 		// + "/bin/down.sh");
 		Log.d(MSG_TAG, "Wifi disabled");
-		sendToLogger("Wifi Disabled");
 		wifiEnabled = false;
 	}
 
@@ -221,7 +222,6 @@ public class WifiService extends Service implements IWifiService {
 				sock.setBroadcast(true);
 				sock.send(pkt);
 				Log.d(MSG_TAG, "Packet was sent.");
-				sendToLogger("Sent Wifi heartbeat");
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.d(MSG_TAG, "attempt to send failed");
@@ -254,9 +254,6 @@ public class WifiService extends Service implements IWifiService {
 							INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
 							WifiService.DISCOVERED_OVER_WIFI);
 					sendBroadcast(foundNewNeighbor);
-
-					sendToLogger("Found neighbor address:"
-							+ pkt.getAddress().getHostAddress() + " rcv:" + rcv);
 					sock.close();
 				} catch (InterruptedIOException e) {
 					// timed out, so no message was received
@@ -282,7 +279,7 @@ public class WifiService extends Service implements IWifiService {
 				if (wifiState == WIFI_STATE_PAUSED) {
 					while (wifiState != WIFI_STATE_DISCOVERYING)
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(500);
 						} catch (InterruptedException e) {
 							// interrupted from sleep
 						}
@@ -292,10 +289,16 @@ public class WifiService extends Service implements IWifiService {
 						// interrupted from sleep >=(
 					}
 					timeSlice = 0;
-
+					pauseForced = false;
 				}
 
 				do {
+					if(wifiState == WIFI_STATE_PAUSED && pauseForced)
+					{
+						timeSlice = 0;
+						pauseForced = false;
+						break;
+					}
 					if (timeSlice == 0)
 						mySchedule = discoveryScheduler.generateScedule();
 
@@ -352,8 +355,8 @@ public class WifiService extends Service implements IWifiService {
 	public void resumeWifiService(long delay) {
 		wifiState = WIFI_STATE_DISCOVERYING;
 		resumeDelay = delay;
+		pauseForced = true;
 		wifiController.interrupt();
-
 	}
 
 	public void pauseWifiService() {
@@ -366,9 +369,15 @@ public class WifiService extends Service implements IWifiService {
 				* DISCOVERY_TIMESLICE;
 	}
 
-	public void sendToLogger(String message) {
+	public void sendToLoggers(String message) {
 		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
 		sendBroadcast(intentToLog);
+	}
+
+	@Override
+	public void forcedPauseWifiService() {
+		pauseForced = true;
+		wifiState = WIFI_STATE_PAUSED;		
 	}
 }

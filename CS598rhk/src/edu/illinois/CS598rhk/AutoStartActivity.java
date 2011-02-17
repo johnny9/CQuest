@@ -1,6 +1,8 @@
 package edu.illinois.CS598rhk;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +40,7 @@ import edu.illinois.CS598rhk.services.WifiService;
 public class AutoStartActivity extends Activity {
 
 	private static final String MSG_TAG = "MainACtivity";
+	private static final String CONFIG_FILENAME = "config";
 	private static String ICICLE_KEY = "main-activity";
 	private static String PHONEID_KEY = "phoneID";
 	private static String IPADDR_KEY = "ipAddr";
@@ -91,13 +94,12 @@ public class AutoStartActivity extends Activity {
 		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
 		startButton = (Button) findViewById(R.id.StartButton);
 		stopButton = (Button) findViewById(R.id.StopButton);
-		ipAddrText.setText("192.168.1.2");
-
+		
 		updateButtons(servicesStarted);
 
 		Intent blueIntent = new Intent(
 				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 900);
+		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
 		startActivity(blueIntent);
 
 		coretask = new CoreTask();
@@ -107,6 +109,7 @@ public class AutoStartActivity extends Activity {
 
 		IntentFilter messageFilter = new IntentFilter();
 		messageFilter.addAction(INTENT_TO_UPDATE_UI);
+		messageFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
 		messageReceiver = new DebugViewMessageReceiver();
 		registerReceiver(messageReceiver, messageFilter);
 		debugViewUpdateTimer = new Timer();
@@ -141,6 +144,11 @@ public class AutoStartActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				if (canStart()) {
+					try {
+						saveConfigFile();
+					} catch (IOException e) {
+						
+					}
 					updateButtons(true);
 					startServices();
 				} else {
@@ -157,13 +165,20 @@ public class AutoStartActivity extends Activity {
 			}
 		});
 
-		if (ipAddr != null) {
-			ipAddrText.setText(ipAddr);
+		try 
+		{
+			loagConfigFile();
+		} catch (IOException e) {
+			ipAddr = "192.168.1.2";
 		}
 		
-		//start the services without user interaction
+		ipAddrText.setText(ipAddr);
+				
+		//auto start
 		updateButtons(true);
 		startServices();
+		
+		
 	}
 
 	private class DebugViewMessageReceiver extends BroadcastReceiver {
@@ -172,6 +187,14 @@ public class AutoStartActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(INTENT_TO_UPDATE_UI)) {
 				updateDebugView();
+			} else if (BluetoothAdapter.ACTION_SCAN_MODE_CHANGED.equals(intent.getAction())) {
+				if(intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, 0) != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE)
+				{
+					Intent blueIntent = new Intent(
+							BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+					blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
+					startActivity(blueIntent);
+				}
 			}
 		}
 	}
@@ -179,23 +202,40 @@ public class AutoStartActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.main_menu, menu);
+		inflater.inflate(R.menu.auto_menu, menu);
 		return true;
+	}
+	
+	public void loagConfigFile() throws IOException {
+		byte[] buffer = new byte[1024];
+		FileInputStream fis = openFileInput(CONFIG_FILENAME);
+		fis.read(buffer);
+		fis.close();
+		
+		String input = new String(buffer);
+		ipAddr = input.split("\n")[0];
+		
+	}
+	
+	public void saveConfigFile() throws IOException {
+		FileOutputStream fos = openFileOutput(CONFIG_FILENAME, MODE_WORLD_READABLE);
+		fos.write((ipAddr+"\n").getBytes());
+		fos.close();
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
-		case R.id.main:
-			if (debugViewUp)
-				setContentView(R.layout.main);
+		case R.id.start:
+			if (!servicesStarted)
+				updateButtons(true);
+				startServices();
 			return true;
-		case R.id.debug:
-			if (!debugViewUp) {
-				debugViewUp = true;
-				// pdateDebugView();
-				setContentView(R.layout.debug);
+		case R.id.stop:
+			if (servicesStarted) {
+				updateButtons(false);
+				stopServices();
 			}
 			return true;
 		default:
@@ -211,10 +251,15 @@ public class AutoStartActivity extends Activity {
 						+ BluetoothAdapter.getDefaultAdapter().getAddress());
 				((TextView) findViewById(R.id.btname)).setText("name:"
 						+ BluetoothAdapter.getDefaultAdapter().getName());
-				if (BluetoothService.neighbors != null) {
+				if (BluetoothService.activeNeighbors != null) {
 					((TextView) findViewById(R.id.btneighborcount))
-							.setText("bt neighbor count: "
-									+ BluetoothService.neighbors.size());
+							.setText("bt active count: "
+									+ BluetoothService.activeNeighbors.size());
+				}
+				if (BluetoothService.potentialNeighbors != null) {
+					((TextView) findViewById(R.id.btneighborcount2))
+							.setText("bt potential count: "
+									+ BluetoothService.potentialNeighbors.size());
 				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
@@ -231,6 +276,14 @@ public class AutoStartActivity extends Activity {
 							.setText("wifi state: paused");
 				((TextView) findViewById(R.id.wifiprog))
 				.setText("wifi progress: "+WifiService.timeSlice + "/25");
+				((TextView) findViewById(R.id.services))
+				.setText("services: started");
+				((TextView) findViewById(R.id.bterrorcount))
+				.setText("bt errocount: " + BluetoothService.errorCount);
+			}
+			else {
+				((TextView) findViewById(R.id.services))
+				.setText("services: stopped");
 			}
 		}
 	}
