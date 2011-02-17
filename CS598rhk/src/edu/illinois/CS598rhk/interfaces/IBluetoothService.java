@@ -9,5 +9,6 @@ public interface IBluetoothService {
 
 	public void startDiscovery();
 
+	public void stopDiscovery();
     
 }

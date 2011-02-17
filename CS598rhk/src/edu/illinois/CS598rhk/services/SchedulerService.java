@@ -193,6 +193,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 								// abort! abort!
 								stoppingWifi = true;
 								wifiService.forcedPauseWifiService();
+								bluetoothService.stopDiscovery();
 							}
 						}
 					}
@@ -215,7 +216,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
 				if (progress > 100000) {
-					bluetoothService.startDiscovery();
+					if(!stoppingWifi)
+						bluetoothService.startDiscovery();
 				} else if (progress <= 100000 && progress > 0 && !stoppingWifi) {
 					if (BluetoothService.activeNeighbors.size() > 0) {
 						bluetoothService.hostWifiDiscoveryElection();
@@ -234,6 +236,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 				} else {
 					stoppingWifi = true;
 					wifiService.pauseWifiService();
+					bluetoothService.stopDiscovery();
 				}
 			}
 		}

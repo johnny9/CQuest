@@ -621,4 +621,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public void startDiscovery() {
 		mAdapter.startDiscovery();
 	}
+	
+	@Override
+	public void stopDiscovery() {
+		mAdapter.cancelDiscovery();
+	}
 }
