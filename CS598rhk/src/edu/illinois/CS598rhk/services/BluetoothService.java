@@ -30,6 +30,7 @@ import edu.illinois.CS598rhk.models.ElectionAcknowledgement;
 import edu.illinois.CS598rhk.models.ElectionInitiation;
 import edu.illinois.CS598rhk.models.ElectionResponse;
 import edu.illinois.CS598rhk.models.ElectionResult;
+import edu.illinois.CS598rhk.models.WifiNeighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
@@ -205,6 +206,33 @@ public class BluetoothService extends Service implements IBluetoothService {
 					Log.e(TAG, "accept() failed", e);
 				}
 
+				if (!activeNeighbors.contains(socket.getRemoteDevice()))
+					activeNeighbors.add(socket.getRemoteDevice());
+
+				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
+					WifiNeighbor data = new WifiNeighbor();
+					data.address = socket.getRemoteDevice().getAddress();
+					data.name = socket.getRemoteDevice().getName();
+
+					// inform the scheduling service
+					Intent foundNewNeighbor = new Intent(
+							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+					foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
+							data.pack());
+					foundNewNeighbor.putExtra(
+							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+							WifiService.DISCOVERED_OVER_WIFI);
+					sendBroadcast(foundNewNeighbor);
+					try {
+						socket.close();
+					} catch (IOException e) {
+						// tried our best
+					}
+
+					continue;
+
+				}
+
 				(new BluetoothAcceptHandlerThread(socket)).start();
 			}
 		}
@@ -291,7 +319,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 				}
 			}
 		}
-
 	}
 
 	private IBluetoothMessage readBluetoothMessage(InputStream inStream)
@@ -375,19 +402,20 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 			IBluetoothMessage results = electionHandler
 					.getWinnerAnnouncement(currentNeighbor);
-
-			try {
-				Log.e(TAG, results.toString());
-				writeBluetoothMessage(outStream, results);
-				IBluetoothMessage message = readBluetoothMessage(inStream);
-				handleResponseMessage(message, currentNeighbor);
-				Log.e(TAG, message.toString());
-			} catch (IOException e) {
-				Log.e(TAG, currentNeighbor.getName()
-						+ " failed election initiation", e);
-				electionHandler.winnerAnnouncementFailed(currentNeighbor);
-				cleanup();
-				return;
+			if (results == null) {
+				try {
+					Log.e(TAG, results.toString());
+					writeBluetoothMessage(outStream, results);
+					IBluetoothMessage message = readBluetoothMessage(inStream);
+					handleResponseMessage(message, currentNeighbor);
+					Log.e(TAG, message.toString());
+				} catch (IOException e) {
+					Log.e(TAG, currentNeighbor.getName()
+							+ " failed election initiation", e);
+					electionHandler.winnerAnnouncementFailed(currentNeighbor);
+					cleanup();
+					return;
+				}
 			}
 
 			cleanup();
@@ -413,10 +441,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 		private boolean winnerAcknowledgedElection;
 		private ElectionResult nextAnnouncement;
 		private int heardFromCounter;
+		private boolean shuttingDown;
 
 		public ElectionHandler() {
 			hostingElection = false;
 			myElectionResponseWindow = 1024;
+			shuttingDown = false;
 		}
 
 		public void winnerAnnouncementFailed(BluetoothDevice currentNeighbor) {
@@ -431,11 +461,19 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
 
 		public void neighborInitiationFailed(BluetoothDevice currentNeighbor) {
-			synchronized (this) {
-				heardFromCounter++;
+
+			if (mAdapter.getAddress().compareTo(currentNeighbor.getAddress()) < 0)
+			{
+				shuttingDown = true;
+				Log.e(TAG, "Shutting down election");
 			}
-			if (heardFromCounter >= activeNeighbors.size())
-				determineElectionWinner();
+			else {
+				synchronized (this) {
+					heardFromCounter++;
+				}
+				if (heardFromCounter >= activeNeighbors.size())
+					determineElectionWinner();
+			}
 		}
 
 		public synchronized void hostWifiDiscoveryElection() {
@@ -453,6 +491,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		public synchronized void resetWifiDiscoveryElection() {
 			hostingElection = false;
 			winnerAcknowledgedElection = false;
+			shuttingDown = false;
 		}
 
 		public synchronized IBluetoothMessage getElectionResponse() {
@@ -482,15 +521,18 @@ public class BluetoothService extends Service implements IBluetoothService {
 				synchronized (electionAnnouncements) {
 					numberOfAnnouncements = electionAnnouncements.size();
 				}
-			} while (numberOfAnnouncements == 0);
+			} while (numberOfAnnouncements == 0 || shuttingDown);
 
 			// get the neighbor his message first
 			while (hostingElection
 					&& !winnerAcknowledgedElection
 					&& !neighbor.getAddress().equals(
-							nextAnnouncement.winnerAddress))
+							nextAnnouncement.winnerAddress) && !shuttingDown)
 				;
 
+			if (shuttingDown)
+				return null;
+			
 			return nextAnnouncement;
 		}
 

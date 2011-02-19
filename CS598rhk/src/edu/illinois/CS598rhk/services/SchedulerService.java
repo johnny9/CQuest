@@ -121,14 +121,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		// this way a leader can be decided before the first election is even
 		// held
 		int wifiStartState = WifiService.WIFI_STATE_DISCOVERYING;
-		/*
-		 * for (BluetoothDevice neighbor : bluetoothNeighborDevices) { if
-		 * (neighbor.getAddress().compareTo(myDevice.getAddress()) < 0) {
-		 * stoppingWifi = true; wifiStartState = WifiService.WIFI_STATE_PAUSED;
-		 * sendToLogger("SchedulerService:" +
-		 * "\n\tStarting wifi in the paused state." + "\n"); break; } }
-		 */
-
+		
 		bindService(new Intent(SchedulerService.this, WifiService.class),
 				mWifiConnection, Context.BIND_AUTO_CREATE);
 		bindService(new Intent(SchedulerService.this, BluetoothService.class),
@@ -174,8 +167,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 				neighbor.unpack(intent
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
-				String sourceOfUpdate = intent
-						.getStringExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE);
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
 				}
