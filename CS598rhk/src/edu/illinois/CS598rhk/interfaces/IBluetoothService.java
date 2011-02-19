@@ -6,6 +6,8 @@ public interface IBluetoothService {
     public void broadcast(IBluetoothMessage message);
 
 	public void hostWifiDiscoveryElection();
+	
+	public void resetWifiDiscoveryElection();
 
 	public void startDiscovery();
 

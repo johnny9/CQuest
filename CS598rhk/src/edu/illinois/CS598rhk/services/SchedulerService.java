@@ -108,7 +108,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		filter = new IntentFilter(
 				BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 		registerReceiver(neighborReceiver, filter);
-		
+
 		filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		registerReceiver(neighborReceiver, filter); // Don't forget to
 													// unregister during
@@ -188,12 +188,14 @@ public class SchedulerService extends Service implements ISchedulerService {
 						if (neighbor.address.equals(device.getAddress())) {
 							// this neighbor is an active bt neighbor
 							if (myDevice.getAddress().compareTo(
-									neighbor.address) < 0) {
+									neighbor.address) < 0) { 
 								// uh oh, he appears to be discovering as well
 								// abort! abort!
-								stoppingWifi = true;
-								wifiService.forcedPauseWifiService();
-								bluetoothService.stopDiscovery();
+								if (progress < 44000) {
+									stoppingWifi = true;
+									wifiService.forcedPauseWifiService();
+									bluetoothService.stopDiscovery();
+								}
 							}
 						}
 					}
@@ -202,7 +204,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 				// Get the BluetoothDevice object from the Intent
 				BluetoothDevice device = intent
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-				
+
 				if (!BluetoothService.activeNeighbors.contains(device)
 						&& BluetoothService.potentialNeighbors.contains(device)) {
 					synchronized (BluetoothService.activeNeighbors) {
@@ -215,13 +217,13 @@ public class SchedulerService extends Service implements ISchedulerService {
 				progress = intent.getLongExtra(
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
-				if (progress > 100000) {
-					if(!stoppingWifi)
+				if (progress > 20000) {
+					if (!stoppingWifi)
 						bluetoothService.startDiscovery();
-				} else if (progress <= 100000 && progress > 0 && !stoppingWifi) {
+					bluetoothService.resetWifiDiscoveryElection();
+				} else if (progress <= 15000 && progress > 0 && !stoppingWifi) {
 					if (BluetoothService.activeNeighbors.size() > 0) {
 						bluetoothService.hostWifiDiscoveryElection();
-
 					}
 				}
 			} else if (BluetoothService.ACTION_ELECTED_FOR_WIFI_DISCOVERY

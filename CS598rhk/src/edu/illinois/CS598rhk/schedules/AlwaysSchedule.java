@@ -10,7 +10,7 @@ public class AlwaysSchedule extends DiscoverSchedule {
 	public
     int[] generateScedule() {
         // TODO Auto-generated method stub
-        int[] schedule = new int[25];
+        int[] schedule = new int[10];
         for(int i = 0; i < schedule.length; i++)
             schedule[i] = TRANSMIT_N_LISTEN;
         return schedule;
@@ -19,7 +19,7 @@ public class AlwaysSchedule extends DiscoverSchedule {
 	@Override
 	public int scheduleLength() {
 		// TODO Auto-generated method stub
-		return 25;
+		return 10;
 	}
 
 }
