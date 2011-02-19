@@ -21,7 +21,6 @@ import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
-import edu.illinois.CS598rhk.models.BluetoothNeighbor;
 import edu.illinois.CS598rhk.models.WifiNeighbor;
 
 public class SchedulerService extends Service implements ISchedulerService {
@@ -36,7 +35,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
 	public static List<WifiNeighbor> wifiNeighbors;
-	private List<BluetoothNeighbor> bluetoothNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private BluetoothAdapter myDevice;
@@ -62,7 +60,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	public void onCreate() {
 		super.onCreate();
 		wifiNeighbors = new ArrayList<WifiNeighbor>();
-		bluetoothNeighbors = new ArrayList<BluetoothNeighbor>();
 		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 

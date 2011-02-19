@@ -68,26 +68,17 @@ public class BluetoothMessage {
 			System.arraycopy(bytes, HEADER_LENGTH, messageBytes, 0, messageLength - HEADER_LENGTH);
 			
 			switch(messageType) {
-			case NEIGHBOR_HEADER:
-				parsedMessage = new Neighbor();
-				break;
-			case BLUETOOTH_NEIGHBOR_HEADER:
-				parsedMessage = new BluetoothNeighbor();
-				break;
-			case WIFI_NEIGHBOR_HEADER:
-				parsedMessage = new WifiNeighbor();
-				break;
 			case INITIATE_ELECTION_HEADER:
-				parsedMessage = new ElectionMessage(messageType);
+				parsedMessage = ElectionInitiation.parse();
 				break;
 			case ELECTION_RESPONSE_HEADER:
-				parsedMessage = new ElectionMessage(messageType);
+				parsedMessage = ElectionResponse.parse(messageBytes);
 				break;
 			case ELECTION_WINNER_ANNOUNCEMENT_HEADER:
-				parsedMessage = new ElectionMessage(messageType);
+				parsedMessage = ElectionResult.parse(messageBytes);
 				break;
 			case ACKNOWLEDGE_ELECTION_WINNER:
-				parsedMessage = new ElectionMessage(messageType);
+				parsedMessage = ElectionAcknowledgement.parse(messageBytes);
 				break;
 			default:
 				break;

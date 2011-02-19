@@ -11,7 +11,6 @@ import java.net.UnknownHostException;
 import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,8 +25,6 @@ import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.WifiNeighbor;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
-import edu.illinois.CS598rhk.schedules.NeverSchedule;
-import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
 public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_UPDATE_SCHEDULE_PROGRESS = "intent to update schedule progress";

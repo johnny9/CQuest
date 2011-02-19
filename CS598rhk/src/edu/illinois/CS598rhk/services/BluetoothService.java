@@ -3,19 +3,14 @@ package edu.illinois.CS598rhk.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 import android.app.Notification;
@@ -31,9 +26,10 @@ import android.util.Log;
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.models.BluetoothMessage;
-import edu.illinois.CS598rhk.models.BluetoothNeighbor;
-import edu.illinois.CS598rhk.models.ElectionMessage;
-import edu.illinois.CS598rhk.models.WifiNeighbor;
+import edu.illinois.CS598rhk.models.ElectionAcknowledgement;
+import edu.illinois.CS598rhk.models.ElectionInitiation;
+import edu.illinois.CS598rhk.models.ElectionResponse;
+import edu.illinois.CS598rhk.models.ElectionResult;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
@@ -56,7 +52,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		}
 	}
 
-	private BluetoothNeighbor myContactInfo;
+	private volatile long scheduleProgress;
 
 	private ElectionHandler electionHandler;
 
@@ -67,9 +63,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	private BluetoothAcceptThread acceptThread;
 
-	private volatile boolean controllerReady;
-	private Object controllerMonitor;
-
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// We could use setName() here to allow the user to change the device
@@ -78,21 +71,15 @@ public class BluetoothService extends Service implements IBluetoothService {
 		notification.tickerText = "BluetoothService";
 		startForeground(2, notification);
 
-		myContactInfo = new BluetoothNeighbor();
 		electionHandler = new ElectionHandler();
 
-		myContactInfo.name = BluetoothAdapter.getDefaultAdapter().getName();
-		myContactInfo.address = BluetoothAdapter.getDefaultAdapter()
-				.getAddress();
-		myContactInfo.progress = 0;
+		scheduleProgress = 0;
 
 		potentialNeighbors = new ArrayList<BluetoothDevice>(BluetoothAdapter
 				.getDefaultAdapter().getBondedDevices());
 		activeNeighbors = new ArrayList<BluetoothDevice>();
 
 		acceptThread = new BluetoothAcceptThread();
-
-		controllerReady = false;
 
 		connectionThreads = new ArrayList<Thread>();
 
@@ -108,8 +95,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 	}
 
 	public void updateScheduleProgress(long progress) {
-		myContactInfo.progress = progress;
-
+		scheduleProgress = progress;
 	}
 
 	public void hostWifiDiscoveryElection() {
@@ -122,37 +108,6 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public void broadcast(IBluetoothMessage message) {
 		(new BluetoothBroadcastThread(message)).start();
-	}
-
-	private synchronized void handleLastBroadcastMessage(
-			IBluetoothMessage lastMessage) {
-		if (lastMessage != null) {
-			switch (lastMessage.getMessageType()) {
-			case BluetoothMessage.INITIATE_ELECTION_HEADER:
-				// electionHandler.determineElectionWinner();
-				break;
-			case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
-				// electionHandler.announceElectionWinner();
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	public synchronized void newBluetoothNeighbor(BluetoothNeighbor neighbor) {
-		Intent i = new Intent(INTENT_TO_ADD_BLUETOOTH_NEIGHBOR);
-		i.putExtra(BLUETOOTH_NEIGHBOR_DATA, neighbor.pack());
-		sendBroadcast(i);
-
-	}
-
-	public synchronized void newWifiNeighbor(WifiNeighbor neihgbor) {
-		Intent i = new Intent(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
-		i.putExtra(WifiService.WIFI_NEIGHBOR_DATA, neihgbor.pack());
-		i.putExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-				DISCOVERED_OVER_BLUETOOTH);
-		sendBroadcast(i);
 	}
 
 	public synchronized void sendToLoggers(String message) {
@@ -190,31 +145,18 @@ public class BluetoothService extends Service implements IBluetoothService {
 		errorCount++;
 	}
 
-	/**
-	 * Indicate that the connection was lost and notify the UI Activity.
-	 */
-	private synchronized void connectionLost() {
-		errorCount++;
-	}
-
 	public synchronized IBluetoothMessage handleReceivedMessage(
 			IBluetoothMessage message) {
 		IBluetoothMessage response = null;
 
-		if (message instanceof BluetoothNeighbor) {
-			newBluetoothNeighbor((BluetoothNeighbor) message);
-			response = myContactInfo;
-		} else if (message instanceof ElectionMessage) {
-			ElectionMessage electionMessage = (ElectionMessage) message;
-			switch (message.getMessageType()) {
-			case BluetoothMessage.INITIATE_ELECTION_HEADER:
-				response = electionHandler.getElectionResponse();
-				break;
-			case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
-				response = electionHandler
-						.getElectionAcknowledgement(electionMessage);
-				break;
-			}
+		switch (message.getMessageType()) {
+		case BluetoothMessage.INITIATE_ELECTION_HEADER:
+			response = electionHandler.getElectionResponse();
+			break;
+		case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
+			response = electionHandler
+					.getElectionAcknowledgement((ElectionResult) message);
+			break;
 		}
 		return response;
 	}
@@ -222,21 +164,15 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public synchronized void handleResponseMessage(IBluetoothMessage message,
 			BluetoothDevice currentNeighbor) {
 
-		if (message instanceof BluetoothNeighbor) {
-			newBluetoothNeighbor((BluetoothNeighbor) message);
-		} else if (message instanceof WifiNeighbor) {
-			newWifiNeighbor((WifiNeighbor) message);
-		} else if (message instanceof ElectionMessage) {
-			ElectionMessage electionMessage = (ElectionMessage) message;
-			switch (message.getMessageType()) {
-			case BluetoothMessage.ELECTION_RESPONSE_HEADER:
-				electionHandler.handleElectionResponse(electionMessage,
-						currentNeighbor);
-				break;
-			case BluetoothMessage.ACKNOWLEDGE_ELECTION_WINNER:
-				electionHandler.handleElectionAcknowledgement(electionMessage);
-				break;
-			}
+		switch (message.getMessageType()) {
+		case BluetoothMessage.ELECTION_RESPONSE_HEADER:
+			electionHandler.handleElectionResponse((ElectionResponse) message,
+					currentNeighbor);
+			break;
+		case BluetoothMessage.ACKNOWLEDGE_ELECTION_WINNER:
+			electionHandler
+					.handleElectionAcknowledgement((ElectionAcknowledgement) message);
+			break;
 		}
 	}
 
@@ -406,14 +342,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 		IBluetoothMessage currentMessage;
 		BluetoothSocket socket;
 		BluetoothDevice currentNeighbor;
-		public boolean readyForResults;
 
 		public BluetoothConnectionThread(IBluetoothMessage message,
 				BluetoothSocket sock) {
 			currentMessage = message;
 			socket = sock;
 			currentNeighbor = sock.getRemoteDevice();
-			readyForResults = false;
 		}
 
 		@Override
@@ -474,10 +408,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 		private int myElectionResponseWindow;
 		private List<Pair<BluetoothDevice, Integer>> electionResponses;
 
-		private List<ElectionMessage> electionAnnouncements;
-		private Iterator<ElectionMessage> announcementIterator;
+		private List<ElectionResult> electionAnnouncements;
+		private Iterator<ElectionResult> announcementIterator;
 		private boolean winnerAcknowledgedElection;
-		private ElectionMessage nextAnnouncement;
+		private ElectionResult nextAnnouncement;
 		private int heardFromCounter;
 
 		public ElectionHandler() {
@@ -510,11 +444,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 				hostingElection = true;
 				heardFromCounter = 0;
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
-				electionAnnouncements = new ArrayList<ElectionMessage>();
+				electionAnnouncements = new ArrayList<ElectionResult>();
 
-				broadcast(new ElectionMessage(
-						BluetoothMessage.INITIATE_ELECTION_HEADER));
-
+				broadcast(new ElectionInitiation());
 			}
 		}
 
@@ -527,10 +459,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 			Random rand = new Random();
 			int value = rand.nextInt(myElectionResponseWindow);
 
-			return new ElectionMessage(value);
+			return new ElectionResponse(value);
 		}
 
-		public void handleElectionResponse(ElectionMessage message,
+		public void handleElectionResponse(ElectionResponse message,
 				BluetoothDevice currentNeighbor) {
 			synchronized (electionResponses) {
 				electionResponses.add(new Pair<BluetoothDevice, Integer>(
@@ -542,7 +474,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				determineElectionWinner();
 		}
 
-		public ElectionMessage getWinnerAnnouncement(BluetoothDevice neighbor) {
+		public ElectionResult getWinnerAnnouncement(BluetoothDevice neighbor) {
 			// wait until we have some results
 
 			int numberOfAnnouncements;
@@ -573,10 +505,10 @@ public class BluetoothService extends Service implements IBluetoothService {
 				Collections.sort(electionResponses);
 
 				long delay = 0;
-				delay = myContactInfo.progress;
+				delay = scheduleProgress;
 				synchronized (electionAnnouncements) {
 					for (Pair<BluetoothDevice, Integer> response : electionResponses) {
-						electionAnnouncements.add(new ElectionMessage(
+						electionAnnouncements.add(new ElectionResult(
 								response.first.getAddress(), delay));
 					}
 
@@ -587,17 +519,13 @@ public class BluetoothService extends Service implements IBluetoothService {
 			}
 		}
 
-		public synchronized ElectionMessage getElectionAcknowledgement(
-				ElectionMessage result) {
-			ElectionMessage response = new ElectionMessage(
-					BluetoothMessage.ACKNOWLEDGE_ELECTION_WINNER);
+		public synchronized ElectionAcknowledgement getElectionAcknowledgement(
+				ElectionResult result) {
+			ElectionAcknowledgement acknowledgement = new ElectionAcknowledgement();
 
-			String myAddress = "";
-			synchronized (myContactInfo) {
-				myAddress = myContactInfo.address;
-			}
+			String myAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
 			if (myAddress.equals(result.winnerAddress)) {
-				response.value = 1;
+				acknowledgement.value = 1;
 				myElectionResponseWindow = 1024;
 
 				Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
@@ -605,7 +533,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 						result.delayUntilWinnerStarts);
 				sendBroadcast(i);
 			} else {
-				response.value = 0;
+				acknowledgement.value = 0;
 				myElectionResponseWindow = Math.max(64,
 						myElectionResponseWindow / 2);
 
@@ -614,12 +542,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 				sendBroadcast(i);
 			}
 
-			return response;
+			return acknowledgement;
 		}
 
 		public synchronized void handleElectionAcknowledgement(
-				ElectionMessage electionMessage) {
-			if (electionMessage.value == 1) {
+				ElectionAcknowledgement acknowledgement) {
+			if (acknowledgement.value == 1) {
 				winnerAcknowledgedElection = true;
 				winnerElected();
 			}
@@ -628,10 +556,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 		private synchronized void winnerElected() {
 			Intent i = new Intent(ACTION_ELECTED_FOR_WIFI_DISCOVERY);
 
-			long delay = 0;
-			synchronized (myContactInfo) {
-				delay = myContactInfo.progress;
-			}
+			long delay = scheduleProgress;
+
 			if (winnerAcknowledgedElection) {
 				delay *= -1;
 			} else {
