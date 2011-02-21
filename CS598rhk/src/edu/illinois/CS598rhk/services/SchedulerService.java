@@ -184,7 +184,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 				WifiNeighbor neighbor = (WifiNeighbor) message;
 				
 				if (!wifiNeighbors.contains(neighbor)) {
-					sendToLogger(myDevice.getAddress() + ", " + neighbor.address);
+					String time = (new Time(System.currentTimeMillis())).toString();
+					sendToLogger(time + ", " + myDevice.getAddress() + ", " + neighbor.address);
 					wifiNeighbors.add(neighbor);
 				}
 				synchronized (BluetoothService.activeNeighbors) {
