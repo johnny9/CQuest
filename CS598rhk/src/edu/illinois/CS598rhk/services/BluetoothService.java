@@ -30,7 +30,7 @@ import edu.illinois.CS598rhk.models.ElectionAcknowledgement;
 import edu.illinois.CS598rhk.models.ElectionInitiation;
 import edu.illinois.CS598rhk.models.ElectionResponse;
 import edu.illinois.CS598rhk.models.ElectionResult;
-import edu.illinois.CS598rhk.models.WifiNeighbor;
+import edu.illinois.CS598rhk.models.Neighbor;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
@@ -212,7 +212,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
 					String address = socket.getRemoteDevice().getAddress();
 					String name = socket.getRemoteDevice().getName();
-					WifiNeighbor data = new WifiNeighbor(name, address);
+					Neighbor data = new Neighbor(name, address, mAdapter.getAddress());
 
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(
@@ -491,7 +491,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
 				electionAnnouncements = new ArrayList<ElectionResult>();
 
-				broadcast(new ElectionInitiation());
+				broadcast(new ElectionInitiation(SchedulerService.wifiNeighbors));
 			}
 		}
 

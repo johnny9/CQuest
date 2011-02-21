@@ -23,7 +23,7 @@ import android.os.Looper;
 import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
-import edu.illinois.CS598rhk.models.WifiNeighbor;
+import edu.illinois.CS598rhk.models.Neighbor;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 
@@ -65,7 +65,7 @@ public class WifiService extends Service implements IWifiService {
 	private String myBroadcast;
 	public static int timeSlice;
 	public static int wifiState;
-	private WifiNeighbor myInfo;
+	private Neighbor myInfo;
 	private boolean pauseForced;
 	private int logPreviousState;
 
@@ -122,7 +122,7 @@ public class WifiService extends Service implements IWifiService {
 		if (wifiManager.isWifiEnabled())
 			wifiManager.setWifiEnabled(false);
 
-		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
+		myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if (myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
 
@@ -130,7 +130,7 @@ public class WifiService extends Service implements IWifiService {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh " + myIPAddress);
 
-		myInfo = new WifiNeighbor("phone", myBluetoothAddress);
+		myInfo = new Neighbor("phone", myIPAddress, myBluetoothAddress);
 		
 		pauseForced = false;
 		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE,

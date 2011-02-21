@@ -25,7 +25,7 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
-import edu.illinois.CS598rhk.models.WifiNeighbor;
+import edu.illinois.CS598rhk.models.Neighbor;
 
 public class SchedulerService extends Service implements ISchedulerService {
 
@@ -40,7 +40,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	public static List<WifiNeighbor> wifiNeighbors;
+	public static List<Neighbor> wifiNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private BluetoothAdapter myDevice;
@@ -67,7 +67,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		wifiNeighbors = new ArrayList<WifiNeighbor>();
+		wifiNeighbors = new ArrayList<Neighbor>();
 		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
@@ -178,22 +178,22 @@ public class SchedulerService extends Service implements ISchedulerService {
 			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent
 					.getAction())) {
 				
-				IBluetoothMessage message = WifiNeighbor.newWifiNeighborReader().parse(intent
+				IBluetoothMessage message = Neighbor.newWifiNeighborReader().parse(intent
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
-				WifiNeighbor neighbor = (WifiNeighbor) message;
+				Neighbor neighbor = (Neighbor) message;
 				
 				if (!wifiNeighbors.contains(neighbor)) {
 					String time = (new Time(System.currentTimeMillis())).toString();
-					sendToLogger(time + ", " + myDevice.getAddress() + ", " + neighbor.address);
+					sendToLogger(time + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr);
 					wifiNeighbors.add(neighbor);
 				}
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
-						if (neighbor.address.equals(device.getAddress())) {
+						if (neighbor.ipAddr.equals(device.getAddress())) {
 							// this neighbor is an active bt neighbor
 							if (myDevice.getAddress().compareTo(
-									neighbor.address) < 0) { 
+									neighbor.ipAddr) < 0) { 
 								// uh oh, he appears to be discovering as well
 								// abort! abort!
 								if (progress < 44000) {

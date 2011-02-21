@@ -5,16 +5,17 @@ import java.nio.ByteBuffer;
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
-public class WifiNeighbor implements IBluetoothMessage {
+public class Neighbor implements IBluetoothMessage {
 	public String name;
-    public String address;
+    public String ipAddr;
+    public String btAddr;
     
-    public WifiNeighbor(String name, String address) {
+    public Neighbor(String name, String ipAddr, String btAddr) {
     	this.name = name;
-    	this.address = address;
+    	this.ipAddr = ipAddr;
     }
     
-    private WifiNeighbor() {
+    private Neighbor() {
     	// Do nothing
     }
     
@@ -25,7 +26,7 @@ public class WifiNeighbor implements IBluetoothMessage {
     private static class WifiNeighborReader implements IMessageReader {
 		@Override
 		public IBluetoothMessage parse(byte[] message) {
-			WifiNeighbor wifiNeighbor = new WifiNeighbor();
+			Neighbor wifiNeighbor = new Neighbor();
 			wifiNeighbor.unpack(message);
 			return wifiNeighbor;
 		}
@@ -33,7 +34,7 @@ public class WifiNeighbor implements IBluetoothMessage {
     
     public byte[] pack() {
             byte[] tempName = name.getBytes();
-            byte[] tempAddress = address.getBytes();
+            byte[] tempAddress = ipAddr.getBytes();
             
             int msgLength = 4 + tempName.length + 4 + tempAddress.length;
             byte[] bytes = new byte[msgLength];
@@ -65,27 +66,30 @@ public class WifiNeighbor implements IBluetoothMessage {
             System.arraycopy(bytes, 4 + nameLength, temp, 0, 4);
             int addressLength = ByteBuffer.wrap(temp).getInt();
             int indexOfAddress = 4 + nameLength + 4;
-            address = new String(bytes, indexOfAddress, addressLength);
+            ipAddr = new String(bytes, indexOfAddress, addressLength);
+            
+            // TODO: Add pack unpack of btAddr
     }
 
     @Override
     public String toString() {
             String prettyString = "Neighbor:"
                     + "\n\tName: " + name
-                    + "\n\tAddress: " + address;
+                    + "\n\tIP: " + ipAddr
+            		+ "\n\tMAC: " + btAddr;
             return prettyString;
     }
     
     @Override
     public boolean equals(Object o) {
-            if (o instanceof WifiNeighbor) {
-            	WifiNeighbor neighbor = (WifiNeighbor) o;
-                    return (name.equals(neighbor.name) && address.equals(neighbor.address));
+            if (o instanceof Neighbor) {
+            	Neighbor neighbor = (Neighbor) o;
+                return btAddr.equals(neighbor.btAddr);
             }
             return false;
     }
 	
     public byte getMessageType() {
-            return BluetoothMessage.WIFI_NEIGHBOR_HEADER;
+            return BluetoothMessage.NEIGHBOR_HEADER;
     }
 }

@@ -9,7 +9,7 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class BluetoothMessage {
-	public static final byte WIFI_NEIGHBOR_HEADER = 2;
+	public static final byte NEIGHBOR_HEADER = 2;
 	public static final byte INITIATE_ELECTION_HEADER = 3;
 	public static final byte ELECTION_RESPONSE_HEADER = 4;
 	public static final byte ELECTION_WINNER_ANNOUNCEMENT_HEADER = 5;
