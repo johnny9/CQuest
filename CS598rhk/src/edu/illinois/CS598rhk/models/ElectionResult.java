@@ -13,14 +13,8 @@ public class ElectionResult implements IBluetoothMessage {
 		delayUntilWinnerStarts = delay;
 	}
 	
-	private ElectionResult() {
+	public ElectionResult() {
 		// Do nothing
-	}
-	
-	public static ElectionResult parse(byte[] message) {
-		ElectionResult result = new ElectionResult();
-		result.unpack(message);
-		return result;
 	}
 	
 	@Override

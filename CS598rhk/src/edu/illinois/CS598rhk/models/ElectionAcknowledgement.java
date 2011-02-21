@@ -7,12 +7,6 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 public class ElectionAcknowledgement implements IBluetoothMessage {
 	public int value;
 	
-	public static ElectionAcknowledgement parse(byte[] message) {
-		ElectionAcknowledgement acknowledgement = new ElectionAcknowledgement();
-		acknowledgement.unpack(message);
-		return acknowledgement;
-	}
-	
 	@Override
 	public byte[] pack() {
 		return ByteBuffer.allocate(4).putInt(value).array();

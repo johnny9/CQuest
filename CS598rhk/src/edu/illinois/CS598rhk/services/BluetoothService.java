@@ -522,6 +522,18 @@ public class BluetoothService extends Service implements IBluetoothService {
 					numberOfAnnouncements = electionAnnouncements.size();
 				}
 			} while (numberOfAnnouncements == 0 || shuttingDown);
+			
+			//The following block is the correct way to achieve the above do while loop ... though
+			//it requires that the person you are waiting on then uses notify appropriately.
+//			synchronized (electionAnnouncements) {
+//				while (electionAnnouncements.size() == 0) {
+//					try {
+//						electionAnnouncements.wait();
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
 
 			// get the neighbor his message first
 			while (hostingElection

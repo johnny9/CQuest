@@ -11,14 +11,8 @@ public class ElectionResponse implements IBluetoothMessage {
 		this.value = value;
 	}
 	
-	private ElectionResponse() {
+	public ElectionResponse() {
 		// Do nothing
-	}
-	
-	public static ElectionResponse parse(byte[] message) {
-		ElectionResponse response = new ElectionResponse();
-		response.unpack(message);
-		return response;
 	}
 	
 	@Override

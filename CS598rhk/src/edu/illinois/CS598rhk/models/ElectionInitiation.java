@@ -4,10 +4,6 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 
 public class ElectionInitiation implements IBluetoothMessage {
 
-	public static ElectionInitiation parse() {
-		return new ElectionInitiation();
-	}
-
 	@Override
 	public byte[] pack() {
 		return new byte[1];
