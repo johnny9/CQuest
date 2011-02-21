@@ -3,9 +3,24 @@ package edu.illinois.CS598rhk.models;
 import java.nio.ByteBuffer;
 
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
+import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class ElectionAcknowledgement implements IBluetoothMessage {
 	public int value;
+	
+	public static IMessageReader newAcknowledgementReader() {
+		return new AcknowledgementReader();
+	}
+	
+	private static class AcknowledgementReader implements IMessageReader {
+
+		@Override
+		public IBluetoothMessage parse(byte[] message) {
+			ElectionAcknowledgement acknowledgement = new ElectionAcknowledgement();
+			acknowledgement.unpack(message);
+			return acknowledgement;
+		}
+	}
 	
 	@Override
 	public byte[] pack() {

@@ -20,10 +20,10 @@ public class BluetoothMessage {
 	static {
 		final Map<Byte, IMessageReader> temp = new HashMap<Byte, IMessageReader>();
 		
-		temp.put(INITIATE_ELECTION_HEADER, MessageReaders.newInitiationReader());
-		temp.put(ELECTION_RESPONSE_HEADER, MessageReaders.newResponseReader());
-		temp.put(ELECTION_WINNER_ANNOUNCEMENT_HEADER, MessageReaders.newResultReader());
-		temp.put(ACKNOWLEDGE_ELECTION_WINNER, MessageReaders.newAcknowledgementReader());
+		temp.put(INITIATE_ELECTION_HEADER, ElectionInitiation.newInitiationReader());
+		temp.put(ELECTION_RESPONSE_HEADER, ElectionResponse.newResponseReader());
+		temp.put(ELECTION_WINNER_ANNOUNCEMENT_HEADER, ElectionResult.newResultReader());
+		temp.put(ACKNOWLEDGE_ELECTION_WINNER, ElectionAcknowledgement.newAcknowledgementReader());
 		
 		messageReaders = Collections.unmodifiableMap(temp);
 	}
