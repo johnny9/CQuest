@@ -210,9 +210,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 					activeNeighbors.add(socket.getRemoteDevice());
 
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
-					WifiNeighbor data = new WifiNeighbor();
-					data.address = socket.getRemoteDevice().getAddress();
-					data.name = socket.getRemoteDevice().getName();
+					String address = socket.getRemoteDevice().getAddress();
+					String name = socket.getRemoteDevice().getName();
+					WifiNeighbor data = new WifiNeighbor(name, address);
 
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(

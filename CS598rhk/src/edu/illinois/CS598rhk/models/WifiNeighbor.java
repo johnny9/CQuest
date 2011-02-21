@@ -3,10 +3,33 @@ package edu.illinois.CS598rhk.models;
 import java.nio.ByteBuffer;
 
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
+import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class WifiNeighbor implements IBluetoothMessage {
 	public String name;
     public String address;
+    
+    public WifiNeighbor(String name, String address) {
+    	this.name = name;
+    	this.address = address;
+    }
+    
+    private WifiNeighbor() {
+    	// Do nothing
+    }
+    
+    public static IMessageReader newWifiNeighborReader() {
+    	return new WifiNeighborReader();
+    }
+    
+    private static class WifiNeighborReader implements IMessageReader {
+		@Override
+		public IBluetoothMessage parse(byte[] message) {
+			WifiNeighbor wifiNeighbor = new WifiNeighbor();
+			wifiNeighbor.unpack(message);
+			return wifiNeighbor;
+		}
+    }
     
     public byte[] pack() {
             byte[] tempName = name.getBytes();
@@ -62,7 +85,6 @@ public class WifiNeighbor implements IBluetoothMessage {
             return false;
     }
 	
-	@Override
     public byte getMessageType() {
             return BluetoothMessage.WIFI_NEIGHBOR_HEADER;
     }

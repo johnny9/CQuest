@@ -127,9 +127,7 @@ public class WifiService extends Service implements IWifiService {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh " + myIPAddress);
 
-		myInfo = new WifiNeighbor();
-		myInfo.address = myBluetoothAddress;
-		myInfo.name = "phone";
+		myInfo = new WifiNeighbor("phone", myBluetoothAddress);
 		
 		pauseForced = false;
 		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE,

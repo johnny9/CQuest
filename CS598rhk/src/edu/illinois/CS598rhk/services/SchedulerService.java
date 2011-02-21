@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
+import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
@@ -163,10 +164,12 @@ public class SchedulerService extends Service implements ISchedulerService {
 		public void onReceive(Context context, Intent intent) {
 			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent
 					.getAction())) {
-				WifiNeighbor neighbor = new WifiNeighbor();
-				neighbor.unpack(intent
+				
+				IBluetoothMessage message = WifiNeighbor.newWifiNeighborReader().parse(intent
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
+				WifiNeighbor neighbor = (WifiNeighbor) message;
+				
 				if (!wifiNeighbors.contains(neighbor)) {
 					wifiNeighbors.add(neighbor);
 				}
