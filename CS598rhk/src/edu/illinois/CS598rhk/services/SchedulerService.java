@@ -1,7 +1,10 @@
 package edu.illinois.CS598rhk.services;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Notification;
 import android.app.Service;
@@ -28,6 +31,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private static final String TAG = "SchedulerService";
 
+	public static final String ACTION_RESET_TIMEOUT = "reset wifi timeout";
+
 	private final IBinder mBinder = new SchedulerBinder();
 
 	private IWifiService wifiService;
@@ -45,6 +50,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private PowerManager pm;
 	private PowerManager.WakeLock wl;
+	
+	private Timer wifiPausedTimeout;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -108,6 +115,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 		registerReceiver(neighborReceiver, filter);
 
 		filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+		registerReceiver(neighborReceiver, filter); 
+		
+		filter = new IntentFilter(SchedulerService.ACTION_RESET_TIMEOUT);
 		registerReceiver(neighborReceiver, filter); // Don't forget to
 													// unregister during
 													// onDestroy
@@ -139,6 +149,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
 		wl.acquire();
+		
+		wifiPausedTimeout = new Timer();
 
 		return START_STICKY;
 	}
@@ -152,10 +164,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 		super.onDestroy();
 	}
 
-	public void sendToLoggerS(String message) {
+	public void sendToLogger(String message) {
 		Log.d(TAG, message);
-		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
-		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
+		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message);
+		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.SCHEDULER_LOG);
 		sendBroadcast(intentToLog);
 	}
 
@@ -171,9 +184,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 				WifiNeighbor neighbor = (WifiNeighbor) message;
 				
 				if (!wifiNeighbors.contains(neighbor)) {
+					sendToLogger(myDevice.getAddress() + ", " + neighbor.address);
 					wifiNeighbors.add(neighbor);
 				}
-
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
 						if (neighbor.address.equals(device.getAddress())) {
@@ -186,6 +199,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 									stoppingWifi = true;
 									wifiService.forcedPauseWifiService();
 									bluetoothService.stopDiscovery();
+									resetTimeout();
 								}
 							}
 						}
@@ -208,11 +222,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 				progress = intent.getLongExtra(
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
-				if (progress > 20000) {
+				if (progress > 29000) {
 					if (!stoppingWifi)
 						bluetoothService.startDiscovery();
 					bluetoothService.resetWifiDiscoveryElection();
-				} else if (progress <= 15000 && progress > 0 && !stoppingWifi) {
+				} else if (progress <= 25000 && progress > 0 && !stoppingWifi) {
 					if (BluetoothService.activeNeighbors.size() > 0) {
 						bluetoothService.hostWifiDiscoveryElection();
 					}
@@ -225,13 +239,39 @@ public class SchedulerService extends Service implements ISchedulerService {
 				if (delay > 0) {
 					stoppingWifi = false;
 					wifiService.resumeWifiService(delay);
-
+					wifiPausedTimeout.cancel();
+					wifiPausedTimeout.purge();
 				} else {
 					stoppingWifi = true;
-					wifiService.pauseWifiService();
+					if(progress > 25000) 
+						wifiService.forcedPauseWifiService();
+					else
+						wifiService.pauseWifiService();
 					bluetoothService.stopDiscovery();
+					resetTimeout();
+					
 				}
+			} else if (SchedulerService.ACTION_RESET_TIMEOUT.equals(intent.getAction())) {
+				resetTimeout();
 			}
 		}
+
+		private void resetTimeout() {
+			wifiPausedTimeout.cancel();
+			wifiPausedTimeout.purge();
+			wifiPausedTimeout = new Timer();
+			wifiPausedTimeout.schedule(new KickStartTimerTask(), 20*5000);
+		}
+	}
+	
+	public class KickStartTimerTask extends TimerTask {
+
+		@Override
+		public void run() {
+			Log.d(TAG, "Haven't heard from my leader yet.  Taking charge!");
+			stoppingWifi = false;
+			wifiService.resumeWifiService(10);
+		}
+		
 	}
 }

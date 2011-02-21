@@ -7,6 +7,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Time;
 
 import android.app.Notification;
 import android.app.Service;
@@ -66,6 +67,7 @@ public class WifiService extends Service implements IWifiService {
 	public static int wifiState;
 	private WifiNeighbor myInfo;
 	private boolean pauseForced;
+	private int logPreviousState;
 
 	InetAddress dest;
 
@@ -90,6 +92,7 @@ public class WifiService extends Service implements IWifiService {
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new AlwaysSchedule();
 		coretask = new CoreTask();
+		logPreviousState = -1;
 		try {
 			dest = InetAddress.getByName(myBroadcast);
 		} catch (UnknownHostException e) {
@@ -122,7 +125,7 @@ public class WifiService extends Service implements IWifiService {
 		this.myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if (myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
-		
+
 		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
 				+ "/bin/load.sh " + myIPAddress);
@@ -145,7 +148,7 @@ public class WifiService extends Service implements IWifiService {
 				+ " netmask 255.255.255.0");
 		try {
 			dest = InetAddress.getByName(myBroadcast);
-			
+
 		} catch (UnknownHostException e) {
 			Log.d(MSG_TAG, "Broadcast address " + myBroadcast + " as unknown.");
 		}
@@ -272,30 +275,34 @@ public class WifiService extends Service implements IWifiService {
 			Looper.prepare();
 			while (true) {
 				if (wifiState == WIFI_STATE_PAUSED) {
-					while (wifiState != WIFI_STATE_DISCOVERYING)
+					logStatePaused();
+					while (wifiState != WIFI_STATE_DISCOVERYING) {
 						try {
-							Thread.sleep(500);
+							Thread.sleep(100);
 						} catch (InterruptedException e) {
 							// interrupted from sleep
 						}
+					}
 					try {
 						Thread.sleep(resumeDelay);
 					} catch (InterruptedException e) {
 						// interrupted from sleep >=(
+
 					}
 					timeSlice = 0;
 					pauseForced = false;
 				}
 
 				do {
-					if(wifiState == WIFI_STATE_PAUSED && pauseForced)
-					{
+					if (wifiState == WIFI_STATE_PAUSED && pauseForced) {
 						timeSlice = 0;
 						pauseForced = false;
 						break;
 					}
-					if (timeSlice == 0)
+					if (timeSlice == 0) {
+						logStateDiscoverying();
 						mySchedule = discoveryScheduler.generateScedule();
+					}
 
 					long startTime = System.currentTimeMillis();
 					if (!wifiEnabled) {
@@ -354,6 +361,33 @@ public class WifiService extends Service implements IWifiService {
 		wifiController.interrupt();
 	}
 
+	public void logStatePaused() {
+		String message;
+		String time;
+		if (logPreviousState != WIFI_STATE_PAUSED) {
+			logPreviousState = WIFI_STATE_PAUSED;
+			time = (new Time(System.currentTimeMillis())).toString();
+			message = time + ", " + myBluetoothAddress + ", 1\n";
+			message += time + ", " + myBluetoothAddress + ", 0";
+
+			sendToLogger(message);
+		}
+	}
+
+	public void logStateDiscoverying() {
+		String message;
+		String time;
+
+		if (logPreviousState != WIFI_STATE_DISCOVERYING) {
+			logPreviousState = WIFI_STATE_DISCOVERYING;
+			time = (new Time(System.currentTimeMillis())).toString();
+			message = time + ", " + myBluetoothAddress + ", 0\n";
+			message += time + ", " + myBluetoothAddress + ", 1";
+
+			sendToLogger(message);
+		}
+	}
+
 	public void pauseWifiService() {
 		wifiState = WIFI_STATE_PAUSED;
 	}
@@ -364,15 +398,16 @@ public class WifiService extends Service implements IWifiService {
 				* DISCOVERY_TIMESLICE;
 	}
 
-	public void sendToLoggers(String message) {
-		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
-		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message);
+	public void sendToLogger(String message) {
+		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message);
+		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.WIFI_LOG);
 		sendBroadcast(intentToLog);
 	}
 
 	@Override
 	public void forcedPauseWifiService() {
 		pauseForced = true;
-		wifiState = WIFI_STATE_PAUSED;		
+		wifiState = WIFI_STATE_PAUSED;
 	}
 }

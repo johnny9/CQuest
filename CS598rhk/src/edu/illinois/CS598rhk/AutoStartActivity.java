@@ -33,7 +33,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import edu.illinois.CS598rhk.services.BluetoothService;
 import edu.illinois.CS598rhk.services.CoreTask;
-import edu.illinois.CS598rhk.services.PowerManagement;
+import edu.illinois.CS598rhk.services.LoggingService;
 import edu.illinois.CS598rhk.services.SchedulerService;
 import edu.illinois.CS598rhk.services.WifiService;
 
@@ -356,7 +356,7 @@ public class AutoStartActivity extends Activity {
 	}
 
 	private void startServices() {
-		startService(new Intent(AutoStartActivity.this, PowerManagement.class));
+		startService(new Intent(AutoStartActivity.this, LoggingService.class));
 		Intent i = new Intent(AutoStartActivity.this, SchedulerService.class);
 		i.putExtra(ADDRESS_KEY, ipAddrText.getText().toString());
 		startService(i);
@@ -364,7 +364,7 @@ public class AutoStartActivity extends Activity {
 	}
 
 	private void stopServices() {
-		stopService(new Intent(AutoStartActivity.this, PowerManagement.class));
+		stopService(new Intent(AutoStartActivity.this, LoggingService.class));
 		stopService(new Intent(AutoStartActivity.this, SchedulerService.class));
 		stopService(new Intent(AutoStartActivity.this, WifiService.class));
 		stopService(new Intent(AutoStartActivity.this, BluetoothService.class));

@@ -113,8 +113,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	public synchronized void sendToLoggers(String message) {
 		Log.d(TAG, message);
-		Intent intentToLog = new Intent(PowerManagement.ACTION_LOG_UPDATE);
-		intentToLog.putExtra(PowerManagement.LOG_MESSAGE, message + "\n\t-- ["
+		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message + "\n\t-- ["
 				+ new Date().toGMTString() + "]");
 		sendBroadcast(intentToLog);
 	}
@@ -232,7 +232,13 @@ public class BluetoothService extends Service implements IBluetoothService {
 					continue;
 
 				}
-
+				
+				//TODO: sent reset intent
+				// inform the scheduling service
+				Intent foundNewNeighbor = new Intent(
+						SchedulerService.ACTION_RESET_TIMEOUT);
+				sendBroadcast(foundNewNeighbor);
+				
 				(new BluetoothAcceptHandlerThread(socket)).start();
 			}
 		}
@@ -402,7 +408,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 			IBluetoothMessage results = electionHandler
 					.getWinnerAnnouncement(currentNeighbor);
-			if (results == null) {
+			if (results != null) {
 				try {
 					Log.e(TAG, results.toString());
 					writeBluetoothMessage(outStream, results);
@@ -470,6 +476,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			else {
 				synchronized (this) {
 					heardFromCounter++;
+					Log.e(TAG, "heardFromCounter: " + heardFromCounter + " neighbors: " + activeNeighbors.size());
 				}
 				if (heardFromCounter >= activeNeighbors.size())
 					determineElectionWinner();
@@ -507,8 +514,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses.add(new Pair<BluetoothDevice, Integer>(
 						currentNeighbor, message.value));
 				heardFromCounter++;
+				Log.e(TAG, "heardFromCounter: " + heardFromCounter + " neighbors: " + activeNeighbors.size());
 			}
-			Log.e(TAG, "heardFromCounter: " + heardFromCounter);
 			if (heardFromCounter >= activeNeighbors.size())
 				determineElectionWinner();
 		}
@@ -539,8 +546,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 			while (hostingElection
 					&& !winnerAcknowledgedElection
 					&& !neighbor.getAddress().equals(
-							nextAnnouncement.winnerAddress) && !shuttingDown)
-				;
+							nextAnnouncement.winnerAddress))
+				if(shuttingDown) break;
 
 			if (shuttingDown)
 				return null;

@@ -1,17 +1,12 @@
 package edu.illinois.CS598rhk.services;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.sql.Time;
 import java.util.Date;
 
-import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
@@ -22,7 +17,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-public class PowerManagement extends Service implements Runnable {
+public class LoggingService extends Service implements Runnable {
 	private static final String POWER_TAG = "AdHocClient_power";
 	private static final String LOG_MESSAGE_TAG = "AdHocClient_logMessage";
 
@@ -32,8 +27,11 @@ public class PowerManagement extends Service implements Runnable {
 
 	public static final String ACTION_LOG_UPDATE = "log update";
 	public static final String LOG_MESSAGE = "log message";
+	public static final String WIFI_LOG = "wifi_discovery";
+	public static final String SCHEDULER_LOG = "new_neighbor";
+	public static final String WHICH_LOG = "which log?";
+	public static final String POWER_LOG = "power_log";
 
-	String filename = "power_log";
 	FileOutputStream fos;
 
 	@Override
@@ -54,7 +52,6 @@ public class PowerManagement extends Service implements Runnable {
     	startForeground(0, notification);
 		
 		startTime = SystemClock.elapsedRealtime();
-		filename = filename + "." + startTime;
 
 		IntentFilter batteryFilter = new IntentFilter(
 				Intent.ACTION_BATTERY_CHANGED);
@@ -63,9 +60,9 @@ public class PowerManagement extends Service implements Runnable {
 		registerReceiver(myBatteryInfoReceiver, batteryFilter);
 
 		IntentFilter logFilter = new IntentFilter(ACTION_LOG_UPDATE);
-		batteryFilter.addAction(LOG_MESSAGE);
-		myBatteryInfoReceiver2 = new BatteryInfoReceiver();
-		registerReceiver(myBatteryInfoReceiver2, logFilter);
+		registerReceiver(myBatteryInfoReceiver, logFilter);
+		
+		clearLog();
 
 		return START_STICKY;
 	}
@@ -74,11 +71,11 @@ public class PowerManagement extends Service implements Runnable {
 
 		public void onReceive(Context context, Intent intent) {
 			long curTime = SystemClock.elapsedRealtime();
-			Date now = new Date(curTime - startTime);
-			String timeString = "Time: " + now.getHours() + ":"
-					+ now.getMinutes() + ":" + now.getSeconds();
+			Time now = new Time(curTime - startTime);
+			String timeString = now.toString();
 			
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+				String filenameString = POWER_LOG;
 				int rawlevel = intent.getIntExtra("level", -1);
 				int scale = intent.getIntExtra("scale", -1);
 				int status = intent.getIntExtra("status", -1);
@@ -98,7 +95,7 @@ public class PowerManagement extends Service implements Runnable {
 				Log.d(POWER_TAG, log_output);
 
 				try {
-					fos = openFileOutput(filename, Context.MODE_APPEND);
+					fos = openFileOutput(POWER_LOG, Context.MODE_APPEND);
 					fos.write(log_output.getBytes());
 					fos.close();
 				} catch (FileNotFoundException e) {
@@ -109,16 +106,15 @@ public class PowerManagement extends Service implements Runnable {
 					e.printStackTrace();
 				}
 			}
-
 			else if (intent.getAction().equals(ACTION_LOG_UPDATE)) {
 				String message = intent.getStringExtra(LOG_MESSAGE);
-				String log_output = timeString + "; "
-						+ message + "\n";
+				String filenameString = intent.getStringExtra(WHICH_LOG);
+				String log_output = message + "\n";
 
 				Log.d(LOG_MESSAGE_TAG, log_output);
 
 				try {
-					fos = openFileOutput(filename, Context.MODE_APPEND);
+					fos = openFileOutput(filenameString, Context.MODE_APPEND);
 					fos.write(log_output.getBytes());
 					fos.close();
 				} catch (FileNotFoundException e) {
@@ -132,10 +128,16 @@ public class PowerManagement extends Service implements Runnable {
 		}
 	}
 
+	public void clearLog()
+	{
+		deleteFile(POWER_LOG);
+		deleteFile(WIFI_LOG);
+		deleteFile(SCHEDULER_LOG);	
+	}
+	
 	@Override
 	public void onDestroy() {
 		unregisterReceiver(myBatteryInfoReceiver);
-		unregisterReceiver(myBatteryInfoReceiver2);
 		stopForeground(true);
 		super.onDestroy();
 	}
