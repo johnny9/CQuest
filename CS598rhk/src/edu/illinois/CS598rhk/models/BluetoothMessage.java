@@ -9,8 +9,6 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class BluetoothMessage {
-	private static final int HEADER_LENGTH = 5;
-	private static final int INDEX_OF_MESSAGE_TYPE = 4;
 	public static final byte WIFI_NEIGHBOR_HEADER = 2;
 	public static final byte INITIATE_ELECTION_HEADER = 3;
 	public static final byte ELECTION_RESPONSE_HEADER = 4;
@@ -30,8 +28,11 @@ public class BluetoothMessage {
 		messageReaders = Collections.unmodifiableMap(temp);
 	}
 	
-	private IBluetoothMessage message;
 	private byte[] header;
+	private static final int HEADER_LENGTH = 5;
+	private static final int INDEX_OF_MESSAGE_TYPE = 4;
+	
+	private IBluetoothMessage message;
 	
 	public BluetoothMessage(IBluetoothMessage message) {
 		this.message = message;
@@ -43,14 +44,14 @@ public class BluetoothMessage {
 	public byte[] getMessageWithHeader() {
 		byte[] temp = message.pack();
 		
-		int messageLength = header.length + temp.length;
+		int messageLength = HEADER_LENGTH + temp.length;
 		byte[] finalMessage = new byte[messageLength];
 		
 		byte[] messageLengthBytes = ByteBuffer.allocate(4).putInt(messageLength).array();
 		System.arraycopy(messageLengthBytes, 0, header, 0, 4);
 		
-		System.arraycopy(header, 0, finalMessage, 0, header.length);
-		System.arraycopy(temp, 0, finalMessage, header.length, temp.length);
+		System.arraycopy(header, 0, finalMessage, 0, HEADER_LENGTH);
+		System.arraycopy(temp, 0, finalMessage, HEADER_LENGTH, temp.length);
 		
 		return finalMessage;
 	}
@@ -60,8 +61,8 @@ public class BluetoothMessage {
 	}
 	
 	public static byte[] stripHeader(byte[] message) {
-		byte[] stripped = new byte[message.length - 5];
-		System.arraycopy(message, 5, stripped, 0, stripped.length);
+		byte[] stripped = new byte[message.length - HEADER_LENGTH];
+		System.arraycopy(message, HEADER_LENGTH, stripped, 0, stripped.length);
 		return stripped;
 	}
 	
@@ -71,23 +72,16 @@ public class BluetoothMessage {
 		byte[] messageHeader = new byte[HEADER_LENGTH];
 		System.arraycopy(bytes, 0, messageHeader, 0, HEADER_LENGTH);
 		
-		byte messageType = messageHeader[4];
-		
 		byte[] messageLengthBytes = new byte[4];
 		System.arraycopy(bytes, 0, messageLengthBytes, 0, 4);
 		int messageLength = ByteBuffer.wrap(messageLengthBytes).getInt();
 		
 		if (messageLength == bytes.length) {
-			byte[] messageBytes = new byte[messageLength- HEADER_LENGTH];
-			System.arraycopy(bytes, HEADER_LENGTH, messageBytes, 0, messageLength - HEADER_LENGTH);
+			byte[] messageBytes = stripHeader(bytes);
 			
+			byte messageType = messageHeader[INDEX_OF_MESSAGE_TYPE];
 			parsedMessage = messageReaders.get(messageType).parse(messageBytes);
-			
-			if (parsedMessage != null) {
-				parsedMessage.unpack(messageBytes);
-			}
 		}
-		
 		return parsedMessage;
 	}
 	
