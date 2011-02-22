@@ -19,11 +19,11 @@ public class Neighbor implements IBluetoothMessage {
     	// Do nothing
     }
     
-    public static IMessageReader newWifiNeighborReader() {
-    	return new WifiNeighborReader();
+    public static IMessageReader newNeighborReader() {
+    	return new NeighborReader();
     }
     
-    private static class WifiNeighborReader implements IMessageReader {
+    private static class NeighborReader implements IMessageReader {
 		@Override
 		public IBluetoothMessage parse(byte[] message) {
 			Neighbor wifiNeighbor = new Neighbor();

@@ -178,7 +178,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent
 					.getAction())) {
 				
-				IBluetoothMessage message = Neighbor.newWifiNeighborReader().parse(intent
+				IBluetoothMessage message = Neighbor.newNeighborReader().parse(intent
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
 				Neighbor neighbor = (Neighbor) message;
