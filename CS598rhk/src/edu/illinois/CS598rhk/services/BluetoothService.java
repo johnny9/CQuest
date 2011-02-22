@@ -152,6 +152,12 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		switch (message.getMessageType()) {
 		case BluetoothMessage.INITIATE_ELECTION_HEADER:
+			ElectionInitiation initiation = (ElectionInitiation) message;
+			
+			for (Neighbor neighbor : initiation.neighbors) {
+				SchedulerService.updateNeighbor(neighbor);
+			}
+			
 			response = electionHandler.getElectionResponse();
 			break;
 		case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
@@ -491,7 +497,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
 				electionAnnouncements = new ArrayList<ElectionResult>();
 
-				broadcast(new ElectionInitiation(SchedulerService.wifiNeighbors));
+				broadcast(new ElectionInitiation(SchedulerService.wifiNeighbors.keySet()));
 			}
 		}
 

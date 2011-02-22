@@ -2,23 +2,26 @@ package edu.illinois.CS598rhk.models;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class ElectionInitiation implements IBluetoothMessage {
-	private List<Neighbor> neighbors;
+	public Set<Neighbor> neighbors;
 	
-	public ElectionInitiation(List<Neighbor> neighbors) {
-		this.neighbors = new ArrayList<Neighbor>(neighbors);
-		Collections.copy(this.neighbors, neighbors);
+	public ElectionInitiation(Set<Neighbor> neighbors) {
+		this.neighbors = new HashSet<Neighbor>();
+		for(Neighbor neighbor : neighbors) {
+			this.neighbors.add(new Neighbor(neighbor));
+		}
 	}
 	
 	private ElectionInitiation() {
-		neighbors = new ArrayList<Neighbor>();
+		neighbors = new HashSet<Neighbor>();
 	}
 	
 	public static IMessageReader newInitiationReader() {

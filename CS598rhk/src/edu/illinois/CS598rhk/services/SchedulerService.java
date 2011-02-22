@@ -2,7 +2,9 @@ package edu.illinois.CS598rhk.services;
 
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -40,10 +42,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	public static List<Neighbor> wifiNeighbors;
+	public static Map<Neighbor,Time> wifiNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
-	private BluetoothAdapter myDevice;
+	private static BluetoothAdapter myDevice;
 	private long progress;
 	private String address;
 	private boolean stoppingWifi;
@@ -67,7 +69,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		wifiNeighbors = new ArrayList<Neighbor>();
+		wifiNeighbors = new HashMap<Neighbor,Time>();
 		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
@@ -172,6 +174,15 @@ public class SchedulerService extends Service implements ISchedulerService {
 		sendBroadcast(intentToLog);
 	}
 
+	// TODO: Need some way of indicating that the neighbor was discovered indirectly or directly !
+	// If directly, then send neighbor in election when leader, if not, don't send
+	public static String updateNeighbor(Neighbor neighbor) {
+		Time time = new Time(System.currentTimeMillis());
+		wifiNeighbors.put(new Neighbor(neighbor), time);
+		
+		return time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
+	}
+	
 	private class MessageReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -183,11 +194,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 				Neighbor neighbor = (Neighbor) message;
 				
-				if (!wifiNeighbors.contains(neighbor)) {
-					String time = (new Time(System.currentTimeMillis())).toString();
-					sendToLogger(time + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr);
-					wifiNeighbors.add(neighbor);
-				}
+				sendToLogger(updateNeighbor(neighbor));
+				
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
 						if (neighbor.ipAddr.equals(device.getAddress())) {

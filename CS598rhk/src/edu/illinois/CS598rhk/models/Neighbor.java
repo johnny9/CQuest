@@ -15,6 +15,12 @@ public class Neighbor implements IBluetoothMessage {
     	this.ipAddr = ipAddr;
     }
     
+    public Neighbor(Neighbor neighbor) {
+    	this.name = neighbor.name;
+    	this.ipAddr = neighbor.ipAddr;
+    	this.btAddr = neighbor.btAddr;
+    }
+    
     private Neighbor() {
     	// Do nothing
     }
@@ -89,24 +95,24 @@ public class Neighbor implements IBluetoothMessage {
             btAddr = new String(bytes, currentIndex, strLength);
     }
 
-    @Override
-    public String toString() {
-            String prettyString = "Neighbor:"
-                    + "\n\tName: " + name
-                    + "\n\tIP: " + ipAddr
-            		+ "\n\tMAC: " + btAddr;
-            return prettyString;
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-            if (o instanceof Neighbor) {
-            	Neighbor neighbor = (Neighbor) o;
-                return btAddr.equals(neighbor.btAddr);
-            }
-            return false;
-    }
-	
+	@Override
+	public String toString() {
+		String prettyString = "Neighbor:" + "\n\tName: " + name + "\n\tIP: "
+				+ ipAddr + "\n\tMAC: " + btAddr;
+		return prettyString;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Neighbor) {
+			Neighbor neighbor = (Neighbor) o;
+			return btAddr.equals(neighbor.btAddr)
+					&& ipAddr.equals(neighbor.ipAddr)
+					&& name.equals(neighbor.name);
+		}
+		return false;
+	}
+
     public byte getMessageType() {
             return BluetoothMessage.NEIGHBOR_HEADER;
     }
