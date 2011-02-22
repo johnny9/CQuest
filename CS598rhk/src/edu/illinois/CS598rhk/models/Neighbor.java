@@ -34,41 +34,59 @@ public class Neighbor implements IBluetoothMessage {
     
     public byte[] pack() {
             byte[] tempName = name.getBytes();
-            byte[] tempAddress = ipAddr.getBytes();
+            byte[] tempIPAddr = ipAddr.getBytes();
+            byte[] tempBTAddr = btAddr.getBytes();
             
-            int msgLength = 4 + tempName.length + 4 + tempAddress.length;
+            int msgLength = 4 + tempName.length + 4 + tempIPAddr.length + 4 + tempBTAddr.length;
             byte[] bytes = new byte[msgLength];
             int currentIndex = 0;
             
-            byte[] nameLengthBytes = ByteBuffer.allocate(4).putInt(tempName.length).array();
-            System.arraycopy(nameLengthBytes, 0, bytes, currentIndex, 4);
+            byte[] strLengthBytes = ByteBuffer.allocate(4).putInt(tempName.length).array();
+            System.arraycopy(strLengthBytes, 0, bytes, currentIndex, 4);
             currentIndex += 4;
             
             System.arraycopy(tempName, 0, bytes, currentIndex, tempName.length);
             currentIndex += tempName.length;
             
-            byte[] addressLengthBytes = ByteBuffer.allocate(4).putInt(tempAddress.length).array();
-            System.arraycopy(addressLengthBytes, 0, bytes, currentIndex, 4);
+            strLengthBytes = ByteBuffer.allocate(4).putInt(tempIPAddr.length).array();
+            System.arraycopy(strLengthBytes, 0, bytes, currentIndex, 4);
             currentIndex += 4;
             
-            System.arraycopy(tempAddress, 0, bytes, currentIndex, tempAddress.length);
-            currentIndex += tempAddress.length;
+            System.arraycopy(tempIPAddr, 0, bytes, currentIndex, tempIPAddr.length);
+            currentIndex += tempIPAddr.length;
+            
+            strLengthBytes = ByteBuffer.allocate(4).putInt(tempBTAddr.length).array();
+            System.arraycopy(strLengthBytes, 0, bytes, currentIndex, 4);
+            currentIndex += 4;
+            
+            System.arraycopy(tempBTAddr, 0, bytes, currentIndex, tempBTAddr.length);
             
             return bytes;
     }
     
     public void unpack(byte[] bytes) {
             byte[] temp = new byte[4];
-            System.arraycopy(bytes, 0, temp, 0, 4);
-            int nameLength = ByteBuffer.wrap(temp).getInt();
-            name = new String(bytes, 4, nameLength);
             
-            System.arraycopy(bytes, 4 + nameLength, temp, 0, 4);
-            int addressLength = ByteBuffer.wrap(temp).getInt();
-            int indexOfAddress = 4 + nameLength + 4;
-            ipAddr = new String(bytes, indexOfAddress, addressLength);
+            int currentIndex = 0;
+            System.arraycopy(bytes, currentIndex, temp, 0, 4);
+            int strLength = ByteBuffer.wrap(temp).getInt();
+            currentIndex += 4;
             
-            // TODO: Add pack unpack of btAddr
+            name = new String(bytes, currentIndex, strLength);
+            currentIndex += strLength;
+            
+            System.arraycopy(bytes, currentIndex, temp, 0, 4);
+            strLength = ByteBuffer.wrap(temp).getInt();
+            currentIndex += 4;
+            
+            ipAddr = new String(bytes, currentIndex, strLength);
+            currentIndex += strLength;
+            
+            System.arraycopy(bytes, currentIndex, temp, 0, strLength);
+            strLength = ByteBuffer.wrap(temp).getInt();
+            currentIndex += 4;
+            
+            btAddr = new String(bytes, currentIndex, strLength);
     }
 
     @Override
