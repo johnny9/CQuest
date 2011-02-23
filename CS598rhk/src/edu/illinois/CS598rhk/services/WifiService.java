@@ -26,6 +26,7 @@ import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.Neighbor;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
+import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
 public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_UPDATE_SCHEDULE_PROGRESS = "intent to update schedule progress";
@@ -90,7 +91,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new AlwaysSchedule();
+		discoveryScheduler = new SearchLightSchedule(48);
 		coretask = new CoreTask();
 		logPreviousState = -1;
 		try {
@@ -180,14 +181,14 @@ public class WifiService extends Service implements IWifiService {
 
 	public void enableWifi() {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/up.sh " + this.myIPAddress);
+				+ "/bin/netcontrol startwifi " + this.myIPAddress);
 		Log.d(MSG_TAG, "Wifi Enabled");
 		wifiEnabled = true;
 	}
 
 	public void disableWifi() {
-		// this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-		// + "/bin/down.sh");
+		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		 + "/bin/netcontrol stopwifi");
 		Log.d(MSG_TAG, "Wifi disabled");
 		wifiEnabled = false;
 	}
