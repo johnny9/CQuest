@@ -1,13 +1,14 @@
+
 #!/bin/bash
 #Automation script for our bluetooth coordination software
 
 adb=~/android-sdk-linux_x86/tools/adb
 package_name=edu.illinois.CS598rhk
 activity_name=AutoStartActivity
-apk_location=CS598rhk.apk
+apk_location=bin/CS598rhk.apk
 ClockSync_location=ClockSync.apk
 subnet=192.168.1.
-devices=( `./adb devices | sed '/List of devices attached/d;s/\tdevice//g' ` )
+devices=( `$adb devices | sed '/List of devices attached/d;s/\tdevice//g' ` )
 
 start_activity ()
 {
