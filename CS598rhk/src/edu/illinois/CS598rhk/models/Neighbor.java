@@ -13,6 +13,7 @@ public class Neighbor implements IBluetoothMessage {
     public Neighbor(String name, String ipAddr, String btAddr) {
     	this.name = name;
     	this.ipAddr = ipAddr;
+    	this.btAddr = btAddr;
     }
     
     public Neighbor(Neighbor neighbor) {
