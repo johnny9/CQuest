@@ -32,6 +32,7 @@ import edu.illinois.CS598rhk.models.ElectionInitiation;
 import edu.illinois.CS598rhk.models.ElectionResponse;
 import edu.illinois.CS598rhk.models.ElectionResult;
 import edu.illinois.CS598rhk.models.Neighbor;
+import edu.illinois.CS598rhk.models.NeighborMetaData;
 
 public class BluetoothService extends Service implements IBluetoothService {
 	public static final String DISCOVERED_OVER_BLUETOOTH = "Wifi neighbor found over bluetooth";
@@ -156,7 +157,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			ElectionInitiation initiation = (ElectionInitiation) message;
 			
 			for (Neighbor neighbor : initiation.neighbors) {
-				SchedulerService.updateNeighbor(neighbor);
+				SchedulerService.updateNeighbor(neighbor, NeighborMetaData.WIFI_NETWORK);
 			}
 			
 			response = electionHandler.getElectionResponse();

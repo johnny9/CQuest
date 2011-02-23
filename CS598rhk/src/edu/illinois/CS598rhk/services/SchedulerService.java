@@ -72,7 +72,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		wifiNeighbors = new HashMap<Neighbor,NeighborMetaData>();
 		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
@@ -177,12 +176,22 @@ public class SchedulerService extends Service implements ISchedulerService {
 		sendBroadcast(intentToLog);
 	}
 
+	private static synchronized void lazyInitializeNeighbors() {
+		if (wifiNeighbors == null) {
+			wifiNeighbors = new HashMap<Neighbor,NeighborMetaData>();
+		}
+	}
+	
 	public static synchronized int getNeighborCount() {
+		lazyInitializeNeighbors();
 		return wifiNeighbors.size();
 	}
 	
 	public static synchronized Set<Neighbor> getNeighbors() {
+		lazyInitializeNeighbors();
+		
 		Set<Neighbor> neighbors = new HashSet<Neighbor>();
+		
 		Set<Neighbor> keys = wifiNeighbors.keySet();
 		
 		for (Neighbor neighbor : keys) {
@@ -193,11 +202,22 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	// TODO: Need some way of indicating that the neighbor was discovered indirectly or directly !
 	// If directly, then send neighbor in election when leader, if not, don't send
-	public static synchronized String updateNeighbor(Neighbor neighbor) {
+	public static synchronized String updateNeighbor(Neighbor neighbor, String networkType) {
+		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
-		wifiNeighbors.put(new Neighbor(neighbor), new NeighborMetaData(time, true));
 		
-		return time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
+		NeighborMetaData oldValue = null;
+		oldValue = wifiNeighbors.put(new Neighbor(neighbor), new NeighborMetaData(time, true, NeighborMetaData.WIFI_NETWORK));
+		
+		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
+		if (oldValue == null) {
+			
+		}
+		else {
+			
+		}
+		
+		return logMessage;
 	}
 	
 	private class MessageReceiver extends BroadcastReceiver {
@@ -210,8 +230,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
 				Neighbor neighbor = (Neighbor) message;
-				
-				sendToLogger(updateNeighbor(neighbor));
+				sendToLogger(updateNeighbor(neighbor, NeighborMetaData.WIFI_NETWORK));
 				
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
