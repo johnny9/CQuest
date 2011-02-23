@@ -1,28 +1,26 @@
 package edu.illinois.CS598rhk.services;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Time;
-import java.util.Date;
 
-import android.os.IBinder;
-import android.os.SystemClock;
-import android.util.Log;
 import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.IBinder;
+import android.os.SystemClock;
+import android.util.Log;
 
 public class LoggingService extends Service implements Runnable {
 	private static final String POWER_TAG = "AdHocClient_power";
 	private static final String LOG_MESSAGE_TAG = "AdHocClient_logMessage";
 
 	private BatteryInfoReceiver myBatteryInfoReceiver;
-	private BatteryInfoReceiver myBatteryInfoReceiver2;
+
 	private long startTime;
 
 	public static final String ACTION_LOG_UPDATE = "log update";
@@ -75,7 +73,7 @@ public class LoggingService extends Service implements Runnable {
 			String timeString = now.toString();
 			
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-				String filenameString = POWER_LOG;
+
 				int rawlevel = intent.getIntExtra("level", -1);
 				int scale = intent.getIntExtra("scale", -1);
 				int status = intent.getIntExtra("status", -1);

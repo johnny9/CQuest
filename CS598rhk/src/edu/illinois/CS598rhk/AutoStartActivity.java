@@ -41,7 +41,6 @@ public class AutoStartActivity extends Activity {
 	private static final String MSG_TAG = "MainACtivity";
 	private static final String CONFIG_FILENAME = "config";
 	private static String ICICLE_KEY = "main-activity";
-	private static String PHONEID_KEY = "phoneID";
 	private static String IPADDR_KEY = "ipAddr";
 	private static String STATE_KEY = "state";
 	private CoreTask coretask;
@@ -51,7 +50,6 @@ public class AutoStartActivity extends Activity {
 
 	public static String INTENT_TO_UPDATE_UI = "update debug ui";
 
-	private String phoneID;
 	private String ipAddr;
 
 	private EditText ipAddrText;
@@ -71,13 +69,11 @@ public class AutoStartActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		if (savedInstanceState == null) {
-			phoneID = null;
 			ipAddr = null;
 			servicesStarted = false;
 		} else {
 			Bundle map = savedInstanceState.getBundle(ICICLE_KEY);
 			if (map != null) {
-				phoneID = map.getString(PHONEID_KEY);
 				ipAddr = map.getString(IPADDR_KEY);
 				servicesStarted = map.getBoolean(STATE_KEY);
 			}

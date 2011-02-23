@@ -24,7 +24,6 @@ import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.Neighbor;
-import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 

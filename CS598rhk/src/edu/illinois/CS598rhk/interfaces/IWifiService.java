@@ -1,6 +1,5 @@
 package edu.illinois.CS598rhk.interfaces;
 
-import java.util.List;
 
 public interface IWifiService {
     public void pauseWifiService();
