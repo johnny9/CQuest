@@ -224,8 +224,8 @@ public class AutoStartActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.start:
 			if (!servicesStarted)
-				updateButtons(true);
 				startServices();
+				updateButtons(true);
 			return true;
 		case R.id.stop:
 			if (servicesStarted) {

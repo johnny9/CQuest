@@ -200,6 +200,14 @@ public class SchedulerService extends Service implements ISchedulerService {
 		return neighbors;
 	}
 	
+	//TODO: Wifi beacon sends directly discovered bluetooth neighbors
+	//TODO: Election sends ALL directly discovered neighbors
+	
+	// ELection message ONLY sends directly discovered neighbors
+	
+	// Bluetooth discoveries do not get added to wifiNeighbors, only to activeNeighbors
+	// Wifi discovery adds to wifiNeighbors only, not to activeNeighbors
+	
 	// TODO: Need some way of indicating that the neighbor was discovered indirectly or directly !
 	// If directly, then send neighbor in election when leader, if not, don't send
 	public static synchronized String updateNeighbor(Neighbor neighbor, String networkType) {
