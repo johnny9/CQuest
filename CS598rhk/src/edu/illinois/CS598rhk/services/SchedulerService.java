@@ -3,8 +3,10 @@ package edu.illinois.CS598rhk.services;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -174,9 +176,23 @@ public class SchedulerService extends Service implements ISchedulerService {
 		sendBroadcast(intentToLog);
 	}
 
+	public static synchronized int getNeighborCount() {
+		return wifiNeighbors.size();
+	}
+	
+	public static synchronized Set<Neighbor> getNeighbors() {
+		Set<Neighbor> neighbors = new HashSet<Neighbor>();
+		Set<Neighbor> keys = wifiNeighbors.keySet();
+		
+		for (Neighbor neighbor : keys) {
+			neighbors.add(new Neighbor(neighbor));
+		}
+		return neighbors;
+	}
+	
 	// TODO: Need some way of indicating that the neighbor was discovered indirectly or directly !
 	// If directly, then send neighbor in election when leader, if not, don't send
-	public static String updateNeighbor(Neighbor neighbor) {
+	public static synchronized String updateNeighbor(Neighbor neighbor) {
 		Time time = new Time(System.currentTimeMillis());
 		wifiNeighbors.put(new Neighbor(neighbor), time);
 		

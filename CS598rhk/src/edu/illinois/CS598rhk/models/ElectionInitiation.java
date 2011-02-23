@@ -14,10 +14,7 @@ public class ElectionInitiation implements IBluetoothMessage {
 	public Set<Neighbor> neighbors;
 	
 	public ElectionInitiation(Set<Neighbor> neighbors) {
-		this.neighbors = new HashSet<Neighbor>();
-		for(Neighbor neighbor : neighbors) {
-			this.neighbors.add(new Neighbor(neighbor));
-		}
+		this.neighbors = neighbors;
 	}
 	
 	private ElectionInitiation() {

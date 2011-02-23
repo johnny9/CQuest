@@ -2,7 +2,6 @@ package edu.illinois.CS598rhk;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -248,15 +247,16 @@ public class MainActivity extends Activity {
 				if (BluetoothService.potentialNeighbors != null) {
 					((TextView) findViewById(R.id.btneighborcount2))
 							.setText("bt potential count: "
-									+ BluetoothService.potentialNeighbors.size());
+									+ BluetoothService.potentialNeighbors
+											.size());
 				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
-				if (SchedulerService.wifiNeighbors != null) {
-					((TextView) findViewById(R.id.wifineighborcount))
-							.setText("wifi neighbor count: "
-									+ SchedulerService.wifiNeighbors.size());
-				}
+
+				((TextView) findViewById(R.id.wifineighborcount))
+						.setText("wifi neighbor count: "
+								+ SchedulerService.getNeighborCount());
+
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING)
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: discoverying");
@@ -264,7 +264,8 @@ public class MainActivity extends Activity {
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: paused");
 				((TextView) findViewById(R.id.wifiprog))
-				.setText("wifi progress: "+WifiService.timeSlice + "/25");
+						.setText("wifi progress: " + WifiService.timeSlice
+								+ "/25");
 			}
 		}
 	}

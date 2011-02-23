@@ -2,7 +2,6 @@ package edu.illinois.CS598rhk;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -263,11 +262,11 @@ public class AutoStartActivity extends Activity {
 				}
 				((TextView) findViewById(R.id.wifiip)).setText("ip address: "
 						+ WifiService.myIPAddress);
-				if (SchedulerService.wifiNeighbors != null) {
-					((TextView) findViewById(R.id.wifineighborcount))
-							.setText("wifi neighbor count: "
-									+ SchedulerService.wifiNeighbors.size());
-				}
+
+				((TextView) findViewById(R.id.wifineighborcount))
+						.setText("wifi neighbor count: "
+								+ SchedulerService.getNeighborCount());
+
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING)
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: discoverying");
@@ -275,15 +274,15 @@ public class AutoStartActivity extends Activity {
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: paused");
 				((TextView) findViewById(R.id.wifiprog))
-				.setText("wifi progress: "+WifiService.timeSlice + "/25");
+						.setText("wifi progress: " + WifiService.timeSlice
+								+ "/25");
 				((TextView) findViewById(R.id.services))
-				.setText("services: started");
+						.setText("services: started");
 				((TextView) findViewById(R.id.bterrorcount))
-				.setText("bt errocount: " + BluetoothService.errorCount);
-			}
-			else {
+						.setText("bt errocount: " + BluetoothService.errorCount);
+			} else {
 				((TextView) findViewById(R.id.services))
-				.setText("services: stopped");
+						.setText("services: stopped");
 			}
 		}
 	}
