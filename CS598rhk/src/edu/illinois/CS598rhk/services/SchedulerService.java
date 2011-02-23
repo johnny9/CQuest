@@ -45,7 +45,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	public static Map<Neighbor,NeighborMetaData> wifiNeighbors;
+	private static Map<Neighbor,NeighborMetaData> wifiNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private static BluetoothAdapter myDevice;
