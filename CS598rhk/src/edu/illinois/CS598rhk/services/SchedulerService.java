@@ -30,6 +30,7 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.interfaces.ISchedulerService;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.Neighbor;
+import edu.illinois.CS598rhk.models.NeighborMetaData;
 
 public class SchedulerService extends Service implements ISchedulerService {
 
@@ -44,7 +45,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	public static Map<Neighbor,Time> wifiNeighbors;
+	public static Map<Neighbor,NeighborMetaData> wifiNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private static BluetoothAdapter myDevice;
@@ -71,7 +72,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		wifiNeighbors = new HashMap<Neighbor,Time>();
+		wifiNeighbors = new HashMap<Neighbor,NeighborMetaData>();
 		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
@@ -194,7 +195,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	// If directly, then send neighbor in election when leader, if not, don't send
 	public static synchronized String updateNeighbor(Neighbor neighbor) {
 		Time time = new Time(System.currentTimeMillis());
-		wifiNeighbors.put(new Neighbor(neighbor), time);
+		wifiNeighbors.put(new Neighbor(neighbor), new NeighborMetaData(time, true));
 		
 		return time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
 	}
@@ -290,13 +291,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 	}
 	
 	public class KickStartTimerTask extends TimerTask {
-
 		@Override
 		public void run() {
 			Log.d(TAG, "Haven't heard from my leader yet.  Taking charge!");
 			stoppingWifi = false;
 			wifiService.resumeWifiService(10);
 		}
-		
 	}
 }
