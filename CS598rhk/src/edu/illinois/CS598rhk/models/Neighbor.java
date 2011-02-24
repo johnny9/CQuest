@@ -111,6 +111,12 @@ public class Neighbor implements IBluetoothMessage {
 		}
 		return false;
 	}
+	
+	@Override
+	public int hashCode()
+	{
+		return btAddr.hashCode();
+	}
 
     public byte getMessageType() {
             return BluetoothMessage.NEIGHBOR_HEADER;
