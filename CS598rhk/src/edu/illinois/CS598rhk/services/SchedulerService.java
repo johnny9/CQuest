@@ -222,7 +222,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
 		
-		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
+		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.btAddr;
 		
 		NeighborMetaData newData = new NeighborMetaData(time, direct, NeighborMetaData.WIFI_NETWORK);
 		NeighborMetaData exists = wifiNeighbors.get(neighbor);
