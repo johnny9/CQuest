@@ -242,18 +242,16 @@ public class SchedulerService extends Service implements ISchedulerService {
 				
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
-						if (neighbor.ipAddr.equals(device.getAddress())) {
+						if (neighbor.btAddr.equals(device.getAddress())) {
 							// this neighbor is an active bt neighbor
 							if (myDevice.getAddress().compareTo(
-									neighbor.ipAddr) < 0) { 
+									neighbor.btAddr) < 0) { 
 								// uh oh, he appears to be discovering as well
 								// abort! abort!
-								if (progress < 44000) {
-									stoppingWifi = true;
-									wifiService.forcedPauseWifiService();
-									bluetoothService.stopDiscovery();
-									resetTimeout();
-								}
+								stoppingWifi = true;
+								wifiService.forcedPauseWifiService();
+								bluetoothService.stopDiscovery();
+								resetTimeout();
 							}
 						}
 					}
