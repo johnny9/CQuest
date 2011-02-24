@@ -228,6 +228,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	
 	private class MessageReceiver extends BroadcastReceiver {
+		private static final int BLUETOOTH_DISCOVERY_STOP_TIME = 29000;
+		private static final int ELECTION_START_TIME = 25000;
+
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent
@@ -279,11 +282,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 				progress = intent.getLongExtra(
 						WifiService.SCHEDULE_PROGRESS_UPDATE, 0);
 				bluetoothService.updateScheduleProgress(progress);
-				if (progress > 29000) {
+				if (progress > BLUETOOTH_DISCOVERY_STOP_TIME) {
 					if (!stoppingWifi)
 						bluetoothService.startDiscovery();
 					bluetoothService.resetWifiDiscoveryElection();
-				} else if (progress <= 25000 && progress > 0 && !stoppingWifi) {
+				} else if (progress <= ELECTION_START_TIME && progress > 0 && !stoppingWifi) {
 					if (BluetoothService.activeNeighbors.size() > 0) {
 						bluetoothService.hostWifiDiscoveryElection();
 					}
@@ -300,7 +303,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 					wifiPausedTimeout.purge();
 				} else {
 					stoppingWifi = true;
-					if(progress > 25000) 
+					if(progress > ELECTION_START_TIME) 
 						wifiService.forcedPauseWifiService();
 					else
 						wifiService.pauseWifiService();
