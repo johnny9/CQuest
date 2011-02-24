@@ -89,7 +89,7 @@ public class Neighbor implements IBluetoothMessage {
             ipAddr = new String(bytes, currentIndex, strLength);
             currentIndex += strLength;
             
-            System.arraycopy(bytes, currentIndex, temp, 0, strLength);
+            System.arraycopy(bytes, currentIndex, temp, 0, 4);
             strLength = ByteBuffer.wrap(temp).getInt();
             currentIndex += 4;
             
