@@ -41,6 +41,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static final String ACTION_ELECTED_FOR_WIFI_DISCOVERY = "action elected for wifi discovery";
 	public static final String DELY_UNTIL_STARTING_WIFI_DISCOVERY = "delay until starting wifi discovery";
 
+	public static final int MAC_ADDR_BYTES_LENGTH = BluetoothAdapter.getDefaultAdapter().getAddress().getBytes().length;
+	
 	final IBinder mBinder = new BluetoothBinder();
 
 	@Override
@@ -65,6 +67,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	private BluetoothAcceptThread acceptThread;
 
+	public static List<String> getNeighborAddrs() {
+		List<String> addrs = new ArrayList<String>();
+		for(BluetoothDevice device : activeNeighbors) {
+			addrs.add(device.getAddress());
+		}
+		return addrs;
+	}
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// We could use setName() here to allow the user to change the device

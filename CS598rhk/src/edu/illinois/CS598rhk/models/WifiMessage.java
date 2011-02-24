@@ -2,17 +2,19 @@ package edu.illinois.CS598rhk.models;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
+import edu.illinois.CS598rhk.services.BluetoothService;
 
 public class WifiMessage implements IBluetoothMessage {
 	public static final byte WIFI_MESSAGE = 0;
 	
 	public Neighbor deviceInfo;
-	public List<String> btDeviceAddrs;
+	private List<String> btDeviceAddrs;
 	
 	public WifiMessage(Neighbor device, List<String> btNeighborAddrs) {
 		this.deviceInfo = device;
@@ -23,11 +25,11 @@ public class WifiMessage implements IBluetoothMessage {
 		// Do nothing
 	}
 	
-	public IMessageReader newMessageReader() {
+	public static IMessageReader newMessageReader() {
 		return new MessageReader();
 	}
 	
-	private class MessageReader implements IMessageReader {
+	private static class MessageReader implements IMessageReader {
 		@Override
 		public IBluetoothMessage parse(byte[] message) {
 			WifiMessage wifiMessage = new WifiMessage();
@@ -74,10 +76,41 @@ public class WifiMessage implements IBluetoothMessage {
 	}
 	
 	public void unpack(byte[] bytes) {
-		
+		byte[] temp = new byte[4];
+        
+        int currentIndex = 0;
+        System.arraycopy(bytes, currentIndex, temp, 0, 4);
+        int neighborLength = ByteBuffer.wrap(temp).getInt();
+        currentIndex += 4;
+        
+        byte[] neighborBytes = new byte[neighborLength];
+        System.arraycopy(bytes, currentIndex, neighborBytes, 0, neighborLength);
+        
+        IMessageReader neighborReader = Neighbor.newNeighborReader();
+        deviceInfo = (Neighbor) neighborReader.parse(neighborBytes);
+        currentIndex += neighborLength;
+        
+        System.arraycopy(bytes, currentIndex, temp, 0, 4);
+        int numAddrs = ByteBuffer.wrap(temp).getInt();
+        currentIndex += 4;
+        
+        btDeviceAddrs = new ArrayList<String>();
+        for(int i=0; i<numAddrs; ++i) {
+        	byte[] addrBytes = new byte[BluetoothService.MAC_ADDR_BYTES_LENGTH];
+        	System.arraycopy(bytes, currentIndex, addrBytes, 0, BluetoothService.MAC_ADDR_BYTES_LENGTH);
+        	currentIndex += BluetoothService.MAC_ADDR_BYTES_LENGTH;
+        	
+        	btDeviceAddrs.add(new String(addrBytes));
+        }
 	}
 	
 	public byte getMessageType() {
 		return WifiMessage.WIFI_MESSAGE;
+	}
+
+	public List<String> getNeighborAddrs() {
+		List<String> addrs = new ArrayList<String>(btDeviceAddrs);
+		Collections.copy(addrs, btDeviceAddrs);
+		return addrs;
 	}
 }

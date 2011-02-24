@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.Time;
+import java.util.List;
 
 import android.app.Notification;
 import android.app.Service;
@@ -22,8 +23,11 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import edu.illinois.CS598rhk.MainActivity;
+import edu.illinois.CS598rhk.interfaces.IMessageReader;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.Neighbor;
+import edu.illinois.CS598rhk.models.NeighborMetaData;
+import edu.illinois.CS598rhk.models.WifiMessage;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
@@ -211,8 +215,8 @@ public class WifiService extends Service implements IWifiService {
 	private class WifiController extends Thread {
 
 		private void sendWifiBroadcast() {
-			byte[] buf = new byte[1024];
-			buf = myInfo.pack();
+			WifiMessage message = new WifiMessage(myInfo, BluetoothService.getNeighborAddrs());
+			byte[] buf = message.pack();
 			DatagramSocket sock;
 			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
 			try {
@@ -242,17 +246,18 @@ public class WifiService extends Service implements IWifiService {
 					sock.setSoTimeout(timeout);
 					sock.receive(pkt);
 
-					String rcv = new String(pkt.getData(), 0, pkt.getLength());
+					IMessageReader reader = WifiMessage.newMessageReader();
+					WifiMessage message = (WifiMessage) reader.parse(pkt.getData());
 
-					// inform the scheduling service
-					Intent foundNewNeighbor = new Intent(
-							INTENT_TO_ADD_WIFI_NEIGHBOR);
-					foundNewNeighbor
-							.putExtra(WIFI_NEIGHBOR_DATA, pkt.getData());
-					foundNewNeighbor.putExtra(
-							INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-							WifiService.DISCOVERED_OVER_WIFI);
-					sendBroadcast(foundNewNeighbor);
+					SchedulerService.updateNeighbor(message.deviceInfo, true, NeighborMetaData.WIFI_NETWORK);
+					
+					List<String> devices = message.getNeighborAddrs();
+					for (String addr : devices) {
+						SchedulerService.updateNeighbor(new Neighbor("GARBAGE NAME",
+								"GARBAGE IP", addr), false,
+								NeighborMetaData.WIFI_NETWORK);
+					}
+					
 					sock.close();
 				} catch (InterruptedIOException e) {
 					// timed out, so no message was received
