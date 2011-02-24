@@ -156,7 +156,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			ElectionInitiation initiation = (ElectionInitiation) message;
 			
 			for (Neighbor neighbor : initiation.neighbors) {
-				SchedulerService.updateNeighbor(neighbor, NeighborMetaData.WIFI_NETWORK);
+				SchedulerService.updateNeighbor(neighbor, false, NeighborMetaData.WIFI_NETWORK);
 			}
 			
 			response = electionHandler.getElectionResponse();
@@ -189,7 +189,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		public BluetoothAcceptThread() {
 			BluetoothServerSocket tmp = null;
-
+			
 			// Create a new listening server socket
 			try {
 				tmp = mAdapter
@@ -212,7 +212,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				} catch (IOException e) {
 					Log.e(TAG, "accept() failed", e);
 				}
-
+				
 				if (!activeNeighbors.contains(socket.getRemoteDevice()))
 					activeNeighbors.add(socket.getRemoteDevice());
 
@@ -228,7 +228,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 							data.pack());
 					foundNewNeighbor.putExtra(
 							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-							WifiService.DISCOVERED_OVER_WIFI);
+							WifiService.DISCOVERED_OVER_BLUETOOTH);
 					sendBroadcast(foundNewNeighbor);
 					try {
 						socket.close();

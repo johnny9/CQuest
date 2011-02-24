@@ -203,30 +203,29 @@ public class SchedulerService extends Service implements ISchedulerService {
 	//TODO: Wifi beacon sends directly discovered bluetooth neighbors
 	//TODO: Election sends ALL directly discovered neighbors
 	
-	// ELection message ONLY sends directly discovered neighbors
-	
-	// Bluetooth discoveries do not get added to wifiNeighbors, only to activeNeighbors
-	// Wifi discovery adds to wifiNeighbors only, not to activeNeighbors
-	
-	// TODO: Need some way of indicating that the neighbor was discovered indirectly or directly !
-	// If directly, then send neighbor in election when leader, if not, don't send
-	public static synchronized String updateNeighbor(Neighbor neighbor, String networkType) {
+	public static synchronized String updateNeighbor(Neighbor neighbor, boolean direct, String networkType) {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
 		
-		NeighborMetaData oldValue = null;
-		oldValue = wifiNeighbors.put(new Neighbor(neighbor), new NeighborMetaData(time, true, NeighborMetaData.WIFI_NETWORK));
-		
 		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
-		if (oldValue == null) {
-			
+		
+		NeighborMetaData newData = new NeighborMetaData(time, direct, NeighborMetaData.WIFI_NETWORK);
+		NeighborMetaData exists = wifiNeighbors.get(neighbor);
+		
+		if (exists == null || (exists != null && exists.directContact == false)) {
+			wifiNeighbors.put(new Neighbor(neighbor), newData);
+			logMessage += ", " + newData.directContact;
 		}
 		else {
-			
+			exists.lastSeen = time;
+			wifiNeighbors.put(new Neighbor(neighbor), exists);
+			logMessage += ", " + exists.directContact;
 		}
 		
 		return logMessage;
 	}
+	
+	
 	
 	private class MessageReceiver extends BroadcastReceiver {
 		@Override
@@ -237,8 +236,15 @@ public class SchedulerService extends Service implements ISchedulerService {
 				IBluetoothMessage message = Neighbor.newNeighborReader().parse(intent
 						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
+				String source = intent.getStringExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE);
+				
 				Neighbor neighbor = (Neighbor) message;
-				sendToLogger(updateNeighbor(neighbor, NeighborMetaData.WIFI_NETWORK));
+				if (WifiService.DISCOVERED_OVER_WIFI.equals(source)) {	
+					sendToLogger(updateNeighbor(neighbor, true, NeighborMetaData.WIFI_NETWORK));
+				}
+				else if (WifiService.DISCOVERED_OVER_BLUETOOTH.equals(source)) {
+					sendToLogger(updateNeighbor(neighbor, false, NeighborMetaData.BLUETOOTH_NETWORK));
+				}
 				
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {

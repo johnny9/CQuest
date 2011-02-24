@@ -107,9 +107,7 @@ public class Neighbor implements IBluetoothMessage {
 	public boolean equals(Object o) {
 		if (o instanceof Neighbor) {
 			Neighbor neighbor = (Neighbor) o;
-			return btAddr.equals(neighbor.btAddr)
-					&& ipAddr.equals(neighbor.ipAddr)
-					&& name.equals(neighbor.name);
+			return btAddr.equals(neighbor.btAddr);
 		}
 		return false;
 	}

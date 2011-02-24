@@ -35,6 +35,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR = "intent to add a wifi neighbor";
 	public static final String INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE = "source of discovered wifi neighbor";
 	public static final String DISCOVERED_OVER_WIFI = "Wifi neighbor found over wifi";
+	public static final String DISCOVERED_OVER_BLUETOOTH = "neighbor found over bluetooth";
 	public static final String WIFI_NEIGHBOR_DATA = "wifi neighbor data";
 	public static final String INTENT_TO_CHANGE_WIFI_ADDRESS = "WHERE ARE ALL MY WIFIS";
 	public static final String NEW_WIFI_ADDRESS = "asdfasdfasdfasdfasdf";
