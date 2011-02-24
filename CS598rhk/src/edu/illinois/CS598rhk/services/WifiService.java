@@ -91,7 +91,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new SearchLightSchedule(48);
+		discoveryScheduler = new SearchLightSchedule(10);
 		coretask = new CoreTask();
 		logPreviousState = -1;
 		try {
@@ -270,6 +270,7 @@ public class WifiService extends Service implements IWifiService {
 
 		@Override
 		public void run() {
+			setName("Wificontroller");
 			enableWifi();
 			int[] mySchedule = discoveryScheduler.generateScedule();
 			timeSlice = 0;
