@@ -219,7 +219,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
 					String address = socket.getRemoteDevice().getAddress();
 					String name = socket.getRemoteDevice().getName();
-					Neighbor data = new Neighbor(name, address, mAdapter.getAddress());
+					Neighbor data = new Neighbor(name, "GARBAGE", address);
 
 					// inform the scheduling service
 					Intent foundNewNeighbor = new Intent(
