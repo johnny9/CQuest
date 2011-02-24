@@ -498,7 +498,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
 				electionAnnouncements = new ArrayList<ElectionResult>();
 
-				broadcast(new ElectionInitiation(SchedulerService.getNeighbors()));
+				broadcast(new ElectionInitiation(SchedulerService.getDirectNeighbors()));
 			}
 		}
 

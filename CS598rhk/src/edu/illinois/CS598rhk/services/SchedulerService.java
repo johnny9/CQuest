@@ -187,6 +187,22 @@ public class SchedulerService extends Service implements ISchedulerService {
 		return wifiNeighbors.size();
 	}
 	
+	public static synchronized Set<Neighbor> getDirectNeighbors() {
+		lazyInitializeNeighbors();
+		
+		Set<Neighbor> neighbors = new HashSet<Neighbor>();
+		
+		Set<Neighbor> keys = wifiNeighbors.keySet();
+		for (Neighbor neighbor : keys) {
+			NeighborMetaData data = wifiNeighbors.get(neighbor);
+			
+			if (data.directContact) {
+				neighbors.add(new Neighbor(neighbor));
+			}
+		}
+		return neighbors;
+	}
+	
 	public static synchronized Set<Neighbor> getNeighbors() {
 		lazyInitializeNeighbors();
 		
@@ -201,7 +217,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	}
 	
 	//TODO: Wifi beacon sends directly discovered bluetooth neighbors
-	//TODO: Election sends ALL directly discovered neighbors
 	
 	public static synchronized String updateNeighbor(Neighbor neighbor, boolean direct, String networkType) {
 		lazyInitializeNeighbors();
