@@ -271,7 +271,7 @@ public class AutoStartActivity extends Activity {
 							.setText("wifi state: paused");
 				((TextView) findViewById(R.id.wifiprog))
 						.setText("wifi progress: " + WifiService.timeSlice
-								+ "/25");
+								+ "/50");
 				((TextView) findViewById(R.id.services))
 						.setText("services: started");
 				((TextView) findViewById(R.id.bterrorcount))
