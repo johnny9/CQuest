@@ -4,7 +4,7 @@
   android:layout_width="wrap_content"
   android:layout_height="wrap_content" android:orientation="vertical">
 
-<TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btname"></TextView>
+<TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/serial"></TextView><TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btname"></TextView>
 <TextView android:text="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btneighborcount"></TextView>
 
 <TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btneighborcount2"></TextView><TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/wifineighborcount"></TextView>
@@ -16,4 +16,5 @@
 
 <TextView android:text="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/services"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@+id/bterrorcount" android:singleLine="false" android:id="@+id/bterrorcount"></TextView>
+
 </LinearLayout>

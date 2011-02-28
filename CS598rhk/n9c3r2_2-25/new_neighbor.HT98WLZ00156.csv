@@ -1,0 +1,5 @@
+16:58:36, 00:23:D4:6A:B6:B9, 00:23:D4:6A:D1:B8, bluetooth_network, false, fresh
+16:58:36, 00:23:D4:6A:B6:B9, 00:23:D4:68:E1:E9, bluetooth_network, false, fresh
+17:02:33, 00:23:D4:6A:B6:B9, 00:23:D4:6A:D1:B8, bluetooth_network, true, update
+17:15:05, 00:23:D4:6A:B6:B9, 00:23:D4:6A:D1:B8, bluetooth_network, true, update
+17:15:09, 00:23:D4:6A:B6:B9, 00:23:D4:68:E1:E9, bluetooth_network, false, fresh

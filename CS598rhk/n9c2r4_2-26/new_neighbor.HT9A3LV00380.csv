@@ -1,0 +1,15 @@
+02:22:39, 00:23:D4:6A:D1:B8, 00:23:D4:6A:B6:B9, bluetooth_network, true, fresh
+02:22:42, 00:23:D4:6A:D1:B8, 00:23:D4:6A:87:DE, bluetooth_network, true, fresh
+02:23:15, 00:23:D4:6A:D1:B8, 00:23:D4:69:79:1C, bluetooth_network, true, fresh
+02:23:28, 00:23:D4:6A:D1:B8, 00:23:D4:69:79:1C, bluetooth_network, true, update
+02:23:56, 00:23:D4:6A:D1:B8, 00:23:D4:6A:22:09, bluetooth_network, false, fresh
+02:23:56, 00:23:D4:6A:D1:B8, 00:23:D4:6A:A4:E2, wifi_network, false, fresh
+02:23:56, 00:23:D4:6A:D1:B8, 00:23:D4:68:E1:E9, wifi_network, false, fresh
+02:25:12, 00:23:D4:6A:D1:B8, 00:23:D4:6A:87:DE, bluetooth_network, true, update
+02:25:12, 00:23:D4:6A:D1:B8, 00:23:D4:69:79:1C, wifi_network, true, update
+02:25:12, 00:23:D4:6A:D1:B8, 00:23:D4:6A:B6:B9, wifi_network, true, update
+02:25:12, 00:23:D4:6A:D1:B8, 00:23:D4:6A:D1:B8, wifi_network, false, fresh
+02:26:08, 00:23:D4:6A:D1:B8, 00:23:D4:6A:22:09, bluetooth_network, false, fresh
+02:44:58, 00:23:D4:6A:D1:B8, 00:23:D4:68:E1:E9, bluetooth_network, false, fresh
+02:44:58, 00:23:D4:6A:D1:B8, 00:23:D4:6A:A4:E2, wifi_network, false, fresh
+02:44:58, 00:23:D4:6A:D1:B8, 00:23:D4:6A:F5:43, wifi_network, false, fresh

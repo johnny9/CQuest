@@ -28,6 +28,7 @@ import edu.illinois.CS598rhk.interfaces.IWifiService;
 import edu.illinois.CS598rhk.models.Neighbor;
 import edu.illinois.CS598rhk.models.NeighborMetaData;
 import edu.illinois.CS598rhk.models.WifiMessage;
+import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
 
@@ -56,8 +57,9 @@ public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_UPDATE_NAME = "^^;;";
 	public static final String WIFI_NEIGHBOR_CURRENT_TIMESLICE = "())(())()()()()()()()(";
 	public static final String WIFI_NEIGHBOR_SCHEDULE_LENGTH = "+++++++++++";
+	public static final String INTENT_TO_ADD_DIRECT_NEIGHBOR = "adding a neighbor found directly";
 
-	private DiscoverSchedule discoveryScheduler;
+	public static DiscoverSchedule discoveryScheduler;
 	private boolean wifiEnabled = false;
 	private CoreTask coretask;
 
@@ -96,6 +98,10 @@ public class WifiService extends Service implements IWifiService {
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new SearchLightSchedule(10);
+		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE, discoveryScheduler.toString());
+		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.POWER_LOG);
+		sendBroadcast(intentToLog);
 		coretask = new CoreTask();
 		logPreviousState = -1;
 		try {
@@ -132,8 +138,8 @@ public class WifiService extends Service implements IWifiService {
 			myIPAddress = "192.168.1.3";
 
 		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
-		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/load.sh " + myIPAddress);
+		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		//		+ "/bin/load.sh " + myIPAddress);
 
 		myInfo = new Neighbor("phone", myIPAddress, myBluetoothAddress);
 		
@@ -185,14 +191,16 @@ public class WifiService extends Service implements IWifiService {
 
 	public void enableWifi() {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/netcontrol startwifi " + this.myIPAddress);
+				+ "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH);
+		this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 " + myIPAddress
+				+ " netmask 255.255.255.0");
 		Log.d(MSG_TAG, "Wifi Enabled");
 		wifiEnabled = true;
 	}
 
 	public void disableWifi() {
 		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-		 + "/bin/netcontrol stopwifi");
+		 + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH);
 		Log.d(MSG_TAG, "Wifi disabled");
 		wifiEnabled = false;
 	}
@@ -249,13 +257,28 @@ public class WifiService extends Service implements IWifiService {
 					IMessageReader reader = WifiMessage.newMessageReader();
 					WifiMessage message = (WifiMessage) reader.parse(pkt.getData());
 
-					SchedulerService.updateNeighbor(message.deviceInfo, true, NeighborMetaData.WIFI_NETWORK);
+					Intent foundNewNeighbor = new Intent(
+							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+					foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
+							message.deviceInfo.pack());
+					foundNewNeighbor.putExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, true);
+					foundNewNeighbor.putExtra(
+							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+							WifiService.DISCOVERED_OVER_BLUETOOTH);
+					sendBroadcast(foundNewNeighbor);
 					
 					List<String> devices = message.getNeighborAddrs();
 					for (String addr : devices) {
-						SchedulerService.updateNeighbor(new Neighbor("GARBAGE NAME",
-								"GARBAGE IP", addr), false,
-								NeighborMetaData.WIFI_NETWORK);
+						Neighbor neighbor = new Neighbor("GARBAGE NAME", "GARBAGE IP", addr);
+						Intent foundNewIndirectNeighbor = new Intent(
+								WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+						foundNewIndirectNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
+								neighbor.pack());
+						foundNewIndirectNeighbor.putExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, false);
+						foundNewIndirectNeighbor.putExtra(
+								WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+								WifiService.DISCOVERED_OVER_WIFI);
+						sendBroadcast(foundNewIndirectNeighbor);
 					}
 					
 					sock.close();
@@ -283,6 +306,7 @@ public class WifiService extends Service implements IWifiService {
 			while (true) {
 				if (wifiState == WIFI_STATE_PAUSED) {
 					logStatePaused();
+					
 					while (wifiState != WIFI_STATE_DISCOVERYING) {
 						try {
 							Thread.sleep(100);
@@ -304,6 +328,8 @@ public class WifiService extends Service implements IWifiService {
 					if (wifiState == WIFI_STATE_PAUSED && pauseForced) {
 						timeSlice = 0;
 						pauseForced = false;
+						if(wifiEnabled)
+							disableWifi();
 						break;
 					}
 					if (timeSlice == 0) {

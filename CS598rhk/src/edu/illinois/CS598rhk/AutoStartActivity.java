@@ -63,6 +63,7 @@ public class AutoStartActivity extends Activity {
 	private Timer debugViewUpdateTimer;
 	private TimerTask debugViewUpdateTask;
 	private DebugViewMessageReceiver messageReceiver;
+	private String serial;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -165,6 +166,7 @@ public class AutoStartActivity extends Activity {
 			loagConfigFile();
 		} catch (IOException e) {
 			ipAddr = "192.168.1.2";
+			serial = "???";
 		}
 		
 		ipAddrText.setText(ipAddr);
@@ -187,7 +189,7 @@ public class AutoStartActivity extends Activity {
 				{
 					Intent blueIntent = new Intent(
 							BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-					blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
+					blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
 					startActivity(blueIntent);
 				}
 			}
@@ -209,12 +211,12 @@ public class AutoStartActivity extends Activity {
 		
 		String input = new String(buffer);
 		ipAddr = input.split("\n")[0];
-		
+		serial = input.split("\n")[1];
 	}
 	
 	public void saveConfigFile() throws IOException {
 		FileOutputStream fos = openFileOutput(CONFIG_FILENAME, MODE_WORLD_READABLE);
-		fos.write((ipAddr+"\n").getBytes());
+		fos.write((ipAddr+"\n"+serial+"\n").getBytes());
 		fos.close();
 	}
 
@@ -246,6 +248,8 @@ public class AutoStartActivity extends Activity {
 						+ BluetoothAdapter.getDefaultAdapter().getAddress());
 				((TextView) findViewById(R.id.btname)).setText("name:"
 						+ BluetoothAdapter.getDefaultAdapter().getName());
+				((TextView) findViewById(R.id.serial)).setText("serial:"
+						+ serial);
 				if (BluetoothService.activeNeighbors != null) {
 					((TextView) findViewById(R.id.btneighborcount))
 							.setText("bt active count: "
@@ -269,9 +273,12 @@ public class AutoStartActivity extends Activity {
 				else
 					((TextView) findViewById(R.id.wifion))
 							.setText("wifi state: paused");
+				if(WifiService.discoveryScheduler != null)
+				{
 				((TextView) findViewById(R.id.wifiprog))
 						.setText("wifi progress: " + WifiService.timeSlice
-								+ "/50");
+								+ "/" + WifiService.discoveryScheduler.scheduleLength());
+				}
 				((TextView) findViewById(R.id.services))
 						.setText("services: started");
 				((TextView) findViewById(R.id.bterrorcount))

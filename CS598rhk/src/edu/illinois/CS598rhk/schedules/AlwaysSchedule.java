@@ -21,5 +21,10 @@ public class AlwaysSchedule extends DiscoverSchedule {
 		// TODO Auto-generated method stub
 		return 10;
 	}
+	
+	@Override
+	public String toString() {
+		return "Always Schedule";
+	}
 
 }

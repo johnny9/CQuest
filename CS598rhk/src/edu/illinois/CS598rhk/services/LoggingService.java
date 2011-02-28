@@ -29,6 +29,7 @@ public class LoggingService extends Service implements Runnable {
 	public static final String SCHEDULER_LOG = "new_neighbor";
 	public static final String WHICH_LOG = "which log?";
 	public static final String POWER_LOG = "power_log";
+	public static final String MISC_LOG = "misc_log";
 
 	FileOutputStream fos;
 
@@ -49,7 +50,7 @@ public class LoggingService extends Service implements Runnable {
     	notification.tickerText = "PowerManagement";
     	startForeground(0, notification);
 		
-		startTime = SystemClock.elapsedRealtime();
+		startTime = System.currentTimeMillis();
 
 		IntentFilter batteryFilter = new IntentFilter(
 				Intent.ACTION_BATTERY_CHANGED);
@@ -68,8 +69,8 @@ public class LoggingService extends Service implements Runnable {
 	private class BatteryInfoReceiver extends BroadcastReceiver {
 
 		public void onReceive(Context context, Intent intent) {
-			long curTime = SystemClock.elapsedRealtime();
-			Time now = new Time(curTime - startTime);
+			long curTime = System.currentTimeMillis();
+			Time now = new Time(curTime-startTime);
 			String timeString = now.toString();
 			
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
@@ -85,7 +86,7 @@ public class LoggingService extends Service implements Runnable {
 					level = (rawlevel * 100) / scale;
 				}
 				
-				String log_output = timeString +"; Battery: level = "
+				String log_output = curTime + ", " + timeString +", Battery: level = "
 						+ level + ", scale = " + scale + ", status = " + status
 						+ ", health = " + health + ", plugged = " + plugged
 						+ ", voltage = " + voltage + "\n";

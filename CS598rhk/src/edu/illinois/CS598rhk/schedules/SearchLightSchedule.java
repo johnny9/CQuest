@@ -41,4 +41,10 @@ public class SearchLightSchedule extends DiscoverSchedule {
 	public int scheduleLength() {
 		return (int) Math.ceil(prime*prime/2);
 	}
+	
+
+	@Override
+	public String toString() {
+		return "Searchlight Schedule " + " t=" + prime;
+	}
 }

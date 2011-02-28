@@ -18,11 +18,13 @@ start_activity ()
        #write config file
        addr=$(($i + $1))
        $adb -s $d shell "mkdir /data/data/$package_name/files/"
-       $adb -s $d shell "echo -e '$subnet$addr\n' > /data/data/$package_name/files/config"
-
-       $adb -s $d shell am start -a android.intent.action.MAIN -c \
+       $adb -s $d shell "echo -e '$subnet$addr\n$d\n' > /data/data/$package_name/files/config"
+       #sleepytime=$(($RANDOM%600))
+       sleepytime=0
+       echo  "Delaying $d for $sleepytime seconds\n" 
+       (sleep $sleepytime; $adb -s $d shell am start -a android.intent.action.MAIN -c \
              android.intent.category.LAUNCHER -n \
-             $package_name/$package_name.$activity_name &
+             $package_name/$package_name.$activity_name) &
        
    done
 }
@@ -86,6 +88,7 @@ grab_logs ()
        $adb -s $d pull "/data/data/$package_name/files/power_log" "power_log.$d.csv"
        $adb -s $d pull "/data/data/$package_name/files/wifi_discovery" "wifi_discovery.$d.csv"	
        $adb -s $d pull "/data/data/$package_name/files/new_neighbor" "new_neighbor.$d.csv"
+       $adb -s $d pull "/data/data/$package_name/files/misc_log" "misc_log.$d.csv"
    done
 }
 
@@ -96,6 +99,7 @@ clear_logs ()
        $adb -s $d shell rm "/data/data/$package_name/files/power_log" 
        $adb -s $d shell rm "/data/data/$package_name/files/wifi_discovery"	
        $adb -s $d shell rm "/data/data/$package_name/files/new_neighbor" 
+       $adb -s $d shell rm "/data/data/$package_name/files/misc_log"
    done
 }
 

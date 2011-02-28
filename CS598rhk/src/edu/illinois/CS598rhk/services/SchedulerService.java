@@ -1,10 +1,8 @@
 package edu.illinois.CS598rhk.services;
 
 import java.sql.Time;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -46,7 +44,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
 	private static Map<Neighbor,NeighborMetaData> wifiNeighbors;
-	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private static BluetoothAdapter myDevice;
 	private long progress;
@@ -72,7 +69,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
+		
 	}
 
 	private ServiceConnection mWifiConnection = new ServiceConnection() {
@@ -129,7 +126,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 		address = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		stoppingWifi = false;
 		myDevice = BluetoothAdapter.getDefaultAdapter();
-		bluetoothNeighborDevices.addAll(myDevice.getBondedDevices());
 
 		// on startup, since bt neighbors are currently static
 		// set leader to be the one with the lowest mac address
@@ -218,7 +214,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	//TODO: Wifi beacon sends directly discovered bluetooth neighbors
 	
-	public static synchronized String updateNeighbor(Neighbor neighbor, boolean direct, String networkType) {
+	public synchronized String updateNeighbor(Neighbor neighbor, boolean direct, String networkType) {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
 		
@@ -246,8 +242,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 	
 	
 	private class MessageReceiver extends BroadcastReceiver {
-		private static final int BLUETOOTH_DISCOVERY_STOP_TIME = 29000;
-		private static final int ELECTION_START_TIME = 25000;
+		private static final int BLUETOOTH_DISCOVERY_STOP_TIME = 200000;
+		private static final int ELECTION_START_TIME = 100000;
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -261,7 +257,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 				
 				Neighbor neighbor = (Neighbor) message;
 				if (WifiService.DISCOVERED_OVER_WIFI.equals(source)) {	
-					sendToLogger(updateNeighbor(neighbor, true, NeighborMetaData.WIFI_NETWORK));
+					boolean direct = intent.getBooleanExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, false);
+					sendToLogger(updateNeighbor(neighbor, direct, NeighborMetaData.WIFI_NETWORK));
 				}
 				else if (WifiService.DISCOVERED_OVER_BLUETOOTH.equals(source)) {
 					sendToLogger(updateNeighbor(neighbor, false, NeighborMetaData.BLUETOOTH_NETWORK));
@@ -291,6 +288,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 				if (!BluetoothService.activeNeighbors.contains(device)
 						&& BluetoothService.potentialNeighbors.contains(device)) {
 					synchronized (BluetoothService.activeNeighbors) {
+						Neighbor neighbor = new Neighbor(device.getName(), "GARBAGE IP" , device.getAddress());
+						sendToLogger(updateNeighbor(neighbor, true, NeighborMetaData.BLUETOOTH_NETWORK));
 						BluetoothService.activeNeighbors.add(device);
 					}
 				}
@@ -338,7 +337,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 			wifiPausedTimeout.cancel();
 			wifiPausedTimeout.purge();
 			wifiPausedTimeout = new Timer();
-			wifiPausedTimeout.schedule(new KickStartTimerTask(), 20*5000);
+			wifiPausedTimeout.schedule(new KickStartTimerTask(), 200*5000);
 		}
 	}
 	

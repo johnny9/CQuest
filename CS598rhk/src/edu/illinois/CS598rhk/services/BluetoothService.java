@@ -125,8 +125,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public synchronized void sendToLoggers(String message) {
 		Log.d(TAG, message);
 		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
-		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message + "\n\t-- ["
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message + " ["
 				+ new Date().toGMTString() + "]");
+		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.MISC_LOG);
 		sendBroadcast(intentToLog);
 	}
 
@@ -166,7 +167,15 @@ public class BluetoothService extends Service implements IBluetoothService {
 			ElectionInitiation initiation = (ElectionInitiation) message;
 			
 			for (Neighbor neighbor : initiation.neighbors) {
-				SchedulerService.updateNeighbor(neighbor, false, NeighborMetaData.WIFI_NETWORK);
+				// inform the scheduling service
+				Intent foundNewNeighbor = new Intent(
+						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+				foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
+						neighbor.pack());
+				foundNewNeighbor.putExtra(
+						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+						WifiService.DISCOVERED_OVER_BLUETOOTH);
+				sendBroadcast(foundNewNeighbor);
 			}
 			
 			response = electionHandler.getElectionResponse();
@@ -294,6 +303,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 					}
 					Log.e(TAG,
 							e.getMessage() + " DEVICE:" + neighbor.getName(), e);
+					sendToLoggers(e.getMessage() + " DEVICE:" + neighbor.getName());		
 					connectionFailed(neighbor);
 					continue;
 				}
@@ -418,6 +428,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 			} catch (Exception e) {
 				Log.e(TAG, currentNeighbor.getName()
 						+ " failed election initiation", e);
+				sendToLoggers(currentNeighbor.getName() + " cancled election initiation");				
 				electionHandler.neighborInitiationFailed(currentNeighbor);
 				cleanup();
 				return;
@@ -435,6 +446,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 				} catch (IOException e) {
 					Log.e(TAG, currentNeighbor.getName()
 							+ " failed election initiation", e);
+
+					sendToLoggers(currentNeighbor.getName() + " failed election");		
 					electionHandler.winnerAnnouncementFailed(currentNeighbor);
 					cleanup();
 					return;
