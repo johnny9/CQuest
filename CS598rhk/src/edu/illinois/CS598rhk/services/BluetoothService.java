@@ -234,21 +234,23 @@ public class BluetoothService extends Service implements IBluetoothService {
 				
 				if (!activeNeighbors.contains(socket.getRemoteDevice()))
 					activeNeighbors.add(socket.getRemoteDevice());
+				
+				String address = socket.getRemoteDevice().getAddress();
+				String name = socket.getRemoteDevice().getName();
+				Neighbor data = new Neighbor(name, "GARBAGE", address);
+
+				// inform the scheduling service
+				Intent foundNewNeighbor = new Intent(
+						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
+				foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
+						data.pack());
+				foundNewNeighbor.putExtra(
+						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
+						WifiService.DISCOVERED_OVER_BLUETOOTH);
+				sendBroadcast(foundNewNeighbor);
 
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
-					String address = socket.getRemoteDevice().getAddress();
-					String name = socket.getRemoteDevice().getName();
-					Neighbor data = new Neighbor(name, "GARBAGE", address);
-
-					// inform the scheduling service
-					Intent foundNewNeighbor = new Intent(
-							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
-					foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
-							data.pack());
-					foundNewNeighbor.putExtra(
-							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-							WifiService.DISCOVERED_OVER_BLUETOOTH);
-					sendBroadcast(foundNewNeighbor);
+					
 					try {
 						socket.close();
 					} catch (IOException e) {
@@ -261,7 +263,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 				
 				//TODO: sent reset intent
 				// inform the scheduling service
-				Intent foundNewNeighbor = new Intent(
+				foundNewNeighbor = new Intent(
 						SchedulerService.ACTION_RESET_TIMEOUT);
 				sendBroadcast(foundNewNeighbor);
 				

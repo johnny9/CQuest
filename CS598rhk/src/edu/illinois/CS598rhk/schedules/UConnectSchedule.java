@@ -19,7 +19,7 @@ public class UConnectSchedule extends DiscoverSchedule {
     //TODO: Make it so Uconnect is Uconnect and not searchlight
     @Override
 	public int[] generateScedule() {
-        int[] schedule = new int[this.prime * (this.prime / 2)];
+        int[] schedule = new int[this.prime * this.prime];
         
         for (int i=0; i<schedule.length; ++i) {
             if (i % this.prime == 0) {
@@ -32,8 +32,9 @@ public class UConnectSchedule extends DiscoverSchedule {
         
         Random rand = new Random();
         for (int i=0; i<(this.prime / 2); ++i) {
-            int poll = (rand.nextInt(this.prime-1) + 1) + (i * this.prime);
-            schedule[poll] = TRANSMIT_N_LISTEN;
+            //int poll = (rand.nextInt(this.prime-1) + 1) + (i * this.prime);
+        	// ^ whatever this math is seems to be the only difference
+            schedule[i] = TRANSMIT_N_LISTEN;
         }
         
         return schedule;
