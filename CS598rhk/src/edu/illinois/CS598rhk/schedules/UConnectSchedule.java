@@ -36,12 +36,12 @@ public class UConnectSchedule extends DiscoverSchedule {
     }
 
 	public int scheduleLength() {
-		return (int) Math.ceil(prime*prime/2);
+		return (int) Math.ceil(prime*prime);
 	}
 	
 
 	@Override
 	public String toString() {
-		return "Searchlight Schedule " + " t=" + prime;
+		return "UConnect Schedule " + " prime=" + prime;
 	}
 }

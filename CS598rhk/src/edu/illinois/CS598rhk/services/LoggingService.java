@@ -86,7 +86,7 @@ public class LoggingService extends Service implements Runnable {
 					level = (rawlevel * 100) / scale;
 				}
 				
-				String log_output = curTime + ", " + timeString +", Battery: level = "
+				String log_output = (new Time(curTime)).toString() + ", " + timeString +", Battery: level = "
 						+ level + ", scale = " + scale + ", status = " + status
 						+ ", health = " + health + ", plugged = " + plugged
 						+ ", voltage = " + voltage + "\n";

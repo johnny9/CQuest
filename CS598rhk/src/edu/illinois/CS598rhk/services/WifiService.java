@@ -31,6 +31,7 @@ import edu.illinois.CS598rhk.models.WifiMessage;
 import edu.illinois.CS598rhk.schedules.AlwaysSchedule;
 import edu.illinois.CS598rhk.schedules.DiscoverSchedule;
 import edu.illinois.CS598rhk.schedules.SearchLightSchedule;
+import edu.illinois.CS598rhk.schedules.UConnectSchedule;
 
 public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_UPDATE_SCHEDULE_PROGRESS = "intent to update schedule progress";
@@ -97,7 +98,7 @@ public class WifiService extends Service implements IWifiService {
 		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
-		discoveryScheduler = new SearchLightSchedule(10);
+		discoveryScheduler = new UConnectSchedule(7);
 		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(LoggingService.LOG_MESSAGE, discoveryScheduler.toString());
 		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.POWER_LOG);
@@ -306,6 +307,8 @@ public class WifiService extends Service implements IWifiService {
 			while (true) {
 				if (wifiState == WIFI_STATE_PAUSED) {
 					logStatePaused();
+					if(wifiEnabled)
+						disableWifi();
 					
 					while (wifiState != WIFI_STATE_DISCOVERYING) {
 						try {
