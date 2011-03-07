@@ -30,6 +30,7 @@ public class LoggingService extends Service implements Runnable {
 	public static final String WHICH_LOG = "which log?";
 	public static final String POWER_LOG = "power_log";
 	public static final String MISC_LOG = "misc_log";
+	public static int batteryLevel;
 
 	FileOutputStream fos;
 
@@ -85,7 +86,7 @@ public class LoggingService extends Service implements Runnable {
 				if (rawlevel >= 0 && scale > 0) {
 					level = (rawlevel * 100) / scale;
 				}
-				
+				batteryLevel = level;
 				String log_output = (new Time(curTime)).toString() + ", " + timeString +", Battery: level = "
 						+ level + ", scale = " + scale + ", status = " + status
 						+ ", health = " + health + ", plugged = " + plugged

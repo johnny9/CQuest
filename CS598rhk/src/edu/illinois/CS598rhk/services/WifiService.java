@@ -61,7 +61,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String INTENT_TO_ADD_DIRECT_NEIGHBOR = "adding a neighbor found directly";
 
 	public static DiscoverSchedule discoveryScheduler;
-	private boolean wifiEnabled = false;
+	public static boolean wifiEnabled = false;
 	private CoreTask coretask;
 
 	private WifiManager wifiManager;

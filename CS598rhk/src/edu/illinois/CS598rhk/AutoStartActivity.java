@@ -250,6 +250,10 @@ public class AutoStartActivity extends Activity {
 						+ BluetoothAdapter.getDefaultAdapter().getName());
 				((TextView) findViewById(R.id.serial)).setText("serial:"
 						+ serial);
+				((TextView) findViewById(R.id.wifiradio)).setText("	wifi enabled: "
+						+ WifiService.wifiEnabled);
+				((TextView) findViewById(R.id.battery)).setText("battery: "
+						+ LoggingService.batteryLevel);
 				if (BluetoothService.activeNeighbors != null) {
 					((TextView) findViewById(R.id.btneighborcount))
 							.setText("bt active count: "
