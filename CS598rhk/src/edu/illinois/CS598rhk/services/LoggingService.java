@@ -29,6 +29,7 @@ public class LoggingService extends Service implements Runnable {
 	public static final String SCHEDULER_LOG = "new_neighbor";
 	public static final String WHICH_LOG = "which log?";
 	public static final String POWER_LOG = "power_log";
+	public static final String POWER_LOG2 = "power_log2";
 	public static final String MISC_LOG = "misc_log";
 	public static int batteryLevel;
 
@@ -47,10 +48,10 @@ public class LoggingService extends Service implements Runnable {
 		// deleteFile(filename);
 		// }
 
-    	Notification notification = new Notification();
-    	notification.tickerText = "PowerManagement";
-    	startForeground(0, notification);
-		
+		Notification notification = new Notification();
+		notification.tickerText = "PowerManagement";
+		startForeground(0, notification);
+
 		startTime = System.currentTimeMillis();
 
 		IntentFilter batteryFilter = new IntentFilter(
@@ -61,7 +62,7 @@ public class LoggingService extends Service implements Runnable {
 
 		IntentFilter logFilter = new IntentFilter(ACTION_LOG_UPDATE);
 		registerReceiver(myBatteryInfoReceiver, logFilter);
-		
+
 		clearLog();
 
 		return START_STICKY;
@@ -71,9 +72,9 @@ public class LoggingService extends Service implements Runnable {
 
 		public void onReceive(Context context, Intent intent) {
 			long curTime = System.currentTimeMillis();
-			Time now = new Time(curTime-startTime);
+			Time now = new Time(curTime - startTime);
 			String timeString = now.toString();
-			
+
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 
 				int rawlevel = intent.getIntExtra("level", -1);
@@ -86,13 +87,32 @@ public class LoggingService extends Service implements Runnable {
 				if (rawlevel >= 0 && scale > 0) {
 					level = (rawlevel * 100) / scale;
 				}
-				batteryLevel = level;
-				String log_output = (new Time(curTime)).toString() + ", " + timeString +", Battery: level = "
-						+ level + ", scale = " + scale + ", status = " + status
-						+ ", health = " + health + ", plugged = " + plugged
-						+ ", voltage = " + voltage + "\n";
 
-				Log.d(POWER_TAG, log_output);
+				String log_output = (new Time(curTime)).toString() + ", "
+						+ timeString + ", Battery: level = " + level
+						+ ", scale = " + scale + ", status = " + status
+						+ ", health = " + health + ", plugged = " + plugged
+						+ ", voltage = " + voltage + ", active bt peers="
+						+ BluetoothService.activeNeighbors.size() + ", potential bt peers="
+						+ BluetoothService.potentialNeighbors.size() + "\n";
+
+				batteryLevel = level;
+				if ((batteryLevel < 78 && batteryLevel > 72)
+						|| (batteryLevel > 47 && batteryLevel < 53)) {
+					try {
+						fos = openFileOutput(POWER_LOG2, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(POWER_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(POWER_TAG, "Log file could not be written to");
+						e.printStackTrace();
+					}
+				}
+
+				//Log.d(POWER_TAG, log_output);
 
 				try {
 					fos = openFileOutput(POWER_LOG, Context.MODE_APPEND);
@@ -105,8 +125,7 @@ public class LoggingService extends Service implements Runnable {
 					Log.e(POWER_TAG, "Log file could not be written to");
 					e.printStackTrace();
 				}
-			}
-			else if (intent.getAction().equals(ACTION_LOG_UPDATE)) {
+			} else if (intent.getAction().equals(ACTION_LOG_UPDATE)) {
 				String message = intent.getStringExtra(LOG_MESSAGE);
 				String filenameString = intent.getStringExtra(WHICH_LOG);
 				String log_output = message + "\n";
@@ -128,20 +147,19 @@ public class LoggingService extends Service implements Runnable {
 		}
 	}
 
-	public void clearLog()
-	{
+	public void clearLog() {
 		deleteFile(POWER_LOG);
 		deleteFile(WIFI_LOG);
-		deleteFile(SCHEDULER_LOG);	
+		deleteFile(SCHEDULER_LOG);
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		unregisterReceiver(myBatteryInfoReceiver);
 		stopForeground(true);
 		super.onDestroy();
 	}
-	
+
 	@Override
 	public IBinder onBind(Intent arg0) {
 		// TODO Auto-generated method stub
