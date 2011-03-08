@@ -1,0 +1,33 @@
+\setlength{\unitlength}{4144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(6099,1859)(1609,-4753)
+\thinlines
+{\color[rgb]{0,0,0}\put(3781,-4542){\framebox(1710,836){}}
+}%
+{\color[rgb]{0,0,0}\put(5986,-4272){\framebox(1710,836){}}
+}%
+{\color[rgb]{0,0,0}\put(1846,-4542){\framebox(1710,836){}}
+}%
+{\color[rgb]{0,0,0}\put(1621,-4741){\framebox(4095,1835){}}
+}%
+\put(2296,-4066){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Bluetooth}%
+}}}}
+\put(2386,-4336){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Service}%
+}}}}
+\put(2926,-3481){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Scheduler Service}%
+}}}}
+\put(6436,-3796){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Logging}%
+}}}}
+\put(6481,-4021){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Service}%
+}}}}
+\put(4366,-4336){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Service}%
+}}}}
+\put(4456,-4066){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Wifi}%
+}}}}
+\end{picture}%
