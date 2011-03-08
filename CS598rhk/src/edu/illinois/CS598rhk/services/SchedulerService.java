@@ -155,6 +155,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		wl.acquire();
 		
 		wifiPausedTimeout = new Timer();
+		sendToLogger("Current Time, My address, Neighbor address, Neighbor IP, Network type, Direct, New");
 
 		return START_STICKY;
 	}
@@ -222,9 +223,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
 		
-		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.ipAddr;
+		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.btAddr + ", " + neighbor.ipAddr;
+		logMessage += ", " + networkType;
 		
-		NeighborMetaData newData = new NeighborMetaData(time, direct, NeighborMetaData.WIFI_NETWORK);
+		NeighborMetaData newData = new NeighborMetaData(time, direct, networkType);
 		NeighborMetaData exists = wifiNeighbors.get(neighbor);
 		
 		if (exists == null || (exists != null && exists.directContact == false)) {
@@ -236,6 +238,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 			wifiNeighbors.put(new Neighbor(neighbor), exists);
 			logMessage += ", " + exists.directContact;
 		}
+		
 		
 		return logMessage;
 	}
