@@ -32,6 +32,8 @@ public class LoggingService extends Service implements Runnable {
 	public static final String POWER_LOG2 = "power_log2";
 	public static final String MISC_LOG = "misc_log";
 	public static int batteryLevel;
+	public static long seventyfive;
+	public static long fifty;
 
 	FileOutputStream fos;
 
@@ -99,6 +101,13 @@ public class LoggingService extends Service implements Runnable {
 				batteryLevel = level;
 				if ((batteryLevel < 78 && batteryLevel > 72)
 						|| (batteryLevel > 47 && batteryLevel < 53)) {
+					if(batteryLevel == 75)
+						seventyfive = curTime;
+					if(batteryLevel == 50)
+					{
+						fifty = curTime;
+						log_output += "75-50 = " + (new Time(fifty - seventyfive)).toString();
+					}
 					try {
 						fos = openFileOutput(POWER_LOG2, Context.MODE_APPEND);
 						fos.write(log_output.getBytes());
