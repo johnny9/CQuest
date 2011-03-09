@@ -1,0 +1,32 @@
+Current Time, My address, Neighbor address, Neighbor IP, Name, Network type, Direct, New, Size
+12:59:09 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:59:18, 00:23:D4:6A:E5:21, 00:23:D4:6A:B9:0F, HTC Dream, GARBAGE, bluetooth discovery, true, fresh, 1
+12:59:18, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth discovery, true, fresh, 2
+12:59:18, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth discovery, true, fresh, 3
+12:59:19, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth discovery, true, fresh, 4
+12:59:26, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, fresh, 5
+12:59:26, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 6
+12:59:28, 00:23:D4:6A:E5:21, 00:23:D4:6A:B9:0F, phone, 192.168.1.9, wifi_network, true, old, 6
+12:59:28, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:59:28, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:59:28, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:59:28, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:59:31, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 7
+12:59:31, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:59:38, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, 09, GARBAGE, bluetooth discovery, true, fresh, 7
+13:01:06, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, fresh, 8
+13:01:06, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 8
+13:01:06, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 8
+13:14:03, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 8
+13:14:03, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 8
+13:18:48, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth discovery, true, old, 8
+13:21:16, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 8
+13:21:16, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 8
+13:21:16, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 8
+13:25:34, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:6A:B9:0F, HTC Dream, GARBAGE, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, 09, GARBAGE, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth_network, true, old, 8
+13:25:47, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, bluetooth_network, true, old, 8

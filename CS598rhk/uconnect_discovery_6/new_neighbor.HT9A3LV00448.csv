@@ -1,0 +1,21 @@
+Current Time, My address, Neighbor address, Neighbor IP, Name, Network type, Direct, New, Size
+12:56:40 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+12:56:53, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, 11, GARBAGE, bluetooth discovery, true, fresh, 1
+12:56:53, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, 13, GARBAGE, bluetooth discovery, true, fresh, 2
+12:56:58, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 2
+12:57:24, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 2
+12:57:24, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 2
+12:59:10, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, 13, GARBAGE, bluetooth_network, true, old, 2
+12:59:11, 00:23:D4:68:E1:E9, 00:23:D4:6A:B9:0F, phone, 192.168.1.9, bluetooth_network, true, fresh, 3
+12:59:11, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, old, 3
+13:01:07, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 3
+13:03:24, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 3
+13:03:24, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 3
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, 13, GARBAGE, bluetooth_network, true, old, 3
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:6A:B9:0F, phone, 192.168.1.9, bluetooth_network, true, old, 3
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:6A:A4:E2, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, fresh, 4
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:6A:E5:21, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, fresh, 5
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, fresh, 6
+13:16:37, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, old, 6
+13:21:27, 00:23:D4:68:E1:E9, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 6
+13:21:27, 00:23:D4:68:E1:E9, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
