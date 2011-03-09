@@ -1,0 +1,17 @@
+10:31:49, 18:00:00, Battery: level = 56, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3855
+10:31:52, 18:00:00, Battery: level = 56, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3855
+10:34:27, 18:00:00, Battery: level = 57, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3854
+UConnect Schedule  prime=7
+10:34:27 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+10:37:19, 18:02:52, Battery: level = 58, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3836, active bt peers=2, potential bt peers=6
+10:40:49, 18:06:21, Battery: level = 59, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3833, active bt peers=2, potential bt peers=6
+10:47:21, 18:00:00, Battery: level = 60, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3822, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+10:47:21 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+10:56:19, 18:00:00, Battery: level = 61, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3835, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+10:56:19 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+11:09:47, 18:13:28, Battery: level = 65, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3839, active bt peers=3, potential bt peers=6
+12:11:57, 18:00:00, Battery: level = 65, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3839, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+12:11:58 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6

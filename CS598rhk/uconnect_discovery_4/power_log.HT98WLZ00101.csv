@@ -1,0 +1,115 @@
+07:06:33, 18:00:00, Battery: level = 99, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4088
+UConnect Schedule  prime=7
+07:06:59, 18:00:26, Battery: level = 98, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4104
+07:07:29, 18:00:56, Battery: level = 97, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4069
+07:08:59, 18:02:26, Battery: level = 96, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4083
+07:11:59, 18:05:26, Battery: level = 95, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4085
+07:23:28, 18:16:55, Battery: level = 94, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4074
+07:26:58, 18:20:25, Battery: level = 93, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4066
+07:33:57, 18:27:24, Battery: level = 92, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4069
+07:34:57, 18:28:24, Battery: level = 91, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4064
+07:38:27, 18:31:54, Battery: level = 90, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4061
+07:40:57, 18:34:24, Battery: level = 89, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4016
+07:41:57, 18:35:24, Battery: level = 88, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4047
+07:42:27, 18:35:54, Battery: level = 87, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4006
+07:51:26, 18:44:53, Battery: level = 86, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4015
+08:06:25, 18:59:53, Battery: level = 85, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4010
+08:10:25, 19:03:52, Battery: level = 84, scale = 100, status = 4, health = 2, plugged = 0, voltage = 4009
+08:13:25, 19:06:52, Battery: level = 83, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3992
+08:14:55, 19:08:22, Battery: level = 82, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3978
+08:22:24, 19:15:52, Battery: level = 81, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3967
+08:23:54, 19:17:22, Battery: level = 80, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3972
+08:26:24, 19:19:52, Battery: level = 79, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3959
+08:38:53, 19:32:21, Battery: level = 78, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3982
+08:40:23, 19:33:51, Battery: level = 77, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3978
+08:51:23, 19:44:50, Battery: level = 76, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3974
+08:52:23, 19:45:50, Battery: level = 75, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3973
+08:54:22, 19:47:50, Battery: level = 74, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3966
+08:54:52, 19:48:20, Battery: level = 73, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3930
+08:56:22, 19:49:50, Battery: level = 72, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3928
+09:16:51, 20:10:18, Battery: level = 71, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3929
+09:18:21, 20:11:48, Battery: level = 70, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3934
+09:43:20, 20:36:47, Battery: level = 69, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3918
+09:52:49, 20:46:16, Battery: level = 68, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3902
+09:54:49, 20:48:16, Battery: level = 67, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3907
+10:35:17, 21:28:44, Battery: level = 66, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3901
+10:39:16, 21:32:44, Battery: level = 65, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3890
+10:57:15, 21:50:43, Battery: level = 64, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3886
+10:58:45, 21:52:12, Battery: level = 63, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3887
+11:10:45, 22:04:12, Battery: level = 62, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3901
+11:11:14, 22:04:42, Battery: level = 61, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3873
+12:04:11, 22:57:39, Battery: level = 60, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3861
+12:36:39, 23:30:07, Battery: level = 59, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3845
+12:52:09, 23:45:36, Battery: level = 58, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3848
+13:00:38, 23:54:05, Battery: level = 57, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3842
+13:13:07, 00:06:35, Battery: level = 56, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3840
+13:17:07, 00:10:34, Battery: level = 55, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3835
+13:35:06, 00:28:33, Battery: level = 54, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3819
+13:53:05, 00:46:32, Battery: level = 53, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3820
+13:54:35, 00:48:02, Battery: level = 52, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3811
+13:56:35, 00:50:02, Battery: level = 51, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3801
+14:05:04, 00:58:31, Battery: level = 50, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3802
+14:31:03, 01:24:30, Battery: level = 49, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3783
+14:32:33, 01:26:00, Battery: level = 48, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3792
+14:33:03, 01:26:30, Battery: level = 47, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3781
+14:34:33, 01:28:00, Battery: level = 46, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3791
+14:42:02, 01:35:29, Battery: level = 45, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3791
+14:48:02, 01:41:29, Battery: level = 44, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3776
+14:50:02, 01:43:29, Battery: level = 43, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3786
+14:59:01, 01:52:28, Battery: level = 42, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3778
+14:59:31, 01:52:58, Battery: level = 41, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3782
+15:29:29, 02:22:57, Battery: level = 40, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3772
+15:32:59, 02:26:26, Battery: level = 39, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3759
+16:19:56, 03:13:24, Battery: level = 38, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3761
+16:23:26, 03:16:53, Battery: level = 37, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3744
+16:24:56, 03:18:23, Battery: level = 36, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3756
+16:25:26, 03:18:53, Battery: level = 35, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3748
+16:26:56, 03:20:23, Battery: level = 34, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3735
+16:28:56, 03:22:23, Battery: level = 33, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3742
+16:35:26, 03:28:53, Battery: level = 32, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3748
+17:01:24, 03:54:51, Battery: level = 31, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3738
+17:08:24, 04:01:51, Battery: level = 30, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3740
+17:17:53, 04:11:20, Battery: level = 29, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3732
+17:36:52, 04:30:19, Battery: level = 28, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3710
+17:41:22, 04:34:49, Battery: level = 27, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3759
+17:43:22, 04:36:49, Battery: level = 26, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3719
+17:50:21, 04:43:48, Battery: level = 25, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3718
+17:51:51, 04:45:18, Battery: level = 24, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3714
+17:53:51, 04:47:18, Battery: level = 23, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3716
+17:55:21, 04:48:48, Battery: level = 22, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3707
+18:00:50, 04:54:18, Battery: level = 21, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3713
+18:29:49, 05:23:16, Battery: level = 20, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3706
+18:38:18, 05:31:46, Battery: level = 19, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3702
+18:45:18, 05:38:45, Battery: level = 18, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3692
+18:52:18, 05:45:45, Battery: level = 17, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3694
+18:54:17, 05:47:45, Battery: level = 16, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3688
+19:01:17, 05:54:44, Battery: level = 15, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3691
+19:36:45, 06:30:12, Battery: level = 14, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3681
+19:37:45, 06:31:12, Battery: level = 13, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3672
+19:46:14, 06:39:42, Battery: level = 12, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3669
+19:48:14, 06:41:42, Battery: level = 11, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3664
+19:49:44, 06:43:11, Battery: level = 10, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3675
+19:53:14, 06:46:41, Battery: level = 9, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3675
+19:55:14, 06:48:41, Battery: level = 8, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3662
+20:02:13, 06:55:41, Battery: level = 7, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3658
+20:12:43, 07:06:10, Battery: level = 6, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3656
+20:26:42, 07:20:09, Battery: level = 5, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3651
+20:28:12, 07:21:39, Battery: level = 4, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3634
+20:30:12, 07:23:39, Battery: level = 3, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3643
+20:31:42, 07:25:09, Battery: level = 2, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3639
+21:46:38, 08:40:05, Battery: level = 1, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3594
+22:00:36, 08:54:04, Battery: level = 0, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3520
+10:31:24, 18:00:00, Battery: level = 100, scale = 100, status = 5, health = 2, plugged = 1, voltage = 4102
+10:31:24, 18:00:00, Battery: level = 100, scale = 100, status = 5, health = 2, plugged = 1, voltage = 4102
+10:35:12, 18:00:00, Battery: level = 99, scale = 100, status = 2, health = 2, plugged = 1, voltage = 4119
+UConnect Schedule  prime=7
+10:35:13 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+10:44:28, 18:00:00, Battery: level = 99, scale = 100, status = 2, health = 2, plugged = 1, voltage = 4119, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+10:44:28 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+10:56:36, 18:00:00, Battery: level = 100, scale = 100, status = 5, health = 2, plugged = 1, voltage = 4190, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+10:56:36 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:12:13, 18:00:00, Battery: level = 100, scale = 100, status = 5, health = 2, plugged = 1, voltage = 4190, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+12:12:13 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6

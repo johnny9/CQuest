@@ -1,0 +1,70 @@
+12:22:06, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, phone, 192.168.1.5, wifi_network, true, old, 6
+12:22:06, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:22:42, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, phone, 192.168.1.6, wifi_network, true, old, 6
+12:22:42, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:22:43, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:22:43, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:45, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, phone, 192.168.1.7, wifi_network, true, old, 6
+12:24:45, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:45, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:45, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:50, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, phone, 192.168.1.7, wifi_network, true, old, 6
+12:24:50, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:50, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+12:24:50, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 6
+Current Time, My address, Neighbor address, Neighbor IP, Name, Network type, Direct, New, Size
+12:32:43 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:32:50, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth discovery, true, fresh, 1
+12:32:51, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, 09, GARBAGE, bluetooth discovery, true, fresh, 2
+12:32:53, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth discovery, true, fresh, 3
+12:32:53, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth discovery, true, fresh, 4
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, fresh, 5
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 6
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 7
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:33:26, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:39:29, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth_network, true, old, 7
+12:39:38, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, old, 7
+12:39:38, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, old, 7
+12:39:38, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, bluetooth_network, true, fresh, 7
+12:39:38, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth_network, true, old, 7
+12:39:38, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, bluetooth_network, true, old, 7
+Current Time, My address, Neighbor address, Neighbor IP, Name, Network type, Direct, New, Size
+12:42:11 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:42:18, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth discovery, true, fresh, 1
+12:42:20, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth discovery, true, fresh, 2
+12:42:21, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth discovery, true, fresh, 3
+12:42:22, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, 09, GARBAGE, bluetooth discovery, true, fresh, 4
+12:42:31, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, fresh, 5
+12:42:31, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 6
+12:42:31, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:42:54, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, fresh, 7
+12:42:54, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:42:54, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:43:31, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 7
+12:43:31, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:43:31, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:43:32, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 7
+12:43:32, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:43:32, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:44:06, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 7
+12:44:06, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:44:06, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:44:08, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, phone, 192.168.1.2, wifi_network, true, old, 7
+12:44:08, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:44:08, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:44:42, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 7
+12:44:42, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:44:42, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:45:18, 00:23:D4:6A:E5:21, 00:23:D4:6A:87:DE, phone, 192.168.1.1, wifi_network, true, old, 7
+12:45:18, 00:23:D4:6A:E5:21, 00:23:D4:68:E1:E9, GARBAGE NAME, GARBAGE IP, wifi_network, false, fresh, 7
+12:45:18, 00:23:D4:6A:E5:21, 00:23:D4:69:79:1C, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:48:44, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, ty, GARBAGE, bluetooth_network, true, old, 7
+12:48:58, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, zxc, GARBAGE, bluetooth_network, true, old, 7
+12:48:58, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, 09, GARBAGE, bluetooth_network, true, old, 7
+12:48:58, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, 08, GARBAGE, bluetooth_network, true, old, 7
+12:52:20, 00:23:D4:6A:E5:21, 00:23:D4:6A:A4:E2, phone, 192.168.1.7, wifi_network, true, old, 7
+12:52:20, 00:23:D4:6A:E5:21, 00:23:D4:6A:B6:B9, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:52:20, 00:23:D4:6A:E5:21, 00:23:D4:6A:22:09, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7
+12:52:20, 00:23:D4:6A:E5:21, 00:23:D4:6A:BB:92, GARBAGE NAME, GARBAGE IP, wifi_network, true, old, 7

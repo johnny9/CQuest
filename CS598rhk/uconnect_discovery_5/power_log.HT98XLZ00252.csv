@@ -1,0 +1,26 @@
+12:22:38, 18:00:00, Battery: level = 65, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3752, active bt peers=3, potential bt peers=6
+UConnect Schedule  prime=7
+12:22:38 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:45:30, 18:00:00, Battery: level = 58, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3744, active bt peers=4, potential bt peers=6
+UConnect Schedule  prime=7
+12:45:30 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+12:45:41, 18:00:11, Battery: level = 57, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3726, active bt peers=3, potential bt peers=6
+12:46:11, 18:00:41, Battery: level = 56, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3731, active bt peers=4, potential bt peers=6
+12:46:41, 18:01:11, Battery: level = 55, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3734, active bt peers=4, potential bt peers=6
+12:47:11, 18:01:41, Battery: level = 54, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3735, active bt peers=4, potential bt peers=6
+12:47:41, 18:02:11, Battery: level = 53, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3734, active bt peers=4, potential bt peers=6
+12:48:11, 18:02:41, Battery: level = 52, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3731, active bt peers=4, potential bt peers=6
+12:48:41, 18:03:11, Battery: level = 51, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3730, active bt peers=4, potential bt peers=6
+12:49:11, 18:03:41, Battery: level = 50, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3727, active bt peers=4, potential bt peers=6
+75-50 = 12:49:1112:49:41, 18:04:11, Battery: level = 49, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3720, active bt peers=4, potential bt peers=6
+12:50:11, 18:04:41, Battery: level = 48, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3727, active bt peers=4, potential bt peers=6
+12:50:41, 18:05:11, Battery: level = 47, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3726, active bt peers=4, potential bt peers=6
+12:51:11, 18:05:41, Battery: level = 46, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3727, active bt peers=4, potential bt peers=6
+12:51:41, 18:06:11, Battery: level = 45, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3722, active bt peers=4, potential bt peers=6
+12:52:11, 18:06:41, Battery: level = 44, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3721, active bt peers=4, potential bt peers=6
+12:52:41, 18:07:11, Battery: level = 43, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3720, active bt peers=4, potential bt peers=6
+12:53:11, 18:07:41, Battery: level = 42, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3724, active bt peers=4, potential bt peers=6
+12:53:41, 18:08:11, Battery: level = 41, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3717, active bt peers=4, potential bt peers=6
+12:54:11, 18:08:41, Battery: level = 40, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3707, active bt peers=4, potential bt peers=6
+12:54:41, 18:09:11, Battery: level = 39, scale = 100, status = 2, health = 2, plugged = 1, voltage = 3702, active bt peers=4, potential bt peers=6
+12:55:05, 18:09:34, Battery: level = 39, scale = 100, status = 4, health = 2, plugged = 0, voltage = 3706, active bt peers=4, potential bt peers=6
