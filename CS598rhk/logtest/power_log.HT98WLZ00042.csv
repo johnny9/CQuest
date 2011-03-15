@@ -1,0 +1,21 @@
+03:32:57, 18:00:00, Battery: level = 37, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3767
+UConnect Schedule  prime=7
+03:32:57 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 6
+03:35:14, 18:02:17, Battery: level = 38, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3776, active bt peers=1, potential bt peers=6
+03:38:44, 18:05:47, Battery: level = 39, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3773, active bt peers=1, potential bt peers=6
+03:41:44, 18:08:46, Battery: level = 40, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3785, active bt peers=1, potential bt peers=6
+03:45:14, 18:12:16, Battery: level = 41, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3787, active bt peers=1, potential bt peers=6
+03:48:43, 18:15:46, Battery: level = 42, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3789, active bt peers=1, potential bt peers=6
+03:52:13, 18:19:16, Battery: level = 43, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3793, active bt peers=1, potential bt peers=6
+03:55:43, 18:22:46, Battery: level = 44, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3779, active bt peers=1, potential bt peers=6
+03:58:43, 18:25:45, Battery: level = 45, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3796, active bt peers=1, potential bt peers=6
+04:02:13, 18:29:15, Battery: level = 46, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3800, active bt peers=1, potential bt peers=6
+04:05:42, 18:32:45, Battery: level = 47, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3804, active bt peers=1, potential bt peers=6
+04:09:12, 18:36:15, Battery: level = 48, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3807, active bt peers=1, potential bt peers=6
+04:12:42, 18:39:45, Battery: level = 49, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3804, active bt peers=1, potential bt peers=6
+04:15:42, 18:42:44, Battery: level = 50, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3807, active bt peers=1, potential bt peers=6
+75-50 = 04:15:4204:19:12, 18:46:14, Battery: level = 51, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3810, active bt peers=1, potential bt peers=6
+04:22:41, 18:49:44, Battery: level = 52, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3800, active bt peers=1, potential bt peers=6
+05:02:36, 18:00:00, Battery: level = 61, scale = 100, status = 2, health = 2, plugged = 2, voltage = 3833
+UConnect Schedule  prime=7
+05:02:36, 00:23:D4:6A:BB:92, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 6

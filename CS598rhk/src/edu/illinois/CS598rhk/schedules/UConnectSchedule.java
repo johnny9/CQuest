@@ -18,17 +18,17 @@ public class UConnectSchedule extends DiscoverSchedule {
     
     @Override
 	public int[] generateScedule() {
-        int[] schedule = new int[this.prime * this.prime];
+        int[] schedule = new int[(this.prime * this.prime)+1];
         
-        for (int i=0; i<schedule.length; ++i) {
+        for (int i=0; i<(schedule.length-1); ++i) {
             if (i % this.prime == 0) {
-                schedule[i] = TRANSMIT_N_LISTEN;
+                schedule[i+1] = TRANSMIT_N_LISTEN;
             }
-            else if ((i % this.prime*this.prime) < (this.prime + 1) / 2) {
-            	schedule[i] = TRANSMIT_N_LISTEN;
+            else if ((i % (this.prime*this.prime)) < (this.prime + 1) / 2) {
+            	schedule[i+1] = TRANSMIT_N_LISTEN;
             }
             else {
-                schedule[i] = DO_NOTHING;
+                schedule[i+1] = DO_NOTHING;
             }
         }
         

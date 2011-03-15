@@ -30,6 +30,7 @@ public class LoggingService extends Service implements Runnable {
 	public static final String WHICH_LOG = "which log?";
 	public static final String POWER_LOG = "power_log";
 	public static final String POWER_LOG2 = "power_log2";
+	public static final String ALL_LOGS = "*";
 	public static final String MISC_LOG = "misc_log";
 	public static int batteryLevel;
 	public static long seventyfive;
@@ -78,35 +79,45 @@ public class LoggingService extends Service implements Runnable {
 			String timeString = now.toString();
 
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+				int rawlevel = -1, scale = -1, status = -1, health = -1, plugged = -1, voltage = -1, level = -1;
+				try {
+					rawlevel = intent.getIntExtra("level", -1);
+					scale = intent.getIntExtra("scale", -1);
+					status = intent.getIntExtra("status", -1);
+					health = intent.getIntExtra("health", -1);
+					plugged = intent.getIntExtra("plugged", -1);
+					voltage = intent.getIntExtra("voltage", -1);
+					level = -1;
+					if (rawlevel >= 0 && scale > 0) {
+						level = (rawlevel * 100) / scale;
+					}
+				} catch (Exception e) {
 
-				int rawlevel = intent.getIntExtra("level", -1);
-				int scale = intent.getIntExtra("scale", -1);
-				int status = intent.getIntExtra("status", -1);
-				int health = intent.getIntExtra("health", -1);
-				int plugged = intent.getIntExtra("plugged", -1);
-				int voltage = intent.getIntExtra("voltage", -1);
-				int level = -1;
-				if (rawlevel >= 0 && scale > 0) {
-					level = (rawlevel * 100) / scale;
 				}
 
 				String log_output = (new Time(curTime)).toString() + ", "
 						+ timeString + ", Battery: level = " + level
 						+ ", scale = " + scale + ", status = " + status
 						+ ", health = " + health + ", plugged = " + plugged
-						+ ", voltage = " + voltage + ", active bt peers="
-						+ BluetoothService.activeNeighbors.size() + ", potential bt peers="
-						+ BluetoothService.potentialNeighbors.size() + "\n";
+						+ ", voltage = " + voltage;
+				if(BluetoothService.activeNeighbors != null)
+				{
+					log_output += ", active bt peers="
+					+ BluetoothService.activeNeighbors.size()
+					+ ", potential bt peers="
+					+ BluetoothService.potentialNeighbors.size();
+				}
+				log_output += "\n";
 
 				batteryLevel = level;
 				if ((batteryLevel < 78 && batteryLevel > 72)
 						|| (batteryLevel > 47 && batteryLevel < 53)) {
-					if(batteryLevel == 75)
+					if (batteryLevel == 75)
 						seventyfive = curTime;
-					if(batteryLevel == 50)
-					{
+					if (batteryLevel == 50) {
 						fifty = curTime;
-						log_output += "75-50 = " + (new Time(fifty - seventyfive)).toString();
+						log_output += "75-50 = "
+								+ (new Time(fifty - seventyfive)).toString();
 					}
 					try {
 						fos = openFileOutput(POWER_LOG2, Context.MODE_APPEND);
@@ -121,7 +132,7 @@ public class LoggingService extends Service implements Runnable {
 					}
 				}
 
-				//Log.d(POWER_TAG, log_output);
+				// Log.d(POWER_TAG, log_output);
 
 				try {
 					fos = openFileOutput(POWER_LOG, Context.MODE_APPEND);
@@ -141,25 +152,92 @@ public class LoggingService extends Service implements Runnable {
 
 				Log.d(LOG_MESSAGE_TAG, log_output);
 
-				try {
-					fos = openFileOutput(filenameString, Context.MODE_APPEND);
-					fos.write(log_output.getBytes());
-					fos.close();
-				} catch (FileNotFoundException e) {
-					Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
-					e.printStackTrace();
-				} catch (IOException e) {
-					Log.e(LOG_MESSAGE_TAG, "Log file could not be written to");
-					e.printStackTrace();
+				if (filenameString.equals(LoggingService.ALL_LOGS)) {
+					try {
+						fos = openFileOutput(POWER_LOG, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
+					try {
+						fos = openFileOutput(POWER_LOG2, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
+					try {
+						fos = openFileOutput(MISC_LOG, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
+					try {
+						fos = openFileOutput(WIFI_LOG, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
+					try {
+						fos = openFileOutput(SCHEDULER_LOG, Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
+				} else {
+					if(log_output.equals("\n"))
+						return;
+					try {
+						fos = openFileOutput(filenameString,
+								Context.MODE_APPEND);
+						fos.write(log_output.getBytes());
+						fos.close();
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_MESSAGE_TAG, "Log file could not be open");
+						e.printStackTrace();
+					} catch (IOException e) {
+						Log.e(LOG_MESSAGE_TAG,
+								"Log file could not be written to");
+						e.printStackTrace();
+					}
 				}
 			}
 		}
 	}
 
 	public void clearLog() {
-		deleteFile(POWER_LOG);
-		deleteFile(WIFI_LOG);
-		deleteFile(SCHEDULER_LOG);
+		//deleteFile(POWER_LOG);
+		//deleteFile(WIFI_LOG);
+		//deleteFile(SCHEDULER_LOG);
 	}
 
 	@Override

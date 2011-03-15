@@ -24,6 +24,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import edu.illinois.CS598rhk.AutoStartActivity;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
@@ -45,7 +46,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private MessageReceiver neighborReceiver = new MessageReceiver();
 
-	private static Map<Neighbor,NeighborMetaData> wifiNeighbors;
+	public static Map<Neighbor, NeighborMetaData> wifiNeighbors;
 	private List<BluetoothDevice> bluetoothNeighborDevices;
 
 	private static BluetoothAdapter myDevice;
@@ -55,7 +56,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 
 	private PowerManager pm;
 	private PowerManager.WakeLock wl;
-	
+
 	private Timer wifiPausedTimeout;
 
 	@Override
@@ -72,7 +73,6 @@ public class SchedulerService extends Service implements ISchedulerService {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 	}
 
 	private ServiceConnection mWifiConnection = new ServiceConnection() {
@@ -105,7 +105,9 @@ public class SchedulerService extends Service implements ISchedulerService {
 		Notification notification = new Notification();
 		notification.tickerText = "SchedulerService";
 		startForeground(1, notification);
+		wifiNeighbors = new HashMap<Neighbor, NeighborMetaData>();
 
+		bluetoothNeighborDevices = new ArrayList<BluetoothDevice>();
 		IntentFilter filter = new IntentFilter(
 				WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
 		registerReceiver(neighborReceiver, filter);
@@ -119,8 +121,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 		registerReceiver(neighborReceiver, filter);
 
 		filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-		registerReceiver(neighborReceiver, filter); 
-		
+		registerReceiver(neighborReceiver, filter);
+
 		filter = new IntentFilter(SchedulerService.ACTION_RESET_TIMEOUT);
 		registerReceiver(neighborReceiver, filter); // Don't forget to
 													// unregister during
@@ -136,7 +138,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		// this way a leader can be decided before the first election is even
 		// held
 		int wifiStartState = WifiService.WIFI_STATE_DISCOVERYING;
-		
+
 		bindService(new Intent(SchedulerService.this, WifiService.class),
 				mWifiConnection, Context.BIND_AUTO_CREATE);
 		bindService(new Intent(SchedulerService.this, BluetoothService.class),
@@ -153,9 +155,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
 		wl.acquire();
-		
+
 		wifiPausedTimeout = new Timer();
-		sendToLogger("Current Time, My address, Neighbor address, Neighbor IP, Network type, Direct, New");
+
+		//sendToLogger("Current Time, My address, Neighbor address, Neighbor IP, Name, Network type, Direct, New, Size");
 
 		return START_STICKY;
 	}
@@ -173,78 +176,93 @@ public class SchedulerService extends Service implements ISchedulerService {
 		Log.d(TAG, message);
 		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(LoggingService.LOG_MESSAGE, message);
-		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.SCHEDULER_LOG);
+		intentToLog.putExtra(LoggingService.WHICH_LOG,
+				LoggingService.SCHEDULER_LOG);
 		sendBroadcast(intentToLog);
 	}
 
-	private static synchronized void lazyInitializeNeighbors() {
+	private synchronized void lazyInitializeNeighbors() {
 		if (wifiNeighbors == null) {
-			wifiNeighbors = new HashMap<Neighbor,NeighborMetaData>();
+			wifiNeighbors = new HashMap<Neighbor, NeighborMetaData>();
 		}
 	}
-	
-	public static synchronized int getNeighborCount() {
+
+	public synchronized Set<Neighbor> getDirectNeighbors() {
 		lazyInitializeNeighbors();
-		return wifiNeighbors.size();
-	}
-	
-	public static synchronized Set<Neighbor> getDirectNeighbors() {
-		lazyInitializeNeighbors();
-		
+
 		Set<Neighbor> neighbors = new HashSet<Neighbor>();
-		
+
 		Set<Neighbor> keys = wifiNeighbors.keySet();
 		for (Neighbor neighbor : keys) {
 			NeighborMetaData data = wifiNeighbors.get(neighbor);
-			
+
 			if (data.directContact) {
 				neighbors.add(new Neighbor(neighbor));
 			}
 		}
 		return neighbors;
 	}
-	
-	public static synchronized Set<Neighbor> getNeighbors() {
+
+	public synchronized Set<Neighbor> getNeighbors() {
 		lazyInitializeNeighbors();
-		
+
 		Set<Neighbor> neighbors = new HashSet<Neighbor>();
-		
+
 		Set<Neighbor> keys = wifiNeighbors.keySet();
-		
+
 		for (Neighbor neighbor : keys) {
 			neighbors.add(new Neighbor(neighbor));
 		}
 		return neighbors;
 	}
-	
-	//TODO: Wifi beacon sends directly discovered bluetooth neighbors
-	
-	public static synchronized String updateNeighbor(Neighbor neighbor, boolean direct, String networkType) {
+
+	// TODO: Wifi beacon sends directly discovered bluetooth neighbors
+
+	public synchronized String updateNeighbor(Neighbor neighbor,
+			boolean direct, String networkType) {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
-		
-		String logMessage = time.toString() + ", " + myDevice.getAddress() + ", " + neighbor.btAddr + ", " + neighbor.ipAddr;
-		logMessage += ", " + networkType;
-		
-		NeighborMetaData newData = new NeighborMetaData(time, direct, networkType);
+
+		String logMessage = myDevice.getAddress() + ", " + neighbor.btAddr
+				+ ", " + networkType;
+		NeighborMetaData newData = new NeighborMetaData(time, direct,
+				networkType);
 		NeighborMetaData exists = wifiNeighbors.get(neighbor);
-		
+
 		if (exists == null || (exists != null && exists.directContact == false)) {
 			wifiNeighbors.put(new Neighbor(neighbor), newData);
-			logMessage += ", " + newData.directContact;
-		}
-		else {
+			//logMessage += ", " + newData.directContact;
+			//logMessage += ", fresh";
+			//logMessage += ", " + wifiNeighbors.size();
+		} else {
 			exists.lastSeen = time;
 			wifiNeighbors.put(new Neighbor(neighbor), exists);
-			logMessage += ", " + exists.directContact;
+			//logMessage += ", " + exists.directContact;
+			//logMessage += ", old";
+			//logMessage += ", " + wifiNeighbors.size();
+
 		}
-		
-		
+
+		if (exists == null) {
+			try {
+				if (Time.parse(neighbor.timestamp) > AutoStartActivity.startTime
+						.getTime()) {
+					logMessage += ", " + neighbor.timestamp;
+				} else {
+					logMessage += ", " + AutoStartActivity.startTime.toString();
+				}
+			} catch (Exception e) {
+				logMessage += ", " + neighbor.timestamp;
+			}
+
+			logMessage += ", " + time.toString();
+		} else {
+			logMessage = "";
+		}
+
 		return logMessage;
 	}
-	
-	
-	
+
 	private class MessageReceiver extends BroadcastReceiver {
 		private static final int BLUETOOTH_DISCOVERY_STOP_TIME = 200000;
 		private static final int ELECTION_START_TIME = 100000;
@@ -253,26 +271,37 @@ public class SchedulerService extends Service implements ISchedulerService {
 		public void onReceive(Context context, Intent intent) {
 			if (WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR.equals(intent
 					.getAction())) {
-				
-				IBluetoothMessage message = Neighbor.newNeighborReader().parse(intent
-						.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
 
-				String source = intent.getStringExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE);
-				
+				IBluetoothMessage message = Neighbor
+						.newNeighborReader()
+						.parse(intent
+								.getByteArrayExtra(WifiService.WIFI_NEIGHBOR_DATA));
+
+				String source = intent
+						.getStringExtra(WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE);
+				Boolean isDirect = intent.getBooleanExtra(
+						WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, true);
 				Neighbor neighbor = (Neighbor) message;
-				if (WifiService.DISCOVERED_OVER_WIFI.equals(source)) {	
-					sendToLogger(updateNeighbor(neighbor, true, NeighborMetaData.WIFI_NETWORK));
+				if (neighbor.btAddr.equals(myDevice.getAddress()))
+					return;
+				if (WifiService.DISCOVERED_OVER_WIFI.equals(source)) {
+					sendToLogger(updateNeighbor(neighbor, isDirect,
+							NeighborMetaData.WIFI_NETWORK));
+				} else if (WifiService.DISCOVERED_OVER_BLUETOOTH.equals(source)) {
+					sendToLogger(updateNeighbor(neighbor, true,
+							NeighborMetaData.BLUETOOTH_NETWORK));
+				} else if (WifiService.DISCOVERED_OVER_BLUETOOTH_DIRECT
+						.equals(source)) {
+					sendToLogger(updateNeighbor(neighbor, true,
+							NeighborMetaData.BLUETOOTH_NETWORK));
 				}
-				else if (WifiService.DISCOVERED_OVER_BLUETOOTH.equals(source)) {
-					sendToLogger(updateNeighbor(neighbor, false, NeighborMetaData.BLUETOOTH_NETWORK));
-				}
-				
+
 				synchronized (BluetoothService.activeNeighbors) {
 					for (BluetoothDevice device : BluetoothService.activeNeighbors) {
 						if (neighbor.btAddr.equals(device.getAddress())) {
 							// this neighbor is an active bt neighbor
-							if (myDevice.getAddress().compareTo(
-									neighbor.btAddr) < 0) { 
+							if (myDevice.getAddress()
+									.compareTo(neighbor.btAddr) < 0) {
 								// uh oh, he appears to be discovering as well
 								// abort! abort!
 								stoppingWifi = true;
@@ -292,6 +321,11 @@ public class SchedulerService extends Service implements ISchedulerService {
 						&& BluetoothService.potentialNeighbors.contains(device)) {
 					synchronized (BluetoothService.activeNeighbors) {
 						BluetoothService.activeNeighbors.add(device);
+						String address = device.getAddress();
+						String name = device.getName();
+						Neighbor neighb = new Neighbor("?", "GARBAGE", address);
+						sendToLogger(updateNeighbor(neighb, true,
+								NeighborMetaData.BLUETOOTH_DISCOVERY));
 					}
 				}
 
@@ -304,7 +338,8 @@ public class SchedulerService extends Service implements ISchedulerService {
 					if (!stoppingWifi)
 						bluetoothService.startDiscovery();
 					bluetoothService.resetWifiDiscoveryElection();
-				} else if (progress <= ELECTION_START_TIME && progress > 0 && !stoppingWifi) {
+				} else if (progress <= ELECTION_START_TIME && progress > 0
+						&& !stoppingWifi) {
 					if (BluetoothService.activeNeighbors.size() > 0) {
 						bluetoothService.hostWifiDiscoveryElection();
 					}
@@ -321,15 +356,16 @@ public class SchedulerService extends Service implements ISchedulerService {
 					wifiPausedTimeout.purge();
 				} else {
 					stoppingWifi = true;
-					if(progress > ELECTION_START_TIME) 
+					if (progress > ELECTION_START_TIME)
 						wifiService.forcedPauseWifiService();
 					else
 						wifiService.pauseWifiService();
 					bluetoothService.stopDiscovery();
 					resetTimeout();
-					
+
 				}
-			} else if (SchedulerService.ACTION_RESET_TIMEOUT.equals(intent.getAction())) {
+			} else if (SchedulerService.ACTION_RESET_TIMEOUT.equals(intent
+					.getAction())) {
 				resetTimeout();
 			}
 		}
@@ -338,10 +374,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 			wifiPausedTimeout.cancel();
 			wifiPausedTimeout.purge();
 			wifiPausedTimeout = new Timer();
-			wifiPausedTimeout.schedule(new KickStartTimerTask(), 100*5000);
+			wifiPausedTimeout.schedule(new KickStartTimerTask(), 200 * 5000);
 		}
 	}
-	
+
 	public class KickStartTimerTask extends TimerTask {
 		@Override
 		public void run() {

@@ -6,18 +6,18 @@ import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 
 public class Neighbor implements IBluetoothMessage {
-	public String name;
+	public String timestamp;
     public String ipAddr;
     public String btAddr;
     
-    public Neighbor(String name, String ipAddr, String btAddr) {
-    	this.name = name;
+    public Neighbor(String timestamp, String ipAddr, String btAddr) {
+    	this.timestamp = timestamp;
     	this.ipAddr = ipAddr;
     	this.btAddr = btAddr;
     }
     
     public Neighbor(Neighbor neighbor) {
-    	this.name = neighbor.name;
+    	this.timestamp = neighbor.timestamp;
     	this.ipAddr = neighbor.ipAddr;
     	this.btAddr = neighbor.btAddr;
     }
@@ -40,7 +40,7 @@ public class Neighbor implements IBluetoothMessage {
     }
     
     public byte[] pack() {
-            byte[] tempName = name.getBytes();
+            byte[] tempName = timestamp.getBytes();
             byte[] tempIPAddr = ipAddr.getBytes();
             byte[] tempBTAddr = btAddr.getBytes();
             
@@ -79,7 +79,7 @@ public class Neighbor implements IBluetoothMessage {
             int strLength = ByteBuffer.wrap(temp).getInt();
             currentIndex += 4;
             
-            name = new String(bytes, currentIndex, strLength);
+            timestamp = new String(bytes, currentIndex, strLength);
             currentIndex += strLength;
             
             System.arraycopy(bytes, currentIndex, temp, 0, 4);
@@ -98,7 +98,7 @@ public class Neighbor implements IBluetoothMessage {
 
 	@Override
 	public String toString() {
-		String prettyString = "Neighbor:" + "\n\tName: " + name + "\n\tIP: "
+		String prettyString = "Neighbor:" + "\n\tName: " + timestamp + "\n\tIP: "
 				+ ipAddr + "\n\tMAC: " + btAddr;
 		return prettyString;
 	}

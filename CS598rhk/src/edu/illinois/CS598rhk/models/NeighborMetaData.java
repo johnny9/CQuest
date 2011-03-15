@@ -5,6 +5,7 @@ import java.sql.Time;
 public class NeighborMetaData {
 	public static final String WIFI_NETWORK = "wifi_network";
 	public static final String BLUETOOTH_NETWORK = "bluetooth_network";
+	public static final String BLUETOOTH_DISCOVERY = "bluetooth discovery";
 	public Time lastSeen;
 	public boolean directContact;
 	public String networkType;

@@ -28,7 +28,9 @@ public class ElectionInitiation implements IBluetoothMessage {
 	private static class InitiationReader implements IMessageReader {
 		@Override
 		public IBluetoothMessage parse(byte[] message) {
-			return new ElectionInitiation();
+			ElectionInitiation newMessage = new ElectionInitiation();
+			newMessage.unpack(message);
+			return newMessage;
 		}
 	}
 	

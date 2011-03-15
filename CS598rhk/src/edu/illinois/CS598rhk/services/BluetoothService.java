@@ -8,9 +8,11 @@ import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import android.app.Notification;
@@ -23,6 +25,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.illinois.CS598rhk.AutoStartActivity;
 import edu.illinois.CS598rhk.interfaces.IBluetoothMessage;
 import edu.illinois.CS598rhk.interfaces.IBluetoothService;
 import edu.illinois.CS598rhk.models.BluetoothMessage;
@@ -41,8 +44,9 @@ public class BluetoothService extends Service implements IBluetoothService {
 	public static final String ACTION_ELECTED_FOR_WIFI_DISCOVERY = "action elected for wifi discovery";
 	public static final String DELY_UNTIL_STARTING_WIFI_DISCOVERY = "delay until starting wifi discovery";
 
-	public static final int MAC_ADDR_BYTES_LENGTH = BluetoothAdapter.getDefaultAdapter().getAddress().getBytes().length;
-	
+	public static final int MAC_ADDR_BYTES_LENGTH = BluetoothAdapter
+			.getDefaultAdapter().getAddress().getBytes().length;
+
 	final IBinder mBinder = new BluetoothBinder();
 
 	@Override
@@ -67,14 +71,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 	private BluetoothAcceptThread acceptThread;
 
-	public static List<String> getNeighborAddrs() {
+	public List<String> getNeighborAddrs() {
 		List<String> addrs = new ArrayList<String>();
-		for(BluetoothDevice device : activeNeighbors) {
+		for (BluetoothDevice device : activeNeighbors) {
 			addrs.add(device.getAddress());
 		}
 		return addrs;
 	}
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// We could use setName() here to allow the user to change the device
@@ -96,6 +100,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 		connectionThreads = new ArrayList<Thread>();
 
 		acceptThread.start();
+
+		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		intentToLog.putExtra(LoggingService.LOG_MESSAGE,
+				(new Time(System.currentTimeMillis())).toString()
+						+ ", " + mAdapter.getAddress() + ", STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = "
+						+ potentialNeighbors.size());
+		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.ALL_LOGS);
+		sendBroadcast(intentToLog);
 
 		return START_STICKY;
 	}
@@ -165,7 +177,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		switch (message.getMessageType()) {
 		case BluetoothMessage.INITIATE_ELECTION_HEADER:
 			ElectionInitiation initiation = (ElectionInitiation) message;
-			
+
 			for (Neighbor neighbor : initiation.neighbors) {
 				// inform the scheduling service
 				Intent foundNewNeighbor = new Intent(
@@ -177,7 +189,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 						WifiService.DISCOVERED_OVER_BLUETOOTH);
 				sendBroadcast(foundNewNeighbor);
 			}
-			
+
 			response = electionHandler.getElectionResponse();
 			break;
 		case BluetoothMessage.ELECTION_WINNER_ANNOUNCEMENT_HEADER:
@@ -208,7 +220,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		public BluetoothAcceptThread() {
 			BluetoothServerSocket tmp = null;
-			
+
 			// Create a new listening server socket
 			try {
 				tmp = mAdapter
@@ -231,42 +243,34 @@ public class BluetoothService extends Service implements IBluetoothService {
 				} catch (IOException e) {
 					Log.e(TAG, "accept() failed", e);
 				}
-				
+
 				if (!activeNeighbors.contains(socket.getRemoteDevice()))
 					activeNeighbors.add(socket.getRemoteDevice());
-				
+
 				String address = socket.getRemoteDevice().getAddress();
 				String name = socket.getRemoteDevice().getName();
 				Neighbor data = new Neighbor(name, "GARBAGE", address);
 
 				// inform the scheduling service
+				/*
 				Intent foundNewNeighbor = new Intent(
 						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
 				foundNewNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
 						data.pack());
 				foundNewNeighbor.putExtra(
 						WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-						WifiService.DISCOVERED_OVER_BLUETOOTH);
+						WifiService.DISCOVERED_OVER_BLUETOOTH_DIRECT);
 				sendBroadcast(foundNewNeighbor);
+				*/
 
-				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
-					
-					try {
-						socket.close();
-					} catch (IOException e) {
-						// tried our best
-					}
-
-					continue;
-
-				}
 				
-				//TODO: sent reset intent
+
+				// TODO: sent reset intent
 				// inform the scheduling service
-				foundNewNeighbor = new Intent(
+				Intent resetTimer = new Intent(
 						SchedulerService.ACTION_RESET_TIMEOUT);
-				sendBroadcast(foundNewNeighbor);
-				
+				sendBroadcast(resetTimer);
+
 				(new BluetoothAcceptHandlerThread(socket)).start();
 			}
 		}
@@ -305,7 +309,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 					}
 					Log.e(TAG,
 							e.getMessage() + " DEVICE:" + neighbor.getName(), e);
-					sendToLoggers(e.getMessage() + " DEVICE:" + neighbor.getName());		
+					sendToLoggers(e.getMessage() + " DEVICE:"
+							+ neighbor.getName());
 					connectionFailed(neighbor);
 					continue;
 				}
@@ -340,7 +345,18 @@ public class BluetoothService extends Service implements IBluetoothService {
 					outStream = mSocket.getOutputStream();
 					while (true) {
 						IBluetoothMessage message = readBluetoothMessage(inStream);
-						IBluetoothMessage response = handleReceivedMessage(message);
+						boolean backingDown = false;
+						if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING) {
+							try {
+								mSocket.close();
+							} catch (IOException e) {
+								// tried our best
+							}
+							backingDown = true;
+						}
+						IBluetoothMessage response = handleReceivedMessage(message);						
+						if(backingDown)
+							return;
 						writeBluetoothMessage(outStream, response);
 					}
 
@@ -430,7 +446,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 			} catch (Exception e) {
 				Log.e(TAG, currentNeighbor.getName()
 						+ " failed election initiation", e);
-				sendToLoggers(currentNeighbor.getName() + " cancled election initiation");				
+				sendToLoggers(currentNeighbor.getName()
+						+ " cancled election initiation");
 				electionHandler.neighborInitiationFailed(currentNeighbor);
 				cleanup();
 				return;
@@ -449,7 +466,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 					Log.e(TAG, currentNeighbor.getName()
 							+ " failed election initiation", e);
 
-					sendToLoggers(currentNeighbor.getName() + " failed election");		
+					sendToLoggers(currentNeighbor.getName()
+							+ " failed election");
 					electionHandler.winnerAnnouncementFailed(currentNeighbor);
 					cleanup();
 					return;
@@ -500,15 +518,14 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		public void neighborInitiationFailed(BluetoothDevice currentNeighbor) {
 
-			if (mAdapter.getAddress().compareTo(currentNeighbor.getAddress()) < 0)
-			{
+			if (mAdapter.getAddress().compareTo(currentNeighbor.getAddress()) < 0) {
 				shuttingDown = true;
 				Log.e(TAG, "Shutting down election");
-			}
-			else {
+			} else {
 				synchronized (this) {
 					heardFromCounter++;
-					Log.e(TAG, "heardFromCounter: " + heardFromCounter + " neighbors: " + activeNeighbors.size());
+					Log.e(TAG, "heardFromCounter: " + heardFromCounter
+							+ " neighbors: " + activeNeighbors.size());
 				}
 				if (heardFromCounter >= activeNeighbors.size())
 					determineElectionWinner();
@@ -523,8 +540,25 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses = new ArrayList<Pair<BluetoothDevice, Integer>>();
 				electionAnnouncements = new ArrayList<ElectionResult>();
 
-				broadcast(new ElectionInitiation(SchedulerService.getDirectNeighbors()));
+				broadcast(new ElectionInitiation(getDirectNeighbors()));
 			}
+		}
+
+		private Set<Neighbor> getDirectNeighbors() {
+			Set<Neighbor> neighbors = new HashSet<Neighbor>();
+
+			Set<Neighbor> keys = SchedulerService.wifiNeighbors.keySet();
+			for (Neighbor neighbor : keys) {
+				NeighborMetaData data = SchedulerService.wifiNeighbors
+						.get(neighbor);
+
+				if (data.directContact) {
+					neighbors.add(new Neighbor(neighbor));
+				}
+			}
+			neighbors.add(new Neighbor(AutoStartActivity.startTime.toString(),
+					WifiService.myIPAddress, mAdapter.getAddress()));
+			return neighbors;
 		}
 
 		public synchronized void resetWifiDiscoveryElection() {
@@ -546,7 +580,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 				electionResponses.add(new Pair<BluetoothDevice, Integer>(
 						currentNeighbor, message.value));
 				heardFromCounter++;
-				Log.e(TAG, "heardFromCounter: " + heardFromCounter + " neighbors: " + activeNeighbors.size());
+				Log.e(TAG, "heardFromCounter: " + heardFromCounter
+						+ " neighbors: " + activeNeighbors.size());
 			}
 			if (heardFromCounter >= activeNeighbors.size())
 				determineElectionWinner();
@@ -561,29 +596,32 @@ public class BluetoothService extends Service implements IBluetoothService {
 					numberOfAnnouncements = electionAnnouncements.size();
 				}
 			} while (numberOfAnnouncements == 0 || shuttingDown);
-			
-			//The following block is the correct way to achieve the above do while loop ... though
-			//it requires that the person you are waiting on then uses notify appropriately.
-//			synchronized (electionAnnouncements) {
-//				while (electionAnnouncements.size() == 0) {
-//					try {
-//						electionAnnouncements.wait();
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			}
+
+			// The following block is the correct way to achieve the above do
+			// while loop ... though
+			// it requires that the person you are waiting on then uses notify
+			// appropriately.
+			// synchronized (electionAnnouncements) {
+			// while (electionAnnouncements.size() == 0) {
+			// try {
+			// electionAnnouncements.wait();
+			// } catch (InterruptedException e) {
+			// e.printStackTrace();
+			// }
+			// }
+			// }
 
 			// get the neighbor his message first
 			while (hostingElection
 					&& !winnerAcknowledgedElection
 					&& !neighbor.getAddress().equals(
 							nextAnnouncement.winnerAddress))
-				if(shuttingDown) break;
+				if (shuttingDown)
+					break;
 
 			if (shuttingDown)
 				return null;
-			
+
 			return nextAnnouncement;
 		}
 
@@ -616,7 +654,8 @@ public class BluetoothService extends Service implements IBluetoothService {
 				ElectionResult result) {
 			ElectionAcknowledgement acknowledgement = new ElectionAcknowledgement();
 
-			String myAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
+			String myAddress = BluetoothAdapter.getDefaultAdapter()
+					.getAddress();
 			if (myAddress.equals(result.winnerAddress)) {
 				acknowledgement.value = 1;
 				myElectionResponseWindow = 1024;

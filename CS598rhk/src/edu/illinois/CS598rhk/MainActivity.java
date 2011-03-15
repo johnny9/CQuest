@@ -251,7 +251,7 @@ public class MainActivity extends Activity {
 
 				((TextView) findViewById(R.id.wifineighborcount))
 						.setText("wifi neighbor count: "
-								+ SchedulerService.getNeighborCount());
+								+ SchedulerService.wifiNeighbors.size());
 
 				if (WifiService.wifiState == WifiService.WIFI_STATE_DISCOVERYING)
 					((TextView) findViewById(R.id.wifion))

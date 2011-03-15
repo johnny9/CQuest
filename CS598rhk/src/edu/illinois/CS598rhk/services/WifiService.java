@@ -8,11 +8,13 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +24,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import edu.illinois.CS598rhk.AutoStartActivity;
 import edu.illinois.CS598rhk.MainActivity;
 import edu.illinois.CS598rhk.interfaces.IMessageReader;
 import edu.illinois.CS598rhk.interfaces.IWifiService;
@@ -48,6 +51,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String WIFI_NEIGHBOR_NAME = "phone name";
 	public static final String WIFI_IP_ADDRESS = "ip address";
 	public static final String WIFI_START_STATE = "initial wifi state";
+	public static final int WIFI_KILL_SERVICE = 2;
 	public static final int WIFI_STATE_DISCOVERYING = 1;
 	public static final int WIFI_STATE_PAUSED = 0;
 
@@ -59,6 +63,7 @@ public class WifiService extends Service implements IWifiService {
 	public static final String WIFI_NEIGHBOR_CURRENT_TIMESLICE = "())(())()()()()()()()(";
 	public static final String WIFI_NEIGHBOR_SCHEDULE_LENGTH = "+++++++++++";
 	public static final String INTENT_TO_ADD_DIRECT_NEIGHBOR = "adding a neighbor found directly";
+	public static final String DISCOVERED_OVER_BLUETOOTH_DIRECT = "neighbor found directly over bluetooth";
 
 	public static DiscoverSchedule discoveryScheduler;
 	public static boolean wifiEnabled = false;
@@ -95,7 +100,7 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public void onCreate() {
-		wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
+		
 		wifiController = new WifiController();
 		myBroadcast = "192.168.1.255";
 		discoveryScheduler = new UConnectSchedule(7);
@@ -104,7 +109,15 @@ public class WifiService extends Service implements IWifiService {
 		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.POWER_LOG);
 		sendBroadcast(intentToLog);
 		coretask = new CoreTask();
+		coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
+		Log.d(MSG_TAG, "Current directory is "
+				+ this.getApplicationContext().getFilesDir().getParent());
+
+
 		logPreviousState = -1;
+
+	
+	
 		try {
 			dest = InetAddress.getByName(myBroadcast);
 		} catch (UnknownHostException e) {
@@ -117,6 +130,7 @@ public class WifiService extends Service implements IWifiService {
 		Notification notification = new Notification();
 		notification.tickerText = "WifiService";
 		startForeground(3, notification);
+		
 
 		IntentFilter messageFilter = new IntentFilter();
 		messageFilter.addAction(INTENT_TO_PAUSE_WIFI);
@@ -131,23 +145,21 @@ public class WifiService extends Service implements IWifiService {
 		Log.d(MSG_TAG, "Current directory is "
 				+ this.getApplicationContext().getFilesDir().getParent());
 
-		if (wifiManager.isWifiEnabled())
-			wifiManager.setWifiEnabled(false);
 
 		myIPAddress = intent.getStringExtra(MainActivity.ADDRESS_KEY);
 		if (myIPAddress == null || !validateIPAddress(myIPAddress))
 			myIPAddress = "192.168.1.3";
-
+		
 		myBluetoothAddress = BluetoothAdapter.getDefaultAdapter().getAddress();
-		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-		//		+ "/bin/load.sh " + myIPAddress);
+		
 
-		myInfo = new Neighbor("phone", myIPAddress, myBluetoothAddress);
+		myInfo = new Neighbor(AutoStartActivity.startTime.toString(), myIPAddress, myBluetoothAddress);
 		
 		pauseForced = false;
 		wifiState = intent.getIntExtra(WifiService.WIFI_START_STATE,
 				WIFI_STATE_DISCOVERYING);
 		wifiController.start();
+		
 
 		return START_STICKY;
 	}
@@ -183,7 +195,7 @@ public class WifiService extends Service implements IWifiService {
 
 	@Override
 	public void onDestroy() {
-		wifiController.stop();
+		wifiState = WIFI_KILL_SERVICE;
 		disableWifi();
 		unregisterReceiver(messageReceiver);
 		stopForeground(true);
@@ -191,17 +203,19 @@ public class WifiService extends Service implements IWifiService {
 	}
 
 	public void enableWifi() {
-		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-				+ "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH);
-		this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 " + myIPAddress
-				+ " netmask 255.255.255.0");
+		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		//		+ "/bin/netcontrol start_wifi " + this.coretask.DATA_FILE_PATH);
+		//this.coretask.runRootCommand("/system/bin/ifconfig tiwlan0 " + myIPAddress
+		//		+ " netmask 255.255.255.0");
+		this.coretask.runRootCommand("/system/bin/ifconfig wlan0 " + myIPAddress + " netmask 255.255.255.0");
 		Log.d(MSG_TAG, "Wifi Enabled");
 		wifiEnabled = true;
 	}
 
 	public void disableWifi() {
-		this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
-		 + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH);
+		//this.coretask.runRootCommand(this.coretask.DATA_FILE_PATH
+		// + "/bin/netcontrol stop_wifi " + this.coretask.DATA_FILE_PATH);
+		this.coretask.runRootCommand("/system/bin/ifconfig wlan0 192.168.0.1");
 		Log.d(MSG_TAG, "Wifi disabled");
 		wifiEnabled = false;
 	}
@@ -220,11 +234,18 @@ public class WifiService extends Service implements IWifiService {
 
 		}
 	}
+	public List<String> getNeighbors() {
+		List<String> addrs = new ArrayList<String>();
+		for (BluetoothDevice device : BluetoothService.activeNeighbors) {
+			addrs.add(device.getAddress());
+		}
+		return addrs;
+	}
 
 	private class WifiController extends Thread {
 
 		private void sendWifiBroadcast() {
-			WifiMessage message = new WifiMessage(myInfo, BluetoothService.getNeighborAddrs());
+			WifiMessage message = new WifiMessage(myInfo, getNeighbors());
 			byte[] buf = message.pack();
 			DatagramSocket sock;
 			DatagramPacket pkt = new DatagramPacket(buf, buf.length, dest, 8888);
@@ -265,12 +286,12 @@ public class WifiService extends Service implements IWifiService {
 					foundNewNeighbor.putExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, true);
 					foundNewNeighbor.putExtra(
 							WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
-							WifiService.DISCOVERED_OVER_BLUETOOTH);
+							WifiService.DISCOVERED_OVER_WIFI);
 					sendBroadcast(foundNewNeighbor);
 					
 					List<String> devices = message.getNeighborAddrs();
 					for (String addr : devices) {
-						Neighbor neighbor = new Neighbor("GARBAGE NAME", "GARBAGE IP", addr);
+						Neighbor neighbor = new Neighbor("?", "?", addr);
 						Intent foundNewIndirectNeighbor = new Intent(
 								WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
 						foundNewIndirectNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
@@ -315,8 +336,15 @@ public class WifiService extends Service implements IWifiService {
 							Thread.sleep(100);
 						} catch (InterruptedException e) {
 							// interrupted from sleep
+							
+						}
+						if(wifiState == WIFI_KILL_SERVICE)
+						{
+							timeSlice = 0;
+							return;
 						}
 					}
+					
 					try {
 						Thread.sleep(resumeDelay);
 					} catch (InterruptedException e) {
@@ -328,6 +356,12 @@ public class WifiService extends Service implements IWifiService {
 				}
 
 				do {
+					if(wifiState == WIFI_KILL_SERVICE)
+					{
+						timeSlice = 0;
+						wifiState = WIFI_STATE_DISCOVERYING;
+						return;
+					}
 					if (wifiState == WIFI_STATE_PAUSED && pauseForced) {
 						timeSlice = 0;
 						pauseForced = false;
