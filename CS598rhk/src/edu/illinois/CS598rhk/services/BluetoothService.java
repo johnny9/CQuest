@@ -105,7 +105,7 @@ public class BluetoothService extends Service implements IBluetoothService {
 		intentToLog.putExtra(LoggingService.LOG_MESSAGE,
 				(new Time(System.currentTimeMillis())).toString()
 						+ ", " + mAdapter.getAddress() + ", STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = "
-						+ potentialNeighbors.size());
+						+ potentialNeighbors.size() + ", " + AutoStartActivity.casenumber);
 		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.ALL_LOGS);
 		sendBroadcast(intentToLog);
 

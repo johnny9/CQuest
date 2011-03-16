@@ -32,6 +32,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import edu.illinois.CS598rhk.services.BluetoothService;
 import edu.illinois.CS598rhk.services.CoreTask;
 import edu.illinois.CS598rhk.services.LoggingService;
@@ -71,6 +72,7 @@ public class AutoStartActivity extends Activity {
 	private StarterThread delayedStartingThread;
 	private int delayRemaining;
 	private boolean delayKillYourself;
+	public static String casenumber;
 
 	private class StarterThread extends Thread {
 		public void run() {
@@ -98,7 +100,7 @@ public class AutoStartActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		casenumber = "";
 		delayedStartingThread = null;
 		if (savedInstanceState == null) {
 			ipAddr = null;
@@ -296,6 +298,28 @@ public class AutoStartActivity extends Activity {
 				delayedStartingThread = new StarterThread();
 				delayedStartingThread.start();
 			}
+		case R.id.casenum:
+		{
+			final AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			final EditText input = new EditText(this);
+			alert.setView(input);
+			alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton) {
+					String value = input.getText().toString().trim();
+					casenumber = value;
+				}
+			});
+
+			alert.setNegativeButton("Cancel",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int whichButton) {
+							dialog.cancel();
+						}
+					});
+			alert.show();
+
+		}
+			
 		default:
 			return super.onOptionsItemSelected(item);
 		}

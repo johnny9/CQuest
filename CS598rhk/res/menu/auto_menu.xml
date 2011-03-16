@@ -4,4 +4,5 @@
 <item android:title="Start" android:id="@+id/start"></item>
 <item android:title="Stop" android:id="@+id/stop"></item>
 <item android:id="@+id/startdelay" android:titleCondensed="start (dealy)" android:title="start (delay)"></item>
+<item android:title="case" android:id="@+id/casenum"></item>
 </menu>
