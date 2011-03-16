@@ -296,7 +296,7 @@ public class WifiService extends Service implements IWifiService {
 								WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR);
 						foundNewIndirectNeighbor.putExtra(WifiService.WIFI_NEIGHBOR_DATA,
 								neighbor.pack());
-						foundNewIndirectNeighbor.putExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, false);
+						foundNewIndirectNeighbor.putExtra(WifiService.INTENT_TO_ADD_DIRECT_NEIGHBOR, true);
 						foundNewIndirectNeighbor.putExtra(
 								WifiService.INTENT_TO_ADD_WIFI_NEIGHBOR_SOURCE,
 								WifiService.DISCOVERED_OVER_WIFI);
