@@ -1,0 +1,71 @@
+13:34:22 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+Device or resource busy DEVICE:qwerty [9 Mar 2011 19:36:54 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 19:45:28 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 19:45:29 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 19:49:23 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 19:49:24 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 19:53:44 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 19:53:45 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 19:57:35 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 20:08:41 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 20:08:43 GMT]
+14:58:16 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+15:17:29 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:20:01 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 21:28:27 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:28:28 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:32:42 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 21:32:47 GMT]
+15:36:43 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:39:16 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 21:47:46 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:47:47 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:52:01 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 21:52:07 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 21:56:03 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 21:56:04 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:06:59 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:07:01 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:10:50 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:10:56 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:14:51 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:14:52 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:18:47 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:18:48 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:22:44 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:30:32 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:30:33 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:34:28 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:34:29 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:38:23 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:38:24 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:42:13 GMT]
+Service discovery failed DEVICE:13 [9 Mar 2011 22:42:19 GMT]
+16:42:59 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+16:50:02 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+Device or resource busy DEVICE:qwerty [9 Mar 2011 22:52:40 GMT]
+13 cancled election initiation [9 Mar 2011 22:52:46 GMT]
+17:00:43 STARTING NEW INSTANCE : POTENTIAL NEIGHBORS = 3
+Device or resource busy DEVICE:qwerty [9 Mar 2011 23:07:33 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 23:32:53 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 23:45:29 GMT]
+Device or resource busy DEVICE:qwerty [9 Mar 2011 23:53:55 GMT]
+Device or resource busy DEVICE:qwerty [10 Mar 2011 00:06:35 GMT]
+Device or resource busy DEVICE:qwerty [10 Mar 2011 00:19:27 GMT]
+Device or resource busy DEVICE:qwerty [10 Mar 2011 00:32:09 GMT]
+Device or resource busy DEVICE:qwerty [10 Mar 2011 00:44:48 GMT]
+Device or resource busy DEVICE:qwerty [10 Mar 2011 00:57:23 GMT]
+01:29:24, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 
+qwerty cancled election initiation [16 Mar 2011 06:31:53 GMT]
+01:40:55, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 1
+13 cancled election initiation [16 Mar 2011 06:43:29 GMT]
+01:56:06, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+02:03:40, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+02:12:04, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+Service discovery failed DEVICE:qwerty [16 Mar 2011 07:18:54 GMT]
+02:26:06, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+02:47:46, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+03:02:06, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+03:11:19, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+03:13:45, 00:23:D4:69:79:1C, STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = 2, 11
+HTC Dream cancled election initiation [16 Mar 2011 08:24:43 GMT]
