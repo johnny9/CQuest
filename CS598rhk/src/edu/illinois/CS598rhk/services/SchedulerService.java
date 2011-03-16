@@ -223,8 +223,7 @@ public class SchedulerService extends Service implements ISchedulerService {
 		lazyInitializeNeighbors();
 		Time time = new Time(System.currentTimeMillis());
 
-		String logMessage = myDevice.getAddress() + ", " + neighbor.btAddr
-				+ ", " + networkType;
+		String logMessage = myDevice.getAddress() + ", " + neighbor.btAddr;
 		NeighborMetaData newData = new NeighborMetaData(time, direct,
 				networkType);
 		NeighborMetaData exists = wifiNeighbors.get(neighbor);
@@ -244,18 +243,10 @@ public class SchedulerService extends Service implements ISchedulerService {
 		}
 
 		if (exists == null) {
-			try {
-				if (Time.parse(neighbor.timestamp) > AutoStartActivity.startTime
-						.getTime()) {
-					logMessage += ", " + neighbor.timestamp;
-				} else {
-					logMessage += ", " + AutoStartActivity.startTime.toString();
-				}
-			} catch (Exception e) {
-				logMessage += ", " + neighbor.timestamp;
-			}
-
+			logMessage += ", " + AutoStartActivity.startTime.toString();
+			logMessage += ", " + neighbor.timestamp;
 			logMessage += ", " + time.toString();
+			logMessage += ", " + AutoStartActivity.casenumber;
 		} else {
 			logMessage = "";
 		}

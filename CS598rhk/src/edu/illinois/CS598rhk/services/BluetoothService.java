@@ -101,13 +101,13 @@ public class BluetoothService extends Service implements IBluetoothService {
 
 		acceptThread.start();
 
-		Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
+		/*Intent intentToLog = new Intent(LoggingService.ACTION_LOG_UPDATE);
 		intentToLog.putExtra(LoggingService.LOG_MESSAGE,
 				(new Time(System.currentTimeMillis())).toString()
 						+ ", " + mAdapter.getAddress() + ", STARTING NEW INSTANCE, POTENTIAL NEIGHBORS = "
 						+ potentialNeighbors.size() + ", " + AutoStartActivity.casenumber);
 		intentToLog.putExtra(LoggingService.WHICH_LOG, LoggingService.ALL_LOGS);
-		sendBroadcast(intentToLog);
+		sendBroadcast(intentToLog);*/
 
 		return START_STICKY;
 	}
