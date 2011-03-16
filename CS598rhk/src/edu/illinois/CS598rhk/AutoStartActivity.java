@@ -115,10 +115,7 @@ public class AutoStartActivity extends Activity {
 
 		setContentView(R.layout.main);
 
-		Intent blueTest = new Intent(
-				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		blueTest.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
-		startActivity(blueTest);
+		
 
 		ipAddrText = (EditText) findViewById(R.id.IPAddrText);
 		startButton = (Button) findViewById(R.id.StartButton);
@@ -126,10 +123,7 @@ public class AutoStartActivity extends Activity {
 
 		updateButtons(servicesStarted);
 
-		Intent blueIntent = new Intent(
-				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		blueIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
-		startActivity(blueIntent);
+		
 
 		coretask = new CoreTask();
 		coretask.setPath(this.getApplicationContext().getFilesDir().getParent());
@@ -225,12 +219,12 @@ public class AutoStartActivity extends Activity {
 			if (intent.getAction().equals(INTENT_TO_UPDATE_UI)) {
 				updateDebugView();
 			} else if (BluetoothAdapter.ACTION_SCAN_MODE_CHANGED.equals(intent
-					.getAction())) {
+					.getAction()) && servicesStarted) {
 				if (intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, 0) != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
 					Intent blueIntent = new Intent(
 							BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
 					blueIntent.putExtra(
-							BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+							BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
 					startActivity(blueIntent);
 				} 
 			} else if (intent.getAction().equals(INTENT_TO_START_SERVICES)) {
@@ -455,11 +449,21 @@ public class AutoStartActivity extends Activity {
 	}
 
 	private void startServices() {
+		Intent blueTest = new Intent(
+				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		blueTest.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
+		startActivity(blueTest);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		startService(new Intent(AutoStartActivity.this, LoggingService.class));
 		Intent i = new Intent(AutoStartActivity.this, SchedulerService.class);
 		i.putExtra(ADDRESS_KEY, ipAddrText.getText().toString());
 		startService(i);
-		startTime = new Time(System.currentTimeMillis());
+		startTime = new Time(System.currentTimeMillis());		
 
 	}
 
@@ -468,6 +472,10 @@ public class AutoStartActivity extends Activity {
 		stopService(new Intent(AutoStartActivity.this, SchedulerService.class));
 		stopService(new Intent(AutoStartActivity.this, WifiService.class));
 		stopService(new Intent(AutoStartActivity.this, BluetoothService.class));
+		Intent blueTest = new Intent(
+				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		blueTest.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 1);
+		startActivity(blueTest);
 	}
 
 	// Binary install
